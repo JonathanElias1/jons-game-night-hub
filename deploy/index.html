@@ -121,6 +121,18 @@
       font-size: 0.75rem;
       font-weight: 600;
     }
+    .game-card .order-badge {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: rgba(0,0,0,0.4);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
     .game-card.finale { border: 3px solid #fbbf24; }
     .game-card.finale .finale-note {
       background: rgba(251, 191, 36, 0.2);
@@ -312,6 +324,7 @@
       {
         id: 'family-feud',
         name: 'Family Feud',
+        order: 1,
         icon: '👨‍👩‍👧‍👦',
         description: '3 rounds + Fast Money',
         maxPts: 125,
@@ -320,7 +333,8 @@
       },
       {
         id: 'jeopardy',
-        name: 'Jeopardy',
+        name: 'Jonpardy',
+        order: 2,
         icon: '❓',
         description: '3 rounds, Daily Doubles',
         maxPts: 120,
@@ -330,6 +344,7 @@
       {
         id: 'wheel-of-fortune',
         name: 'Wheel of Fortune',
+        order: 3,
         icon: '🎡',
         description: 'Spin, solve, win prizes!',
         maxPts: 100,
@@ -337,23 +352,14 @@
         color: 'game-wheel'
       },
       {
-        id: 'price-is-right',
-        name: 'Price Is Right',
-        icon: '💲',
-        description: 'Guess prices, win big!',
-        maxPts: 100,
-        path: 'price-is-right/index.html',
-        color: 'game-price'
-      },
-      {
         id: 'smarter-than-jon',
         name: 'Are You Smarter Than Jon?',
+        order: 4,
         icon: '🧠',
         description: 'FINALE: Top scorer plays!',
         maxPts: 100,
         path: 'smarter-than-jon/index.html',
-        color: 'game-smarter',
-        isFinale: true
+        color: 'game-smarter'
       }
     ];
 
@@ -518,18 +524,15 @@
 
       gamesGrid.innerHTML = GAMES.map(game => {
         const played = gamesPlayed.includes(game.name);
-        const isLocked = game.isFinale && gamesPlayed.length < 4;
 
         return `
-          <div class="game-card ${game.color} ${game.isFinale ? 'finale' : ''} ${isLocked ? 'locked' : ''}"
-               onclick="${isLocked ? '' : `launchGame('${game.path}', '${game.name}')`}">
+          <div class="game-card ${game.color}" onclick="launchGame('${game.path}', '${game.name}')">
+            <div class="order-badge">Game ${game.order}</div>
             ${played ? '<div class="played-badge">✓ Played</div>' : ''}
             <div class="icon">${game.icon}</div>
             <h3>${game.name}</h3>
             <p>${game.description}</p>
             <div class="max-pts">Max: ${game.maxPts} pts</div>
-            ${game.isFinale ? `<div class="finale-note">🏆 Current Leader: <strong>${topPlayer}</strong></div>` : ''}
-            ${isLocked ? '<div class="finale-note">🔒 Play other games first!</div>' : ''}
           </div>
         `;
       }).join('');
