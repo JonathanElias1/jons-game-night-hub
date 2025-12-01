@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import useSfx from "./hooks/useSfx";
 import useImagePreloader from "./hooks/useImagePreloader";
+import { FALLBACK } from "./lib/constants";
+import { loadPuzzles } from "./data/loadPuzzles";
 const GRADIENT = "bg-[radial-gradient(110%_110%_at_0%_0%,#5b7fff_0%,#21bd84_100%)]";
 const BASE_WHEEL_PX = 500;
 // --- bonus wheel orientation (used by draw + pick) ---
