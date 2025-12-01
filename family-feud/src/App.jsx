@@ -15,11 +15,25 @@ import { Timer } from "./components/Timer";
 import { useAudio } from "./hooks/useAudio";
 import { useThemeMusic } from "./hooks/useThemeMusic";
 import { useGameData } from "./hooks/useGameData";
-import { gradientBg } from "./utils/constants";
+import { gradientBg, AVATARS } from "./utils/constants";
 import { defaultMultiplierByIndex, labelForMult } from "./utils/helpers";
+
+// Load hub data from localStorage
+function loadHubData() {
+  try {
+    const saved = localStorage.getItem('jonsGameNightData');
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error('Failed to load hub data:', e);
+  }
+  return null;
+}
 
 export default function FamilyFeudApp() {
   const [gameSettings, setGameSettings] = useState(null);
+  const [autoStarted, setAutoStarted] = useState(false);
   const [players, setPlayers] = useState([]);
   const [teamAName, setTeamAName] = useState("Team A Family");
   const [teamBName, setTeamBName] = useState("Team B Family");
@@ -48,6 +62,49 @@ export default function FamilyFeudApp() {
   const { data, loaded } = useGameData();
   const { ding, buzz, blip, buzzA, buzzB, volume, setVolume } = useAudio();
   const theme = useThemeMusic();
+
+  // Auto-start from hub data if available
+  useEffect(() => {
+    if (autoStarted || gameSettings) return;
+
+    const hubData = loadHubData();
+    if (hubData && hubData.players && hubData.players.length >= 2) {
+      const teamNames = hubData.teamNames || { A: 'Team A', B: 'Team B' };
+
+      // Split players by team and assign random avatars
+      const playersA = hubData.players
+        .filter(p => p.team === 'A')
+        .map((p, i) => ({
+          id: `A${i}`,
+          name: p.name,
+          avatar: AVATARS[Math.floor(Math.random() * AVATARS.length)].emoji,
+          team: 'A',
+          teamName: teamNames.A,
+          personalScore: 0,
+          stats: { answersRevealed: 0, topAnswers: 0, faceoffWins: 0, stealsWon: 0, fastMoneyPoints: 0 }
+        }));
+
+      const playersB = hubData.players
+        .filter(p => p.team === 'B')
+        .map((p, i) => ({
+          id: `B${i}`,
+          name: p.name,
+          avatar: AVATARS[Math.floor(Math.random() * AVATARS.length)].emoji,
+          team: 'B',
+          teamName: teamNames.B,
+          personalScore: 0,
+          stats: { answersRevealed: 0, topAnswers: 0, faceoffWins: 0, stealsWon: 0, fastMoneyPoints: 0 }
+        }));
+
+      if (playersA.length > 0 && playersB.length > 0) {
+        setAutoStarted(true);
+        setPlayers([...playersA, ...playersB]);
+        setTeamAName(teamNames.A);
+        setTeamBName(teamNames.B);
+        setGameSettings({ numRounds: 3, players: [...playersA, ...playersB], teamAName: teamNames.A, teamBName: teamNames.B });
+      }
+    }
+  }, [autoStarted, gameSettings]);
 
   const addAction = (message) => {
     const time = new Date().toLocaleTimeString();
