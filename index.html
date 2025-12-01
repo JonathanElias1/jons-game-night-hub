@@ -138,6 +138,8 @@
     .game-wheel { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
     .game-price { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); }
     .game-smarter { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
+    .game-wordwar { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+    .game-boggle { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); }
 
     /* Leaderboard */
     .leaderboard {
@@ -312,6 +314,24 @@
         color: 'game-price'
       },
       {
+        id: 'word-war',
+        name: 'Word War',
+        icon: '⚔️',
+        description: 'Scrabble with power-ups!',
+        maxPts: 100,
+        path: 'word-war/dist/index.html',
+        color: 'game-wordwar'
+      },
+      {
+        id: 'boggle-blitz',
+        name: 'Boggle Blitz',
+        icon: '🎲',
+        description: 'Find words fast, use power-ups!',
+        maxPts: 100,
+        path: 'boggle/dist/index.html',
+        color: 'game-boggle'
+      },
+      {
         id: 'smarter-than-jon',
         name: 'Are You Smarter Than Jon?',
         icon: '🧠',
@@ -470,7 +490,7 @@
 
       gamesGrid.innerHTML = GAMES.map(game => {
         const played = (data.gamesPlayed || []).includes(game.name);
-        const isLocked = game.isFinale && (data.gamesPlayed || []).length < 4;
+        const isLocked = game.isFinale && (data.gamesPlayed || []).length < 6;
 
         return `
           <div class="game-card ${game.color} ${game.isFinale ? 'finale' : ''} ${isLocked ? 'locked' : ''}"
