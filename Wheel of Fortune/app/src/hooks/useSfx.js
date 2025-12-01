@@ -14,7 +14,7 @@ function useSfx() {
 
 
   // list of files to decode (key -> filename)
-  const base = "/";
+  const base = "./";
   const FILES = {
     spin: "sounds/wof-spin.mp3",
     ding: "sounds/wof-correct.mp3",
