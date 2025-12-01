@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/',              // ✅ Netlify serves from /
+  base: './',              // Use relative paths for subdirectory deployment
 })
