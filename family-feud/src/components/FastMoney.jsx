@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { cls } from "../utils/helpers";
-import { isDuplicateAnswer } from "../utils/answerMatching";
+import { isDuplicateAnswer, findMatchingAnswer } from "../utils/answerMatching";
 
 export function FastMoney({
   fastMoneyPrompts,
@@ -55,6 +55,51 @@ export function FastMoney({
   const switchToPlayer2 = () => {
     setPlayer(2);
     blip();
+  };
+
+  // Auto-match answer and return points if found
+  const findPointsForAnswer = (promptIndex, userAnswer) => {
+    const prompt = fastMoneyPrompts[promptIndex];
+    if (!prompt || !prompt.answers) return 0;
+
+    // Build answers array for matching
+    const answersWithStatus = prompt.answers.map(a => ({
+      text: a.text,
+      points: a.points,
+      revealed: false
+    }));
+
+    const result = findMatchingAnswer(userAnswer, answersWithStatus);
+    if (result.matched && result.answerIndex >= 0) {
+      return prompt.answers[result.answerIndex].points;
+    }
+    return 0;
+  };
+
+  // Handle Player 1 answer change with auto-matching
+  const handleAnswer1Change = (index, value) => {
+    setAnswers1((arr) => arr.map((x, j) => (j === index ? value : x)));
+
+    // Auto-fill points if we find a match
+    const points = findPointsForAnswer(index, value);
+    if (points > 0) {
+      setFmPoints1((arr) => arr.map((x, j) => (j === index ? points : x)));
+      blip();
+    }
+  };
+
+  // Handle Player 2 answer change with auto-matching
+  const handleAnswer2Change = (index, value) => {
+    setAnswers2((arr) => arr.map((x, j) => (j === index ? value : x)));
+
+    // Don't auto-fill if it's a duplicate
+    if (!duplicates[index]) {
+      const points = findPointsForAnswer(index, value);
+      if (points > 0) {
+        setFmPoints2((arr) => arr.map((x, j) => (j === index ? points : x)));
+        blip();
+      }
+    }
   };
 
   const combined = fmTotal1 + fmTotal2;
@@ -143,16 +188,14 @@ export function FastMoney({
               )}>
                 <td className="py-2 pr-2 font-semibold">{i + 1}</td>
                 <td className="py-2 pr-2">
-                  {fmShown[i] ? p : <span className="uppercase tracking-widest text-white/70 text-xs">Hidden</span>}
+                  {fmShown[i] ? (p.prompt || p) : <span className="uppercase tracking-widest text-white/70 text-xs">Hidden</span>}
                 </td>
                 {/* Player 1 Answer */}
                 <td className="py-2 pr-2">
                   <input
                     type="text"
                     value={answers1[i]}
-                    onChange={(e) => {
-                      setAnswers1((arr) => arr.map((x, j) => (j === i ? e.target.value : x)));
-                    }}
+                    onChange={(e) => handleAnswer1Change(i, e.target.value)}
                     disabled={player === 2}
                     placeholder={player === 1 ? "Type answer..." : ""}
                     className={cls(
@@ -180,9 +223,7 @@ export function FastMoney({
                     <input
                       type="text"
                       value={answers2[i]}
-                      onChange={(e) => {
-                        setAnswers2((arr) => arr.map((x, j) => (j === i ? e.target.value : x)));
-                      }}
+                      onChange={(e) => handleAnswer2Change(i, e.target.value)}
                       disabled={player === 1}
                       placeholder={player === 2 ? "Type answer..." : ""}
                       className={cls(
