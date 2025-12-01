@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jon's Game Night Hub</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="shared/gameNightScoring.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', system-ui, sans-serif; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: white;
+      padding: 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 30px; }
+    .header h1 { font-size: 3rem; font-weight: 900; margin-bottom: 10px; }
+    .header h1 span { color: #fbbf24; }
+    .header p { color: #94a3b8; font-size: 1.1rem; }
+
+    /* Setup Panel */
+    .setup-panel {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+    .setup-panel h2 { margin-bottom: 20px; }
+    .team-setup { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .team-input { display: flex; flex-direction: column; gap: 8px; }
+    .team-input label { font-size: 0.9rem; color: #94a3b8; }
+    .team-input input {
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 2px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 1rem;
+    }
+    .team-input input:focus { outline: none; border-color: #fbbf24; }
+    .team-a input { border-color: rgba(59, 130, 246, 0.5); }
+    .team-b input { border-color: rgba(239, 68, 68, 0.5); }
+
+    .add-player { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .add-player input { flex: 1; min-width: 200px; padding: 12px 16px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: white; }
+    .team-btns { display: flex; gap: 10px; }
+    .team-btn { padding: 12px 20px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .team-btn.team-a { background: rgba(59, 130, 246, 0.3); color: white; border: 2px solid transparent; }
+    .team-btn.team-b { background: rgba(239, 68, 68, 0.3); color: white; border: 2px solid transparent; }
+    .team-btn.selected { border-color: #fbbf24; }
+    .add-btn { padding: 12px 24px; border-radius: 10px; border: none; background: #10b981; color: white; font-weight: 600; cursor: pointer; }
+    .add-btn:hover { background: #059669; }
+
+    .players-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+    .player-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.1);
+    }
+    .player-card.team-a { border-left: 4px solid #3b82f6; }
+    .player-card.team-b { border-left: 4px solid #ef4444; }
+    .player-info { display: flex; flex-direction: column; }
+    .player-name { font-weight: 600; }
+    .player-team { font-size: 0.8rem; color: #94a3b8; }
+    .player-remove { background: none; border: none; color: #ef4444; font-size: 1.2rem; cursor: pointer; }
+
+    /* Team Scores Banner */
+    .scores-banner {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+      align-items: center;
+    }
+    .team-score {
+      padding: 20px;
+      border-radius: 16px;
+      text-align: center;
+    }
+    .team-score.team-a { background: rgba(59, 130, 246, 0.3); }
+    .team-score.team-b { background: rgba(239, 68, 68, 0.3); }
+    .team-score .name { color: #94a3b8; font-size: 0.9rem; margin-bottom: 5px; }
+    .team-score .score { font-size: 3rem; font-weight: 900; }
+    .vs { font-size: 2rem; font-weight: 900; color: #fbbf24; }
+
+    /* Game Cards */
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .game-card {
+      position: relative;
+      padding: 30px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      overflow: hidden;
+    }
+    .game-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+    .game-card .icon { font-size: 4rem; margin-bottom: 15px; }
+    .game-card h3 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
+    .game-card p { color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-bottom: 10px; }
+    .game-card .max-pts { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
+    .game-card .played-badge {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: #10b981;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .game-card.finale { border: 3px solid #fbbf24; }
+    .game-card.finale .finale-note {
+      background: rgba(251, 191, 36, 0.2);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      margin-top: 10px;
+    }
+    .game-card.locked { opacity: 0.5; cursor: not-allowed; }
+    .game-card.locked:hover { transform: none; }
+
+    /* Colors for each game */
+    .game-feud { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
+    .game-jeopardy { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); }
+    .game-wheel { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
+    .game-price { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); }
+    .game-smarter { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
+
+    /* Leaderboard */
+    .leaderboard {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+    .leaderboard h2 { margin-bottom: 20px; }
+    .leader-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      background: rgba(255,255,255,0.05);
+    }
+    .leader-item.gold { background: rgba(251, 191, 36, 0.2); border: 2px solid #fbbf24; }
+    .leader-item.silver { background: rgba(156, 163, 175, 0.2); border: 2px solid #9ca3af; }
+    .leader-item.bronze { background: rgba(217, 119, 6, 0.2); border: 2px solid #d97706; }
+    .leader-rank { font-size: 1.5rem; margin-right: 15px; }
+    .leader-info { flex: 1; }
+    .leader-name { font-weight: 600; }
+    .leader-team { font-size: 0.8rem; color: #94a3b8; }
+    .leader-score { font-size: 1.5rem; font-weight: 900; color: #fbbf24; }
+
+    /* Progress Bar */
+    .progress-section {
+      background: rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    .progress-section h3 { margin-bottom: 12px; font-size: 1rem; }
+    .progress-bar {
+      height: 12px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #fbbf24);
+      border-radius: 6px;
+      transition: width 0.5s ease;
+    }
+    .progress-text { font-size: 0.85rem; color: #94a3b8; }
+
+    /* Actions */
+    .actions { display: flex; gap: 15px; flex-wrap: wrap; }
+    .action-btn {
+      flex: 1;
+      min-width: 150px;
+      padding: 15px 20px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .action-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+    .btn-export { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; }
+    .btn-reset { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
+    .btn-start { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: black; font-size: 1.2rem; }
+    .btn-edit { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; }
+
+    /* Phase visibility */
+    .phase { display: none; }
+    .phase.active { display: block; }
+
+    @media (max-width: 768px) {
+      .header h1 { font-size: 2rem; }
+      .team-setup { grid-template-columns: 1fr; }
+      .scores-banner { grid-template-columns: 1fr; text-align: center; }
+      .vs { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🎉 <span>Jon's</span> Game Night 🎉</h1>
+      <p>Birthday Edition - Select a game to play!</p>
+    </div>
+
+    <!-- Setup Phase -->
+    <div id="setup-phase" class="phase active">
+      <div class="setup-panel">
+        <h2>📋 Team & Player Setup</h2>
+
+        <div class="team-setup">
+          <div class="team-input team-a">
+            <label>Team A Name</label>
+            <input type="text" id="team-a-name" value="Team A" placeholder="Team A">
+          </div>
+          <div class="team-input team-b">
+            <label>Team B Name</label>
+            <input type="text" id="team-b-name" value="Team B" placeholder="Team B">
+          </div>
+        </div>
+
+        <div class="add-player">
+          <input type="text" id="player-name" placeholder="Enter player name...">
+          <div class="team-btns">
+            <button class="team-btn team-a selected" id="select-team-a">Team A</button>
+            <button class="team-btn team-b" id="select-team-b">Team B</button>
+          </div>
+          <button class="add-btn" id="add-player-btn">+ Add</button>
+        </div>
+
+        <div class="players-list" id="players-list"></div>
+
+        <div style="margin-top: 20px;">
+          <button class="action-btn btn-start" id="start-btn" style="width: 100%;">
+            🎮 START GAME NIGHT! 🎮
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hub Phase -->
+    <div id="hub-phase" class="phase">
+      <!-- Team Scores -->
+      <div class="scores-banner">
+        <div class="team-score team-a">
+          <div class="name" id="display-team-a">Team A</div>
+          <div class="score" id="score-team-a">0</div>
+        </div>
+        <div class="vs">VS</div>
+        <div class="team-score team-b">
+          <div class="name" id="display-team-b">Team B</div>
+          <div class="score" id="score-team-b">0</div>
+        </div>
+      </div>
+
+      <!-- Progress Section -->
+      <div class="progress-section">
+        <h3>🎯 Game Night Progress</h3>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-text" id="progress-text">0 of 5 games played</div>
+      </div>
+
+      <!-- Game Cards -->
+      <div class="games-grid" id="games-grid">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="leaderboard">
+        <h2>🏆 Leaderboard</h2>
+        <div id="leaderboard-list"></div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button class="action-btn btn-edit" id="edit-btn">✏️ Edit Players</button>
+        <button class="action-btn btn-export" id="export-btn">💾 Export Scores</button>
+        <button class="action-btn btn-reset" id="reset-btn">🗑️ Reset All</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Game configuration with clean paths
+    const GAMES = [
+      {
+        id: 'family-feud',
+        name: 'Family Feud',
+        icon: '👨‍👩‍👧‍👦',
+        description: '3 rounds + Fast Money',
+        maxPts: 125,
+        path: 'family-feud/index.html',
+        color: 'game-feud'
+      },
+      {
+        id: 'jeopardy',
+        name: 'Jeopardy',
+        icon: '❓',
+        description: '3 rounds, Daily Doubles',
+        maxPts: 120,
+        path: 'jeopardy/index.html',
+        color: 'game-jeopardy'
+      },
+      {
+        id: 'wheel-of-fortune',
+        name: 'Wheel of Fortune',
+        icon: '🎡',
+        description: 'Spin, solve, win prizes!',
+        maxPts: 100,
+        path: 'wheel-of-fortune/index.html',
+        color: 'game-wheel'
+      },
+      {
+        id: 'price-is-right',
+        name: 'Price Is Right',
+        icon: '💲',
+        description: 'Guess prices, win big!',
+        maxPts: 100,
+        path: 'price-is-right/index.html',
+        color: 'game-price'
+      },
+      {
+        id: 'smarter-than-jon',
+        name: 'Are You Smarter Than Jon?',
+        icon: '🧠',
+        description: 'FINALE: Top scorer plays!',
+        maxPts: 100,
+        path: 'smarter-than-jon/index.html',
+        color: 'game-smarter',
+        isFinale: true
+      }
+    ];
+
+    let selectedTeam = 'A';
+    let data = GameNightScoring.getData();
+
+    // Initialize
+    function init() {
+      loadSavedData();
+      setupEventListeners();
+      updateUI();
+    }
+
+    function loadSavedData() {
+      data = GameNightScoring.getData();
+      if (data.players && data.players.length > 0) {
+        document.getElementById('team-a-name').value = data.teamNames?.A || 'Team A';
+        document.getElementById('team-b-name').value = data.teamNames?.B || 'Team B';
+      }
+    }
+
+    function setupEventListeners() {
+      // Team selection
+      document.getElementById('select-team-a').addEventListener('click', () => selectTeam('A'));
+      document.getElementById('select-team-b').addEventListener('click', () => selectTeam('B'));
+
+      // Add player
+      document.getElementById('add-player-btn').addEventListener('click', addPlayer);
+      document.getElementById('player-name').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addPlayer();
+      });
+
+      // Team name changes
+      document.getElementById('team-a-name').addEventListener('change', saveTeamNames);
+      document.getElementById('team-b-name').addEventListener('change', saveTeamNames);
+
+      // Start game night
+      document.getElementById('start-btn').addEventListener('click', startGameNight);
+
+      // Actions
+      document.getElementById('edit-btn').addEventListener('click', editPlayers);
+      document.getElementById('export-btn').addEventListener('click', exportScores);
+      document.getElementById('reset-btn').addEventListener('click', resetAll);
+    }
+
+    function selectTeam(team) {
+      selectedTeam = team;
+      document.getElementById('select-team-a').classList.toggle('selected', team === 'A');
+      document.getElementById('select-team-b').classList.toggle('selected', team === 'B');
+    }
+
+    function addPlayer() {
+      const input = document.getElementById('player-name');
+      const name = input.value.trim();
+      if (!name) return;
+
+      const teamNames = {
+        A: document.getElementById('team-a-name').value || 'Team A',
+        B: document.getElementById('team-b-name').value || 'Team B'
+      };
+
+      data = GameNightScoring.getData();
+      if (!data.players) data.players = [];
+
+      data.players.push({
+        name,
+        team: selectedTeam,
+        scores: {},
+        total: 0
+      });
+      data.teamNames = teamNames;
+
+      GameNightScoring.saveData(data);
+      input.value = '';
+      updateUI();
+    }
+
+    function removePlayer(index) {
+      data = GameNightScoring.getData();
+      data.players.splice(index, 1);
+      GameNightScoring.saveData(data);
+      updateUI();
+    }
+
+    function saveTeamNames() {
+      data = GameNightScoring.getData();
+      data.teamNames = {
+        A: document.getElementById('team-a-name').value || 'Team A',
+        B: document.getElementById('team-b-name').value || 'Team B'
+      };
+      GameNightScoring.saveData(data);
+      updateUI();
+    }
+
+    function startGameNight() {
+      data = GameNightScoring.getData();
+      if (!data.players || data.players.length < 2) {
+        alert('Please add at least 2 players to start!');
+        return;
+      }
+
+      document.getElementById('setup-phase').classList.remove('active');
+      document.getElementById('hub-phase').classList.add('active');
+      updateHubUI();
+    }
+
+    function editPlayers() {
+      document.getElementById('hub-phase').classList.remove('active');
+      document.getElementById('setup-phase').classList.add('active');
+      loadSavedData();
+      updateUI();
+    }
+
+    function updateUI() {
+      data = GameNightScoring.getData();
+      const teamNames = data.teamNames || { A: 'Team A', B: 'Team B' };
+
+      // Update players list
+      const list = document.getElementById('players-list');
+      list.innerHTML = (data.players || []).map((p, i) => `
+        <div class="player-card team-${p.team.toLowerCase()}">
+          <div class="player-info">
+            <div class="player-name">${p.name}</div>
+            <div class="player-team">${teamNames[p.team]}</div>
+          </div>
+          <button class="player-remove" onclick="removePlayer(${i})">×</button>
+        </div>
+      `).join('');
+
+      // Update button state
+      const startBtn = document.getElementById('start-btn');
+      if ((data.players || []).length >= 2) {
+        startBtn.disabled = false;
+        startBtn.textContent = '🎮 START GAME NIGHT! 🎮';
+      } else {
+        startBtn.disabled = true;
+        startBtn.textContent = 'Add at least 2 players to start';
+      }
+    }
+
+    function updateHubUI() {
+      data = GameNightScoring.getData();
+      const teamNames = data.teamNames || { A: 'Team A', B: 'Team B' };
+      const totals = GameNightScoring.getTeamTotals();
+      const leaderboard = GameNightScoring.getLeaderboard();
+      const gamesPlayed = data.gamesPlayed || [];
+
+      // Update team scores
+      document.getElementById('display-team-a').textContent = teamNames.A;
+      document.getElementById('display-team-b').textContent = teamNames.B;
+      document.getElementById('score-team-a').textContent = totals.teamA;
+      document.getElementById('score-team-b').textContent = totals.teamB;
+
+      // Update progress
+      const progress = (gamesPlayed.length / GAMES.length) * 100;
+      document.getElementById('progress-fill').style.width = progress + '%';
+      document.getElementById('progress-text').textContent = `${gamesPlayed.length} of ${GAMES.length} games played`;
+
+      // Update games grid
+      const gamesGrid = document.getElementById('games-grid');
+      const topPlayer = leaderboard.length > 0 ? leaderboard[0].name : 'TBD';
+
+      gamesGrid.innerHTML = GAMES.map(game => {
+        const played = gamesPlayed.includes(game.name);
+        const isLocked = game.isFinale && gamesPlayed.length < 4;
+
+        return `
+          <div class="game-card ${game.color} ${game.isFinale ? 'finale' : ''} ${isLocked ? 'locked' : ''}"
+               onclick="${isLocked ? '' : `launchGame('${game.path}', '${game.name}')`}">
+            ${played ? '<div class="played-badge">✓ Played</div>' : ''}
+            <div class="icon">${game.icon}</div>
+            <h3>${game.name}</h3>
+            <p>${game.description}</p>
+            <div class="max-pts">Max: ${game.maxPts} pts</div>
+            ${game.isFinale ? `<div class="finale-note">🏆 Current Leader: <strong>${topPlayer}</strong></div>` : ''}
+            ${isLocked ? '<div class="finale-note">🔒 Play other games first!</div>' : ''}
+          </div>
+        `;
+      }).join('');
+
+      // Update leaderboard
+      const leaderboardList = document.getElementById('leaderboard-list');
+      leaderboardList.innerHTML = leaderboard.slice(0, 10).map((p, i) => {
+        const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+        const rankIcon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+        return `
+          <div class="leader-item ${rankClass}">
+            <span class="leader-rank">${rankIcon}</span>
+            <div class="leader-info">
+              <div class="leader-name">${p.name}</div>
+              <div class="leader-team">${teamNames[p.team]}</div>
+            </div>
+            <div class="leader-score">${p.total || 0}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function launchGame(path, gameName) {
+      GameNightScoring.markGamePlayed(gameName);
+      window.location.href = path;
+    }
+
+    function exportScores() {
+      data = GameNightScoring.getData();
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'jons-game-night-scores.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function resetAll() {
+      if (confirm('Reset ALL scores and player data? This cannot be undone!')) {
+        localStorage.removeItem('jonsGameNightData');
+        localStorage.removeItem('jonsGameNightHistory');
+        location.reload();
+      }
+    }
+
+    // Check if returning from a game
+    if (data.players && data.players.length >= 2 && data.gamesPlayed && data.gamesPlayed.length > 0) {
+      document.getElementById('setup-phase').classList.remove('active');
+      document.getElementById('hub-phase').classList.add('active');
+      setTimeout(updateHubUI, 100);
+    }
+
+    // Initialize
+    init();
+  </script>
+</body>
+</html>

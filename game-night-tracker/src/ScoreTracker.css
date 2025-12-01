@@ -1,0 +1,672 @@
+.score-tracker-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 10px;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 12px;
+  font-size: 20px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+select {
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding: 12px 36px 12px 12px;
+  cursor: pointer;
+  box-sizing: border-box;
+  width: 100%;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+input, select, button {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  touch-action: manipulation;
+}
+
+input, select {
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input::placeholder {
+  color: #999;
+}
+
+button {
+  background: #22c55e;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+button.secondary {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+button.danger {
+  background: #ef4444;
+}
+
+.player-list {
+  margin-top: 10px;
+  max-height: 50vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.player-item {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 56px;
+}
+
+.player-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.player-name {
+  font-weight: bold;
+  font-size: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-team {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-score {
+  font-size: 22px;
+  font-weight: bold;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.remove-btn {
+  width: auto;
+  padding: 8px 14px;
+  background: #ef4444;
+  margin: 0 0 0 12px;
+  min-height: auto;
+  flex-shrink: 0;
+}
+
+.score-input-group {
+  display: grid;
+  grid-template-columns: 1fr 100px auto;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.score-input-group input,
+.score-input-group select {
+  margin-bottom: 0;
+}
+
+.score-input-group button {
+  margin-bottom: 0;
+  padding: 12px 20px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Compact Game Selector */
+.game-selector {
+  padding: 12px;
+}
+
+.game-selector h2 {
+  font-size: 14px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.game-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.game-btn {
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  margin-bottom: 0;
+  font-size: 13px;
+  border-radius: 8px;
+  min-height: 44px;
+}
+
+.game-btn.active {
+ background: #fbbf24;
+  color: #000;
+  font-weight: bold;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.5);
+}
+
+.current-game-display {
+  font-size: 15px;
+  padding: 6px;
+  margin-top: 6px;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Compact Award Points Section */
+.quick-entry {
+  padding: 12px;
+}
+
+.quick-entry h2 {
+  font-size: 14px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.quick-entry h3 {
+  font-size: 13px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+/* Compact Team Buttons */
+.team-select-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.team-select-btn {
+  flex: 1;
+  padding: 10px;
+  font-size: 13px;
+  min-height: 40px;
+  margin-bottom: 0;
+}
+
+.team-a-btn {
+  background: #3b82f6;
+}
+
+.team-b-btn {
+  background: #22c55e;
+}
+
+/* Compact Player Selection */
+.players-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+
+.player-btn {
+  padding: 10px;
+  font-size: 13px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  min-height: auto;
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.player-btn.selected {
+  background: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.player-btn.team-a {
+  border-left: 4px solid #3b82f6;
+}
+
+.player-btn.team-b {
+  border-left: 4px solid #22c55e;
+}
+
+.player-btn .player-info {
+  font-size: 11px;
+  margin-top: 2px;
+  opacity: 0.9;
+}
+
+/* Compact Point Buttons */
+.points-grid {
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.points-grid h3 {
+  font-size: 14px;
+  margin-bottom: 8px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.point-button {
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  min-height: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.point-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.point-button .point-name {
+  font-size: 13px;
+  margin-bottom: 2px;
+  font-weight: 600;
+}
+
+.point-button .point-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #fbbf24;
+}
+
+.point-button .point-type {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.point-explanation {
+  font-size: 11px;
+  padding: 8px;
+  margin-top: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  line-height: 1.4;
+}
+
+.leaderboard {
+  margin-top: 10px;
+  max-height: 60vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.rank-1 {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+  font-size: 16px;
+  padding: 14px;
+}
+
+.rank-2 {
+  background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+}
+
+.rank-3 {
+  background: linear-gradient(135deg, #fdba74, #fb923c);
+}
+
+.finale-notice {
+  background: #fbbf24;
+  color: #000;
+  padding: 12px;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: bold;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.stat-box {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 10px;
+  opacity: 0.8;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.setup-phase, .game-phase {
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Collapsible sections */
+.collapse-toggle {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: auto;
+}
+
+.collapse-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Compact Action Buttons */
+.quick-actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  flex-wrap: wrap;
+}
+
+.compact-btn {
+  flex: 1;
+  min-width: 90px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 0;
+  border-radius: 8px;
+}
+
+/* Player Item Styles for Edit Mode */
+.players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.score-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-edit {
+  padding: 6px 12px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  min-height: auto;
+  width: auto;
+  margin: 0;
+}
+
+.btn-edit:hover {
+  background: #2563eb;
+}
+
+.edit-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.edit-input {
+  width: 70px;
+  padding: 6px 8px;
+  border: 2px solid #3b82f6;
+  border-radius: 6px;
+  font-size: 14px;
+  margin: 0;
+}
+
+.btn-small {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  min-height: auto;
+  width: auto;
+  margin: 0;
+}
+
+.btn-success {
+  background: #22c55e;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #16a34a;
+}
+
+.btn-cancel {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-cancel:hover {
+  background: #dc2626;
+}
+
+.team-badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.team-badge.team-A {
+  background: #3b82f6;
+}
+
+.team-badge.team-B {
+  background: #22c55e;
+}
+
+/* Smooth scrolling */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Better scrollbars on mobile */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
+
+/* Prevent text selection on buttons */
+button {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Better focus states for accessibility */
+input:focus, select:focus {
+  outline: 3px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Mobile specific adjustments */
+@media (max-width: 768px) {
+  .score-tracker-container {
+    padding: 8px;
+  }
+  
+  h1 {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  
+  .card {
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+  
+  .game-btn {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  
+  .player-btn {
+    padding: 8px;
+    font-size: 12px;
+  }
+  
+  .point-button {
+    padding: 8px;
+  }
+  
+  .point-button .point-value {
+    font-size: 16px;
+  }
+  
+  .compact-btn {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+  
+  .collapse-toggle {
+    padding: 10px;
+    font-size: 14px;
+  }
+}
+
+/* Landscape mode adjustments */
+@media (orientation: landscape) and (max-height: 600px) {
+  h1 {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  
+  .card {
+    padding: 8px;
+  }
+  
+  .player-list, .leaderboard {
+    max-height: 40vh;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 400px) {
+  .game-buttons {
+    grid-template-columns: 1fr;
+  }
+  
+  .players-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .team-select-buttons {
+    flex-direction: column;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  .score-input-group {
+    grid-template-columns: 1fr 80px auto;
+  }
+  
+  .game-btn {
+    font-size: 11px;
+    padding: 8px 6px;
+  }
+}
