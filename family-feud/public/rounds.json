@@ -8,7 +8,7 @@
       "answers": [
         { "text": "A gift for Jon", "points": 70, "aliases": ["gift", "present", "presents", "birthday gift", "birthday present"] },
         { "text": "Napkins", "points": 10, "aliases": ["paper towels", "tissues", "serviettes"] },
-        { "text": "Drugs", "points": 9, "aliases": ["weed", "marijuana", "pot", "pills", "edibles"] },
+        { "text": "Drugs", "points": 9, "aliases": ["weed", "marijuana", "pot", "pills", "edibles","blow","cocaine"] },
         { "text": "Food", "points": 3, "aliases": ["pizza", "cake", "snacks", "chips", "candy", "cookies", "cupcakes", "appetizers"] },
         { "text": "Drinks", "points": 3, "aliases": ["soda", "beer", "wine", "beverages", "alcohol", "juice", "water", "pop", "booze"] },
         { "text": "Candles", "points": 2, "aliases": ["birthday candles"] },
@@ -115,18 +115,18 @@
         { "text": "presents", "points": 15, "aliases": ["gifts", "gift", "present", "birthday gifts"] },
         { "text": "candles", "points": 10, "aliases": ["birthday candles"] },
         { "text": "party hats", "points": 6, "aliases": ["hats", "party hat", "cone hats"] },
-        { "text": "animals", "points": 4, "aliases": ["pets", "dogs", "cats", "dog", "cat"] }
+        { "text": "animals", "points": 4, "aliases": ["pets", "dogs", "cats", "dog", "cat", "pony", "horse"] }
       ]
     },
     {
       "prompt": "Name one of Jon's signature catch phrases",
       "answers": [
-        { "text": "Hello this is Jon", "points": 30, "aliases": ["hello its jon", "hi this is jon", "hello jon"] },
+        { "text": "Hi this is Jon", "points": 40, "aliases": ["hello its jon", "hi this is jon", "hello jon"] },
         { "text": "You should listen to me", "points": 25, "aliases": ["listen to me", "you should listen"] },
-        { "text": "I'm always hard", "points": 20, "aliases": ["always hard", "im hard", "hard"] },
-        { "text": "I love Israel", "points": 10, "aliases": ["love israel", "israel"] },
+        { "text": "I'm always hard", "points": 20, "aliases": ["always hard", "im hard", "hard","I'm the hardest"] },
         { "text": "Hey Jon Fooders", "points": 8, "aliases": ["jon fooders", "fooders", "hey fooders"] },
-        { "text": "I'm the hardest", "points": 7, "aliases": ["the hardest", "im hardest", "hardest"] }
+        { "text": "I love Israel", "points": 10, "aliases": ["love israel", "israel"] }
+
       ]
     },
     {
