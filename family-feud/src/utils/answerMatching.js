@@ -54,8 +54,28 @@ export function isAnswerMatch(userAnswer, correctAnswer, threshold = 0.6) {
 }
 
 /**
+ * Check if user answer matches any of the aliases
+ */
+function matchesAlias(userNorm, aliases) {
+  if (!aliases || !Array.isArray(aliases)) return false;
+
+  for (const alias of aliases) {
+    const aliasNorm = normalize(alias);
+    // Exact match with alias
+    if (userNorm === aliasNorm) return true;
+    // User answer contains alias or vice versa
+    if (aliasNorm.includes(userNorm) && userNorm.length >= 3) return true;
+    if (userNorm.includes(aliasNorm) && aliasNorm.length >= 3) return true;
+    // Handle plurals
+    if (userNorm + "s" === aliasNorm || aliasNorm + "s" === userNorm) return true;
+  }
+  return false;
+}
+
+/**
  * Find matching answer from a list of possible answers
  * Returns { matched: boolean, answerIndex: number, confidence: 'exact'|'partial'|'close' }
+ * Supports aliases array on each answer for synonym matching
  */
 export function findMatchingAnswer(userAnswer, answers) {
   const userNorm = normalize(userAnswer);
@@ -69,6 +89,11 @@ export function findMatchingAnswer(userAnswer, answers) {
 
     // Exact match
     if (userNorm === correctNorm) {
+      return { matched: true, answerIndex: i, confidence: 'exact' };
+    }
+
+    // Check aliases for exact/partial match
+    if (matchesAlias(userNorm, answer.aliases)) {
       return { matched: true, answerIndex: i, confidence: 'exact' };
     }
 
@@ -92,7 +117,7 @@ export function findMatchingAnswer(userAnswer, answers) {
     }
   }
 
-  // Check for close matches (typos)
+  // Check for close matches (typos) - also check aliases
   for (let i = 0; i < answers.length; i++) {
     const answer = answers[i];
     if (!answer.text || answer.revealed) continue;
@@ -104,6 +129,19 @@ export function findMatchingAnswer(userAnswer, answers) {
 
     if (similarity >= 0.7) {
       return { matched: true, answerIndex: i, confidence: 'close' };
+    }
+
+    // Also check aliases for close matches
+    if (answer.aliases) {
+      for (const alias of answer.aliases) {
+        const aliasNorm = normalize(alias);
+        const aliasDist = levenshteinDistance(userNorm, aliasNorm);
+        const aliasMaxLen = Math.max(userNorm.length, aliasNorm.length);
+        const aliasSim = 1 - aliasDist / aliasMaxLen;
+        if (aliasSim >= 0.7) {
+          return { matched: true, answerIndex: i, confidence: 'close' };
+        }
+      }
     }
   }
 

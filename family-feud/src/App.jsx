@@ -523,10 +523,22 @@ export default function FamilyFeudApp() {
     }
   }, [phase, fmCombined, fmTargetHit, hubEnabled, teamA, teamB]);
 
-  // Disable award during steal phase - steal resolution handles awarding
-  const awardDisabled = bank <= 0 || isAwarding || phase === "steal";
   const activeMult = phase === "sudden" ? suddenMultiplier : roundMultiplier;
   const multLabel = labelForMult(activeMult);
+
+  // Check if all valid answers have been revealed (round is complete)
+  const validAnswersCount = answers.filter(a => a.text && a.points > 0).length;
+  const revealedCount = revealed.filter((r, i) => r && answers[i]?.text && answers[i]?.points > 0).length;
+  const allAnswersRevealed = revealedCount === validAnswersCount && validAnswersCount > 0;
+  const roundComplete = allAnswersRevealed && bank === 0;
+
+  // Auto-award when all answers are revealed during regular round play
+  useEffect(() => {
+    if (phase === "round" && allAnswersRevealed && bank > 0 && controlTeam && !isAwarding) {
+      // All answers revealed, auto-award to control team
+      award(controlTeam);
+    }
+  }, [phase, allAnswersRevealed, bank, controlTeam, isAwarding]);
 
   const winner = teamA > teamB ? teamAName : teamB > teamA ? teamBName : "Tie";
 
@@ -633,6 +645,11 @@ export default function FamilyFeudApp() {
                   if (phase === "faceoff" && faceoffTurn) {
                     beginRound(faceoffTurn);
                   }
+                  // During steal, if they get a correct answer, auto-succeed the steal
+                  if (phase === "steal") {
+                    addAction(`Steal successful! Matched answer #${idx + 1}`);
+                    resolveSteal(true);
+                  }
                 }}
                 onWrongAnswer={(answer) => {
                   if (phase === "round") {
@@ -640,6 +657,7 @@ export default function FamilyFeudApp() {
                     addAction(`Wrong answer: "${answer}"`);
                   } else if (phase === "steal") {
                     // Steal attempt failed
+                    addAction(`Steal failed! "${answer}" was wrong`);
                     resolveSteal(false);
                   } else if (phase === "faceoff") {
                     // Wrong answer in faceoff - pass to other team
@@ -692,12 +710,9 @@ export default function FamilyFeudApp() {
             )}
 
             <RoundControls
-              award={award}
-              awardDisabled={awardDisabled}
               nextRound={nextRound}
               restart={restart}
-              teamAName={teamAName}
-              teamBName={teamBName}
+              roundComplete={roundComplete}
             />
 
             <ActionHistory history={actionHistory} />
