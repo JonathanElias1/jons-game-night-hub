@@ -105,6 +105,12 @@ export function FastMoney({
           >
             New Game
           </button>
+          <button
+            onClick={() => window.location.href = '../'}
+            className="px-3 py-2 rounded-xl bg-purple-500 hover:bg-purple-400 text-white transition font-semibold"
+          >
+            🏠 Back to Hub
+          </button>
         </div>
       </div>
 
