@@ -3,120 +3,162 @@
 
   "rounds": [
     {
-      "question": "Name something you bring to a birthday party:",
+      "question": "Name something you bring to a birthday party?",
       "multiplier": 1,
       "answers": [
-        { "text": "A gift for Jon", "points": 70 },
-        { "text": "Napkins", "points": 10 },
-        { "text": "Drugs", "points":  9 },
-        { "text": "Food", "points": 3 },
-        { "text": "Drinks", "points": 3 },
-        { "text": "Candles", "points": 2 },
-        { "text": "Plates/Cups", "points": 2 },
-        { "text": "Games", "points": 1 }
+        { "text": "A gift for Jon", "points": 70, "aliases": ["gift", "present", "presents", "birthday gift", "birthday present"] },
+        { "text": "Napkins", "points": 10, "aliases": ["paper towels", "tissues", "serviettes"] },
+        { "text": "Drugs", "points": 9, "aliases": ["weed", "marijuana", "pot", "pills", "edibles","blow","cocaine"] },
+        { "text": "Food", "points": 3, "aliases": ["pizza", "cake", "snacks", "chips", "candy", "cookies", "cupcakes", "appetizers"] },
+        { "text": "Drinks", "points": 3, "aliases": ["soda", "beer", "wine", "beverages", "alcohol", "juice", "water", "pop", "booze"] },
+        { "text": "Candles", "points": 2, "aliases": ["birthday candles"] },
+        { "text": "Plates/Cups", "points": 2, "aliases": ["dishes", "utensils", "silverware", "forks", "spoons", "paper plates", "plasticware", "cups"] },
+        { "text": "Games", "points": 1, "aliases": ["board games", "video games", "party games", "card games"] }
       ]
     },
     {
-      "question": "Name a reason a video shoot runs late:",
+      "question": "Name a reason a video shoot runs late?",
       "multiplier": 1,
       "answers": [
-        { "text": "Technical issues", "points": 29 },
-        { "text": "Talent arrives late", "points": 24 },
-        { "text": "Last-minute script changes", "points": 17 },
-        { "text": "Lighting setup", "points": 12 },
-        { "text": "Audio problems", "points": 8 },
-        { "text": "Location issues", "points": 6 },
-        { "text": "Wardrobe/Makeup", "points": 3 },
-        { "text": "Weather", "points": 1 }
+        { "text": "Technical issues", "points": 29, "aliases": ["tech problems", "equipment failure", "camera issues", "computer problems", "equipment", "technology"] },
+        { "text": "Bad Talent", "points": 24, "aliases": ["actors", "bad acting", "performers", "talent", "acting"] },
+        { "text": "Last-minute script changes", "points": 17, "aliases": ["rewrites", "script rewrites", "script", "changes"] },
+        { "text": "Lighting setup", "points": 12, "aliases": ["lights", "lighting", "light problems"] },
+        { "text": "Audio problems", "points": 8, "aliases": ["sound issues", "microphone", "mic problems", "sound", "audio"] },
+        { "text": "Location issues", "points": 6, "aliases": ["venue", "setting", "location", "place"] },
+        { "text": "Wardrobe", "points": 3, "aliases": ["clothes", "costumes", "makeup", "hair", "styling", "outfit"] },
+        { "text": "Weather", "points": 1, "aliases": ["rain", "storm", "wind", "snow", "cold", "hot"] }
       ]
     },
     {
       "question": "Which race does Jon get most confused for?",
       "multiplier": 2,
       "answers": [
-        { "text": "Russian/Ukranian", "points": 40 },
-        { "text": "Mexican", "points": 18 },
-        { "text": "", "points": 15 },
-        { "text": "", "points": 12 },
-        { "text": "", "points": 8 },
-        { "text": "", "points": 4 },
-        { "text": "", "points": 2 },
-        { "text": "", "points": 1 }
+        { "text": "Russian", "points": 40, "aliases": ["soviet", "russia"] },
+        { "text": "Ukranian", "points": 18, "aliases": ["ukraine", "ukrainian"] },
+        { "text": "Mexican", "points": 15, "aliases": ["hispanic", "latino", "spanish", "latin"] },
+        { "text": "Mongolian", "points": 12, "aliases": ["asian", "chinese", "mongol", "mongolia"] },
+        { "text": "Unknown", "points": 8, "aliases": ["other", "idk", "dont know", "mystery", "unclear"] },
+        { "text": "Homo Sapien", "points": 4, "aliases": ["human", "person", "man", "guy"] }
       ]
     },
     {
-      "question": "Name something people do first thing in the morning:",
+      "question": "If Adults Trick Or Treated, What Might They Request Instead Of Candy?",
       "multiplier": 3,
       "answers": [
-        { "text": "Brush teeth", "points": 28 },
-        { "text": "Use bathroom", "points": 21 },
-        { "text": "Check phone", "points": 16 },
-        { "text": "Make coffee", "points": 14 },
-        { "text": "Shower", "points": 10 },
-        { "text": "Eat breakfast", "points": 6 },
-        { "text": "Hit snooze", "points": 3 },
-        { "text": "Make bed", "points": 2 }
+        { "text": "Sex", "points": 30, "aliases": ["boobs", "ass", "hookup", "intimacy"] },
+        { "text": "Money", "points": 21, "aliases": ["cash", "dollars", "bucks", "coins", "currency"] },
+        { "text": "Drugs", "points": 17, "aliases": ["weed", "marijuana", "pills", "edibles", "pot"] },
+        { "text": "Alcohol", "points": 16, "aliases": ["beer", "wine", "liquor", "booze", "drinks", "shots", "vodka", "whiskey"] },
+        { "text": "Food", "points": 11, "aliases": ["candy", "snacks", "pizza", "dinner", "meal", "steak"] },
+        { "text": "Help", "points": 5, "aliases": ["assistance", "favors", "favor", "chores"] }
       ]
     },
     {
-      "question": "Name something you spread on toast:",
+      "question": "Name something you hate when people say out loud?",
       "multiplier": 3,
       "answers": [
-        { "text": "Butter", "points": 34 },
-        { "text": "Jam/Jelly", "points": 26 },
-        { "text": "Peanut butter", "points": 16 },
-        { "text": "Avocado", "points": 10 },
-        { "text": "Cream cheese", "points": 6 },
-        { "text": "Honey", "points": 4 },
-        { "text": "Marmalade", "points": 3 },
-        { "text": "Nutella", "points": 1 }
+        { "text": "Fender Bender", "points": 28, "aliases": ["car accident", "fenderbender"] },
+        { "text": "Moist", "points": 24, "aliases": ["wet", "damp"] },
+        { "text": "Baby Talk", "points": 18, "aliases": ["goo goo", "talking like a baby", "babytalk", "cooing"] },
+        { "text": "LOL", "points": 14, "aliases": ["laugh out loud", "lmao", "lmfao", "rofl"] },
+        { "text": "Six Seven", "points": 10, "aliases": ["67", "sixty seven"] },
+        { "text": "Marmalade", "points": 6, "aliases": ["jam", "jelly", "preserve"] }
       ]
     },
     {
-      "question": "Name something you keep in your car:",
+      "question": "Name a reason you might not respond to a text?",
       "multiplier": 3,
       "answers": [
-        { "text": "Spare tire/Jack", "points": 27 },
-        { "text": "Phone charger", "points": 19 },
-        { "text": "Sunglasses", "points": 15 },
-        { "text": "Jumper cables", "points": 12 },
-        { "text": "Water/Snacks", "points": 9 },
-        { "text": "Blanket/Jacket", "points": 7 },
-        { "text": "First aid kit", "points": 6 },
-        { "text": "Umbrella", "points": 5 }
+        { "text": "Hate", "points": 35, "aliases": ["dont like", "angry", "mad", "annoyed", "hate them", "dont like them", "ignoring"] },
+        { "text": "Busy", "points": 22, "aliases": ["occupied", "preoccupied", "distracted"] },
+        { "text": "Working", "points": 15, "aliases": ["at work", "job", "work", "meeting"] },
+        { "text": "Drinking", "points": 10, "aliases": ["drunk", "wasted", "partying", "bar", "club"] },
+        { "text": "Eating", "points": 7, "aliases": ["dinner", "lunch", "meal", "breakfast", "food"] },
+        { "text": "Bathroom", "points": 5, "aliases": ["toilet", "restroom", "peeing", "pooping", "shower", "showering"] },
+        { "text": "Jumping a Car", "points": 4, "aliases": ["car trouble", "dead battery", "car problems", "broken down"] },
+        { "text": "Involved with Hospital Operations", "points": 2, "aliases": ["hospital", "medical", "surgery", "sick", "doctor", "emergency", "er"] }
       ]
     }
   ],
 
   "suddenDeath": [
     {
-      "question": "Sudden Death: Name a household bill people dread the most.",
+      "question": "Sudden Death: Name a household bill people dread the most?",
       "multiplier": 3,
       "answers": [
-        { "text": "Electricity", "points": 100 }
+        { "text": "Electricity", "points": 100, "aliases": ["electric", "power", "electric bill", "power bill", "utilities"] }
       ]
     },
     {
       "question": "Sudden Death: Name the most-used app on people's phones.",
       "multiplier": 3,
       "answers": [
-        { "text": "Messages/Texts", "points": 100 }
+        { "text": "Messages/Texts", "points": 100, "aliases": ["texting", "imessage", "sms", "text", "messaging", "messages"] }
       ]
     },
     {
       "question": "Sudden Death: Name the most popular pizza topping.",
       "multiplier": 3,
       "answers": [
-        { "text": "Pepperoni", "points": 100 }
+        { "text": "Pepperoni", "points": 100, "aliases": ["peperoni", "pepperonis"] }
       ]
     }
   ],
 
   "fastMoneyPrompts": [
-    "A breakfast food you can eat on the go",
-    "Something people lose all the time",
-    "A reason you might be late",
-    "A chore kids get paid to do",
-    "A fruit you can peel"
+    {
+      "prompt": "Name something you might find at a birthday party",
+      "answers": [
+        { "text": "people", "points": 40, "aliases": ["friends", "family", "guests", "crowd", "person"] },
+        { "text": "cake", "points": 25, "aliases": ["birthday cake", "cupcakes", "dessert"] },
+        { "text": "presents", "points": 15, "aliases": ["gifts", "gift", "present", "birthday gifts"] },
+        { "text": "candles", "points": 10, "aliases": ["birthday candles"] },
+        { "text": "party hats", "points": 6, "aliases": ["hats", "party hat", "cone hats"] },
+        { "text": "animals", "points": 4, "aliases": ["pets", "dogs", "cats", "dog", "cat", "pony", "horse"] }
+      ]
+    },
+    {
+      "prompt": "Name one of Jon's signature catch phrases",
+      "answers": [
+        { "text": "Hi this is Jon", "points": 40, "aliases": ["hello its jon", "hi this is jon", "hello jon"] },
+        { "text": "You should listen to me", "points": 25, "aliases": ["listen to me", "you should listen"] },
+        { "text": "I'm always hard", "points": 20, "aliases": ["always hard", "im hard", "hard","I'm the hardest"] },
+        { "text": "Hey Jon Fooders", "points": 8, "aliases": ["jon fooders", "fooders", "hey fooders"] },
+        { "text": "I love Israel", "points": 10, "aliases": ["love israel", "israel"] }
+
+      ]
+    },
+    {
+      "prompt": "Name something Jon would bring to a desert island",
+      "answers": [
+        { "text": "Cody", "points": 35, "aliases": ["cody ko", "his friend cody"] },
+        { "text": "Dogs", "points": 25, "aliases": ["dog", "pets", "his dogs", "puppy"] },
+        { "text": "Camera", "points": 20, "aliases": ["video camera", "filming equipment", "phone"] },
+        { "text": "Food", "points": 12, "aliases": ["snacks", "meals", "chicken", "meat"] },
+        { "text": "Water", "points": 8, "aliases": ["drinks", "hydration", "beverages"] }
+      ]
+    },
+    {
+      "prompt": "Name something Jon is known for",
+      "answers": [
+        { "text": "FGL/Best friend/best person", "points": 35, "aliases": ["fgl", "best friend", "friend", "friendship", "best person"] },
+        { "text": "JON-E Worldwide/Filming", "points": 25, "aliases": ["jon e worldwide", "jone worldwide", "filming", "videos", "youtube"] },
+        { "text": "JON FOOD", "points": 20, "aliases": ["jonfood", "food reviews", "eating", "food channel"] },
+        { "text": "Cooking/Meat Night", "points": 12, "aliases": ["cooking", "meat night", "grilling", "bbq", "chef"] },
+        { "text": "Acting/Art The Clown", "points": 8, "aliases": ["acting", "art the clown", "terrifier", "movies", "horror"] },
+        { "text": "Sports", "points": 8, "aliases": ["basketball", "football", "athletics", "athlete"] }
+      ]
+    },
+    {
+      "prompt": "Name Jon's favorite food",
+      "answers": [
+        { "text": "Chicken", "points": 35, "aliases": ["fried chicken", "poultry", "bird"] },
+        { "text": "Durian", "points": 25, "aliases": ["durian fruit", "stinky fruit"] },
+        { "text": "Watermelon", "points": 20, "aliases": ["melon", "water melon"] },
+        { "text": "Chicken Fried Rice", "points": 12, "aliases": ["fried rice", "rice"] },
+        { "text": "Chicken Wings", "points": 8, "aliases": ["wings", "buffalo wings", "hot wings"] }
+      ]
+    }
   ]
 }
