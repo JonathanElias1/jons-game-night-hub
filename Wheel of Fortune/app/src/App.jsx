@@ -3420,32 +3420,32 @@ if (phase === "setup") {
       });
       setPhase("play");
     };
-    // Hub import function - imports players from Game Night Hub and splits into WoF teams of 2
+    // Hub import function - imports teams from Game Night Hub preserving team structure
     const importHubPlayers = () => {
       const hubData = getHubData();
-      if (!hubData || !hubData.players || hubData.players.length < 2) {
+      if (!hubData || !hubData.players || hubData.players.length < 1) {
         alert('No Game Night Hub data found or not enough players');
         return;
       }
       const allPlayers = hubData.players;
-      // Shuffle players
-      const shuffled = [...allPlayers].sort(() => Math.random() - 0.5);
-      // Split into teams of 2
-      const newTeamCount = Math.ceil(shuffled.length / 2);
+      // Group players by their hub team
+      const teamGroups = {};
+      allPlayers.forEach(p => {
+        const team = p.team || 'A';
+        if (!teamGroups[team]) teamGroups[team] = [];
+        teamGroups[team].push(p.name);
+      });
+      // Create WoF teams from hub teams
+      const hubTeams = Object.keys(teamGroups).sort(); // ['A', 'B', etc.]
+      const newTeamCount = hubTeams.length;
       const newTeamNames = [];
       const hubTeamMapping = {}; // Maps WoF team index to hub team
-      for (let i = 0; i < newTeamCount; i++) {
-        const p1 = shuffled[i * 2];
-        const p2 = shuffled[i * 2 + 1];
-        if (p1 && p2) {
-          newTeamNames.push(`${p1.name} \u0026 ${p2.name}`);
-          // Map to hub team (use first player team if both same, otherwise A)
-          hubTeamMapping[i] = p1.team === p2.team ? p1.team : 'A';
-        } else if (p1) {
-          newTeamNames.push(p1.name);
-          hubTeamMapping[i] = p1.team;
-        }
-      }
+      hubTeams.forEach((hubTeam, i) => {
+        const players = teamGroups[hubTeam];
+        // Join player names with " & " for the team name
+        newTeamNames.push(players.join(' & '));
+        hubTeamMapping[i] = hubTeam;
+      });
       setTeamCount(newTeamCount);
       setTempTeamCount(String(newTeamCount));
       setTeamNames(newTeamNames);
