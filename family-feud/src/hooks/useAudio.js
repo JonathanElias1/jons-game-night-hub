@@ -50,6 +50,11 @@ export function useAudio() {
   }
   const play = (k, chain) => store.current[k]?.play().catch(() => fb(chain));
 
+  // Duplicate answer buzzer for Fast Money (descending tone)
+  const duplicateBuzz = () => {
+    fb([[400, 150], [300, 150], [200, 200]]);
+  };
+
   return {
     volume,
     setVolume,
@@ -58,5 +63,6 @@ export function useAudio() {
     blip: () => play("blip", [[520, 120]]),
     buzzA: () => play("buzzA", [[820, 160], [600, 160]]),
     buzzB: () => play("buzzB", [[300, 200], [220, 220]]),
+    duplicateBuzz,
   };
 }

@@ -12,6 +12,7 @@ import { GameOverScreen } from "./components/GameOverScreen";
 import { FastMoney } from "./components/FastMoney";
 import { ActionHistory } from "./components/ActionHistory";
 import { Timer } from "./components/Timer";
+import { AnswerInput } from "./components/AnswerInput";
 import { useAudio } from "./hooks/useAudio";
 import { useThemeMusic } from "./hooks/useThemeMusic";
 import { useGameData } from "./hooks/useGameData";
@@ -73,7 +74,7 @@ export default function FamilyFeudApp() {
   const typewriterTimerRef = useRef(null);
   
   const { data, loaded } = useGameData();
-  const { ding, buzz, blip, buzzA, buzzB, volume, setVolume } = useAudio();
+  const { ding, buzz, blip, buzzA, buzzB, volume, setVolume, duplicateBuzz } = useAudio();
   const theme = useThemeMusic();
 
   // Auto-start from hub data if available
@@ -609,12 +610,37 @@ export default function FamilyFeudApp() {
               faceoffTurn={faceoffTurn} 
             />
 
-            <AnswersBoard 
-              answers={answers} 
-              revealed={revealed} 
-              phase={phase} 
-              toggleReveal={toggleReveal} 
+            <AnswersBoard
+              answers={answers}
+              revealed={revealed}
+              phase={phase}
+              toggleReveal={toggleReveal}
             />
+
+            {/* Answer Input - shown during round play */}
+            {(phase === "round" || phase === "faceoff" || phase === "steal") && controlTeam && (
+              <AnswerInput
+                answers={answers}
+                revealed={revealed}
+                onReveal={(idx) => {
+                  toggleReveal(idx);
+                }}
+                onWrongAnswer={(answer) => {
+                  if (phase === "round") {
+                    addStrike();
+                    addAction(`Wrong answer: "${answer}"`);
+                  } else if (phase === "steal") {
+                    // Steal attempt failed
+                    resolveSteal(false);
+                  } else {
+                    buzz();
+                    addAction(`Wrong answer: "${answer}"`);
+                  }
+                }}
+                disabled={phase === "gameover" || phase === "fast"}
+                placeholder={phase === "steal" ? "Type steal attempt..." : "Type an answer..."}
+              />
+            )}
 
             {(phase === "faceoff" || phase === "sudden") && (
               <FaceoffControls 
@@ -675,17 +701,18 @@ export default function FamilyFeudApp() {
         )}
 
         {phase === "fast" && (
-          <FastMoney 
-            fastMoneyPrompts={data.fastMoneyPrompts} 
-            fmPoints1={fmPoints1} 
-            fmPoints2={fmPoints2} 
-            fmShown={fmShown} 
-            setFmPoints1={setFmPoints1} 
-            setFmPoints2={setFmPoints2} 
+          <FastMoney
+            fastMoneyPrompts={data.fastMoneyPrompts}
+            fmPoints1={fmPoints1}
+            fmPoints2={fmPoints2}
+            fmShown={fmShown}
+            setFmPoints1={setFmPoints1}
+            setFmPoints2={setFmPoints2}
             setFmShown={setFmShown}
             fmTotal1={fmTotal1}
             fmTotal2={fmTotal2}
             blip={blip}
+            duplicateBuzz={duplicateBuzz}
             restart={restart}
           />
         )}
