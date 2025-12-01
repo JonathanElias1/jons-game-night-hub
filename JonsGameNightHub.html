@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jon's Game Night Hub</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap');
+    * { font-family: 'Poppins', system-ui, sans-serif; box-sizing: border-box; }
+    body { margin: 0; padding: 0; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); min-height: 100vh; }
+    .game-card { transition: all 0.3s ease; }
+    .game-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+    .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+    @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.5); } 50% { box-shadow: 0 0 40px rgba(255,215,0,0.8); } }
+    .confetti { position: fixed; width: 10px; height: 10px; animation: fall 3s linear forwards; }
+    @keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+    .score-popup { animation: scorePopup 0.5s ease-out; }
+    @keyframes scorePopup { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .wheel-container { perspective: 1000px; }
+    .wheel { transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); }
+    .feud-board { background: linear-gradient(180deg, #1a237e 0%, #0d47a1 100%); }
+    .jeopardy-board { background: linear-gradient(180deg, #0d1b6e 0%, #1a237e 100%); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+    // ==================== SCORING SYSTEM CONFIG ====================
+    const SCORING_CONFIG = {
+      'Family Feud': {
+        pointOptions: [
+          { name: 'Top Answer', value: 10, type: 'individual', emoji: '🎯' },
+          { name: 'Fast Money Win', value: 20, type: 'individual', emoji: '💨' },
+          { name: 'Round Win', value: 25, type: 'team', emoji: '🏆' }
+        ],
+        maxPoints: 125,
+        color: 'from-blue-600 to-blue-800',
+        icon: '👨‍👩‍👧‍👦',
+        description: '3 rounds + Fast Money'
+      },
+      'Jeopardy': {
+        pointOptions: [
+          { name: 'Daily Double', value: 15, type: 'team', emoji: '⭐' },
+          { name: 'Round Win', value: 25, type: 'team', emoji: '🏆' }
+        ],
+        maxPoints: 120,
+        color: 'from-purple-600 to-purple-800',
+        icon: '❓',
+        description: '3 rounds, 1 Daily Double per round'
+      },
+      'Wheel of Fortune': {
+        pointOptions: [
+          { name: 'Bonus Round', value: 20, type: 'individual', emoji: '🎰' },
+          { name: 'Round Win', value: 10, type: 'team', emoji: '🏆' }
+        ],
+        maxPoints: 100,
+        color: 'from-green-600 to-green-800',
+        icon: '🎡',
+        description: '8 rounds'
+      },
+      'Price Is Right': {
+        pointOptions: [
+          { name: 'Game Win', value: 15, type: 'individual', emoji: '💰' },
+          { name: 'Showcase Win', value: 30, type: 'individual', emoji: '🎁' },
+          { name: 'Perfect Bid', value: 10, type: 'individual', emoji: '🎯' }
+        ],
+        maxPoints: 100,
+        color: 'from-yellow-500 to-orange-600',
+        icon: '💲',
+        description: 'Pricing games + Showcase'
+      },
+      'Are You Smarter Than Jon': {
+        pointOptions: [
+          { name: 'Correct Answer', value: 10, type: 'individual', emoji: '✅' },
+          { name: 'Used Lifeline', value: -5, type: 'individual', emoji: '🆘' },
+          { name: 'Game Win', value: 25, type: 'team', emoji: '🏆' }
+        ],
+        maxPoints: 100,
+        color: 'from-red-500 to-pink-600',
+        icon: '🧠',
+        description: 'Grade-level questions'
+      }
+    };
+
+    // ==================== GAME DATA ====================
+    const FAMILY_FEUD_DATA = [
+      { question: "Name something you associate with Jon's birthday", answers: [
+        { text: "Cake", points: 35 }, { text: "Party", points: 25 }, { text: "Presents", points: 20 },
+        { text: "Friends", points: 12 }, { text: "Fun", points: 8 }
+      ]},
+      { question: "Name something Jon loves to do", answers: [
+        { text: "Games", points: 40 }, { text: "Eat", points: 25 }, { text: "Sleep", points: 18 },
+        { text: "Laugh", points: 10 }, { text: "Dance", points: 7 }
+      ]},
+      { question: "Name a party game everyone loves", answers: [
+        { text: "Charades", points: 30 }, { text: "Trivia", points: 28 }, { text: "Cards", points: 22 },
+        { text: "Karaoke", points: 12 }, { text: "Board Games", points: 8 }
+      ]}
+    ];
+
+    const JEOPARDY_DATA = {
+      categories: ["Birthday Fun", "Jon Trivia", "Party Games", "Celebrations", "Friendship"],
+      clues: {
+        "Birthday Fun": [
+          { value: 200, clue: "Traditional birthday dessert", answer: "What is cake?" },
+          { value: 400, clue: "Song sung at birthday parties", answer: "What is Happy Birthday?" },
+          { value: 600, clue: "Colorful decorations that pop", answer: "What are balloons?" },
+          { value: 800, clue: "You blow these out and make a wish", answer: "What are candles?" },
+          { value: 1000, clue: "Wrapped items given at parties", answer: "What are presents?" }
+        ],
+        "Jon Trivia": [
+          { value: 200, clue: "The month Jon was born", answer: "What is December?" },
+          { value: 400, clue: "Jon's favorite color", answer: "What is blue?" },
+          { value: 600, clue: "Jon's favorite food", answer: "What is pizza?" },
+          { value: 800, clue: "Jon's pet's name", answer: "Who is Buddy?" },
+          { value: 1000, clue: "Jon's dream vacation spot", answer: "What is Hawaii?" }
+        ]
+      }
+    };
+
+    const WHEEL_PUZZLES = [
+      { category: "PHRASE", answer: "HAPPY BIRTHDAY JON" },
+      { category: "PLACE", answer: "PARTY CENTRAL" },
+      { category: "THING", answer: "BIRTHDAY CAKE" },
+      { category: "EVENT", answer: "CELEBRATION TIME" }
+    ];
+
+    const WHEEL_WEDGES = [
+      { value: 500, color: '#FF6B6B' }, { value: 600, color: '#4ECDC4' },
+      { value: 700, color: '#45B7D1' }, { value: 800, color: '#96CEB4' },
+      { value: 900, color: '#FFEAA7' }, { value: 300, color: '#DDA0DD' },
+      { value: 400, color: '#98D8C8' }, { value: 'BANKRUPT', color: '#2C3E50' },
+      { value: 550, color: '#F39C12' }, { value: 650, color: '#E74C3C' },
+      { value: 750, color: '#9B59B6' }, { value: 'LOSE TURN', color: '#95A5A6' }
+    ];
+
+    const PRICE_IS_RIGHT_ITEMS = [
+      { name: "Birthday Cake", actualPrice: 45, image: "🎂" },
+      { name: "Party Decorations", actualPrice: 35, image: "🎈" },
+      { name: "Gift Card", actualPrice: 50, image: "🎁" },
+      { name: "Party Platter", actualPrice: 75, image: "🍕" },
+      { name: "Champagne", actualPrice: 40, image: "🍾" }
+    ];
+
+    const SMARTER_QUESTIONS = [
+      { grade: "1st", question: "How many candles on a birthday cake for someone turning 10?", answer: "10", options: ["8", "10", "12", "15"] },
+      { grade: "2nd", question: "What do you blow out on a birthday cake?", answer: "Candles", options: ["Balloons", "Candles", "Confetti", "Streamers"] },
+      { grade: "3rd", question: "Traditional song sung at birthday parties?", answer: "Happy Birthday", options: ["Jingle Bells", "Happy Birthday", "ABC Song", "Twinkle Star"] },
+      { grade: "4th", question: "What do you wear on your head at a party?", answer: "Party hat", options: ["Crown", "Party hat", "Helmet", "Cap"] },
+      { grade: "5th", question: "What sweet treat is often served at parties besides cake?", answer: "Ice cream", options: ["Broccoli", "Ice cream", "Salad", "Soup"] }
+    ];
+
+    // ==================== MAIN APP ====================
+    function App() {
+      const [phase, setPhase] = useState('setup'); // setup, hub, game, tracker
+      const [currentGame, setCurrentGame] = useState(null);
+      const [teams, setTeams] = useState([]);
+      const [teamNames, setTeamNames] = useState({ A: 'Team A', B: 'Team B' });
+      const [players, setPlayers] = useState([]);
+      const [selectedPlayers, setSelectedPlayers] = useState([]);
+      const [history, setHistory] = useState([]);
+      const [showLeaderboard, setShowLeaderboard] = useState(false);
+      const [notification, setNotification] = useState(null);
+      const [gamesPlayed, setGamesPlayed] = useState([]);
+
+      // Load saved data
+      useEffect(() => {
+        const saved = localStorage.getItem('jonsGameNightData');
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            if (data.players) setPlayers(data.players);
+            if (data.teamNames) setTeamNames(data.teamNames);
+            if (data.gamesPlayed) setGamesPlayed(data.gamesPlayed);
+          } catch (e) { console.error('Failed to load saved data'); }
+        }
+      }, []);
+
+      // Save data on changes
+      useEffect(() => {
+        if (players.length > 0) {
+          localStorage.setItem('jonsGameNightData', JSON.stringify({ players, teamNames, gamesPlayed }));
+        }
+      }, [players, teamNames, gamesPlayed]);
+
+      const showNotification = (message, type = 'success') => {
+        setNotification({ message, type });
+        setTimeout(() => setNotification(null), 3000);
+      };
+
+      const addPlayer = (name, team) => {
+        if (!name.trim()) return false;
+        const newPlayer = {
+          name: name.trim(),
+          team,
+          scores: Object.keys(SCORING_CONFIG).reduce((acc, game) => ({ ...acc, [game]: 0 }), {}),
+          total: 0
+        };
+        setPlayers(prev => [...prev, newPlayer]);
+        showNotification(`${name} joined ${teamNames[team]}!`);
+        return true;
+      };
+
+      const removePlayer = (index) => {
+        const player = players[index];
+        setPlayers(prev => prev.filter((_, i) => i !== index));
+        showNotification(`${player.name} removed`);
+      };
+
+      const addScore = (playerName, points, game = currentGame) => {
+        setHistory(prev => [...prev, { players: JSON.parse(JSON.stringify(players)), game }]);
+        setPlayers(prev => prev.map(p => {
+          if (p.name === playerName) {
+            const newScores = { ...p.scores };
+            newScores[game] = (newScores[game] || 0) + points;
+            const newTotal = Object.values(newScores).reduce((a, b) => a + b, 0);
+            return { ...p, scores: newScores, total: newTotal };
+          }
+          return p;
+        }));
+        showNotification(`+${points} points to ${playerName}!`, 'success');
+      };
+
+      const addTeamScore = (team, points, game = currentGame) => {
+        const teamPlayers = players.filter(p => p.team === team);
+        teamPlayers.forEach(p => addScore(p.name, points, game));
+      };
+
+      const undo = () => {
+        if (history.length === 0) return;
+        const lastState = history[history.length - 1];
+        setPlayers(lastState.players);
+        setHistory(prev => prev.slice(0, -1));
+        showNotification('Action undone');
+      };
+
+      const resetAll = () => {
+        if (window.confirm('Reset all scores and data? This cannot be undone!')) {
+          setPlayers([]);
+          setHistory([]);
+          setGamesPlayed([]);
+          localStorage.removeItem('jonsGameNightData');
+          setPhase('setup');
+          showNotification('All data reset');
+        }
+      };
+
+      const getTeamTotals = () => {
+        const teamA = players.filter(p => p.team === 'A').reduce((sum, p) => sum + p.total, 0);
+        const teamB = players.filter(p => p.team === 'B').reduce((sum, p) => sum + p.total, 0);
+        return { teamA, teamB };
+      };
+
+      const getSortedPlayers = () => [...players].sort((a, b) => b.total - a.total);
+
+      const startGame = (gameName) => {
+        setCurrentGame(gameName);
+        setPhase('game');
+        if (!gamesPlayed.includes(gameName)) {
+          setGamesPlayed(prev => [...prev, gameName]);
+        }
+      };
+
+      const endGame = () => {
+        setCurrentGame(null);
+        setPhase('hub');
+      };
+
+      // ==================== RENDER PHASES ====================
+      if (phase === 'setup') {
+        return <SetupPhase
+          players={players}
+          teamNames={teamNames}
+          setTeamNames={setTeamNames}
+          onAddPlayer={addPlayer}
+          onRemovePlayer={removePlayer}
+          onStart={() => setPhase('hub')}
+        />;
+      }
+
+      if (phase === 'hub') {
+        return <GameHub
+          players={players}
+          teamNames={teamNames}
+          gamesPlayed={gamesPlayed}
+          getTeamTotals={getTeamTotals}
+          getSortedPlayers={getSortedPlayers}
+          onSelectGame={startGame}
+          onOpenTracker={() => setPhase('tracker')}
+          onReset={resetAll}
+          notification={notification}
+        />;
+      }
+
+      if (phase === 'tracker') {
+        return <ScoreTracker
+          players={players}
+          currentGame={currentGame}
+          setCurrentGame={setCurrentGame}
+          teamNames={teamNames}
+          selectedPlayers={selectedPlayers}
+          setSelectedPlayers={setSelectedPlayers}
+          onAddScore={addScore}
+          onAddTeamScore={addTeamScore}
+          onUndo={undo}
+          canUndo={history.length > 0}
+          getTeamTotals={getTeamTotals}
+          getSortedPlayers={getSortedPlayers}
+          onBack={() => setPhase('hub')}
+          notification={notification}
+        />;
+      }
+
+      if (phase === 'game' && currentGame) {
+        return <GameWrapper
+          game={currentGame}
+          players={players}
+          teamNames={teamNames}
+          onAddScore={addScore}
+          onAddTeamScore={addTeamScore}
+          onEnd={endGame}
+          notification={notification}
+        />;
+      }
+
+      return null;
+    }
+
+    // ==================== SETUP PHASE ====================
+    function SetupPhase({ players, teamNames, setTeamNames, onAddPlayer, onRemovePlayer, onStart }) {
+      const [newName, setNewName] = useState('');
+      const [selectedTeam, setSelectedTeam] = useState('A');
+
+      const handleAdd = () => {
+        if (onAddPlayer(newName, selectedTeam)) {
+          setNewName('');
+        }
+      };
+
+      return (
+        <div className="min-h-screen p-4 md:p-8">
+          <div className="max-w-4xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-4xl md:text-6xl font-black text-white mb-2">
+                🎉 Jon's Game Night 🎉
+              </h1>
+              <p className="text-xl text-gray-300">Birthday Edition</p>
+            </div>
+
+            {/* Team Names */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6">
+              <h2 className="text-2xl font-bold text-white mb-4">📋 Team Setup</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-gray-300 text-sm">Team A Name</label>
+                  <input
+                    type="text"
+                    value={teamNames.A}
+                    onChange={(e) => setTeamNames(prev => ({ ...prev, A: e.target.value }))}
+                    className="w-full p-3 rounded-lg bg-blue-500/30 text-white border-2 border-blue-400 focus:border-blue-300 outline-none"
+                    placeholder="Team A"
+                  />
+                </div>
+                <div>
+                  <label className="text-gray-300 text-sm">Team B Name</label>
+                  <input
+                    type="text"
+                    value={teamNames.B}
+                    onChange={(e) => setTeamNames(prev => ({ ...prev, B: e.target.value }))}
+                    className="w-full p-3 rounded-lg bg-red-500/30 text-white border-2 border-red-400 focus:border-red-300 outline-none"
+                    placeholder="Team B"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Add Player */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6">
+              <h2 className="text-2xl font-bold text-white mb-4">➕ Add Players</h2>
+              <div className="flex flex-col md:flex-row gap-4">
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+                  className="flex-1 p-3 rounded-lg bg-white/20 text-white border-2 border-white/30 focus:border-white/50 outline-none"
+                  placeholder="Player name..."
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSelectedTeam('A')}
+                    className={`px-4 py-2 rounded-lg font-bold transition ${selectedTeam === 'A' ? 'bg-blue-500 text-white' : 'bg-gray-600 text-gray-300'}`}
+                  >
+                    {teamNames.A}
+                  </button>
+                  <button
+                    onClick={() => setSelectedTeam('B')}
+                    className={`px-4 py-2 rounded-lg font-bold transition ${selectedTeam === 'B' ? 'bg-red-500 text-white' : 'bg-gray-600 text-gray-300'}`}
+                  >
+                    {teamNames.B}
+                  </button>
+                </div>
+                <button
+                  onClick={handleAdd}
+                  className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold transition"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
+            {/* Players List */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6">
+              <h2 className="text-2xl font-bold text-white mb-4">👥 Players ({players.length})</h2>
+              {players.length === 0 ? (
+                <p className="text-gray-400 text-center py-8">No players added yet. Add some players to get started!</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {players.map((player, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex items-center justify-between p-3 rounded-lg ${player.team === 'A' ? 'bg-blue-500/30 border-l-4 border-blue-400' : 'bg-red-500/30 border-l-4 border-red-400'}`}
+                    >
+                      <div>
+                        <span className="text-white font-semibold">{player.name}</span>
+                        <span className="text-gray-300 text-sm ml-2">({teamNames[player.team]})</span>
+                      </div>
+                      <button
+                        onClick={() => onRemovePlayer(idx)}
+                        className="text-red-400 hover:text-red-300 text-xl"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Start Button */}
+            <button
+              onClick={onStart}
+              disabled={players.length < 2}
+              className={`w-full py-4 rounded-xl text-2xl font-black transition ${players.length >= 2 ? 'bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-black pulse-glow' : 'bg-gray-600 text-gray-400 cursor-not-allowed'}`}
+            >
+              {players.length >= 2 ? "🎮 START GAME NIGHT! 🎮" : "Add at least 2 players to start"}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // ==================== GAME HUB ====================
+    function GameHub({ players, teamNames, gamesPlayed, getTeamTotals, getSortedPlayers, onSelectGame, onOpenTracker, onReset, notification }) {
+      const totals = getTeamTotals();
+      const sorted = getSortedPlayers();
+
+      return (
+        <div className="min-h-screen p-4 md:p-8">
+          {notification && (
+            <div className={`fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-bold z-50 score-popup ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+              {notification.message}
+            </div>
+          )}
+
+          <div className="max-w-6xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-4xl md:text-5xl font-black text-white mb-2">🎮 Game Hub 🎮</h1>
+              <p className="text-gray-300">Select a game to play or check scores</p>
+            </div>
+
+            {/* Team Scores Banner */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="bg-blue-500/30 rounded-xl p-4">
+                  <div className="text-blue-300 text-sm">{teamNames.A}</div>
+                  <div className="text-4xl font-black text-white">{totals.teamA}</div>
+                </div>
+                <div className="flex items-center justify-center">
+                  <span className="text-4xl font-black text-yellow-400">VS</span>
+                </div>
+                <div className="bg-red-500/30 rounded-xl p-4">
+                  <div className="text-red-300 text-sm">{teamNames.B}</div>
+                  <div className="text-4xl font-black text-white">{totals.teamB}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Game Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {Object.entries(SCORING_CONFIG).map(([gameName, config]) => (
+                <div
+                  key={gameName}
+                  onClick={() => onSelectGame(gameName)}
+                  className={`game-card cursor-pointer bg-gradient-to-br ${config.color} rounded-2xl p-6 relative overflow-hidden`}
+                >
+                  {gamesPlayed.includes(gameName) && (
+                    <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                      ✓ Played
+                    </div>
+                  )}
+                  <div className="text-6xl mb-4">{config.icon}</div>
+                  <h3 className="text-2xl font-black text-white mb-2">{gameName}</h3>
+                  <p className="text-white/80 text-sm mb-4">{config.description}</p>
+                  <div className="text-white/60 text-xs">Max: {config.maxPoints} pts</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <button
+                onClick={onOpenTracker}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white py-4 rounded-xl font-bold transition"
+              >
+                📊 Score Tracker
+              </button>
+              <button
+                onClick={() => {
+                  const data = JSON.stringify({ players, teamNames, gamesPlayed }, null, 2);
+                  const blob = new Blob([data], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'jons-game-night-scores.json';
+                  a.click();
+                }}
+                className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white py-4 rounded-xl font-bold transition"
+              >
+                💾 Export Scores
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white py-4 rounded-xl font-bold transition"
+              >
+                🔄 Refresh
+              </button>
+              <button
+                onClick={onReset}
+                className="bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white py-4 rounded-xl font-bold transition"
+              >
+                🗑️ Reset All
+              </button>
+            </div>
+
+            {/* Leaderboard */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6">
+              <h2 className="text-2xl font-bold text-white mb-4">🏆 Leaderboard</h2>
+              <div className="space-y-2">
+                {sorted.slice(0, 10).map((player, idx) => (
+                  <div
+                    key={player.name}
+                    className={`flex items-center justify-between p-3 rounded-lg ${idx === 0 ? 'bg-yellow-500/30 border-2 border-yellow-400' : idx === 1 ? 'bg-gray-400/30 border-2 border-gray-300' : idx === 2 ? 'bg-orange-600/30 border-2 border-orange-500' : 'bg-white/10'}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}</span>
+                      <span className="text-white font-semibold">{player.name}</span>
+                      <span className={`text-sm px-2 py-1 rounded ${player.team === 'A' ? 'bg-blue-500/50 text-blue-200' : 'bg-red-500/50 text-red-200'}`}>
+                        {teamNames[player.team]}
+                      </span>
+                    </div>
+                    <span className="text-2xl font-black text-yellow-400">{player.total} pts</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ==================== SCORE TRACKER ====================
+    function ScoreTracker({ players, currentGame, setCurrentGame, teamNames, selectedPlayers, setSelectedPlayers, onAddScore, onAddTeamScore, onUndo, canUndo, getTeamTotals, getSortedPlayers, onBack, notification }) {
+      const games = Object.keys(SCORING_CONFIG);
+      const activeGame = currentGame || games[0];
+      const config = SCORING_CONFIG[activeGame];
+      const totals = getTeamTotals();
+
+      const togglePlayer = (name) => {
+        setSelectedPlayers(prev =>
+          prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+        );
+      };
+
+      const selectTeam = (team) => {
+        setSelectedPlayers(players.filter(p => p.team === team).map(p => p.name));
+      };
+
+      const handleAward = (points) => {
+        if (selectedPlayers.length === 0) {
+          alert('Select at least one player');
+          return;
+        }
+        selectedPlayers.forEach(name => onAddScore(name, points, activeGame));
+        setSelectedPlayers([]);
+      };
+
+      return (
+        <div className="min-h-screen p-4 md:p-8">
+          {notification && (
+            <div className={`fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-bold z-50 score-popup ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+              {notification.message}
+            </div>
+          )}
+
+          <div className="max-w-4xl mx-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <button onClick={onBack} className="text-white hover:text-gray-300 text-lg">
+                ← Back to Hub
+              </button>
+              <h1 className="text-2xl font-bold text-white">📊 Score Tracker</h1>
+            </div>
+
+            {/* Team Scores */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-blue-500/30 rounded-xl p-4 text-center">
+                <div className="text-blue-300">{teamNames.A}</div>
+                <div className="text-3xl font-black text-white">{totals.teamA}</div>
+              </div>
+              <div className="bg-red-500/30 rounded-xl p-4 text-center">
+                <div className="text-red-300">{teamNames.B}</div>
+                <div className="text-3xl font-black text-white">{totals.teamB}</div>
+              </div>
+            </div>
+
+            {/* Game Selector */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 mb-6">
+              <div className="text-gray-300 mb-2">Current Game:</div>
+              <div className="flex flex-wrap gap-2">
+                {games.map(game => (
+                  <button
+                    key={game}
+                    onClick={() => setCurrentGame(game)}
+                    className={`px-4 py-2 rounded-lg font-semibold transition ${activeGame === game ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                  >
+                    {SCORING_CONFIG[game].icon} {game}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Team Select Buttons */}
+            <div className="flex gap-4 mb-4">
+              <button onClick={() => selectTeam('A')} className="flex-1 py-3 bg-blue-500/50 hover:bg-blue-500/70 text-white rounded-lg font-bold">
+                Select All {teamNames.A}
+              </button>
+              <button onClick={() => selectTeam('B')} className="flex-1 py-3 bg-red-500/50 hover:bg-red-500/70 text-white rounded-lg font-bold">
+                Select All {teamNames.B}
+              </button>
+            </div>
+
+            {/* Players Grid */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 mb-6">
+              <div className="text-gray-300 mb-2">Select Players:</div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {players.map((player, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => togglePlayer(player.name)}
+                    className={`p-3 rounded-lg text-left transition ${selectedPlayers.includes(player.name) ? 'bg-yellow-500 text-black' : player.team === 'A' ? 'bg-blue-500/30 text-white hover:bg-blue-500/50' : 'bg-red-500/30 text-white hover:bg-red-500/50'}`}
+                  >
+                    <div className="font-semibold">{player.name}</div>
+                    <div className="text-sm opacity-70">{player.scores[activeGame] || 0} pts</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Point Buttons */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 mb-6">
+              <div className="text-gray-300 mb-2">{activeGame} Points:</div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {config.pointOptions.map((option, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleAward(option.value)}
+                    disabled={selectedPlayers.length === 0}
+                    className={`p-4 rounded-xl text-white font-bold transition ${selectedPlayers.length === 0 ? 'bg-gray-600 opacity-50 cursor-not-allowed' : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500'}`}
+                  >
+                    <div className="text-2xl">{option.emoji}</div>
+                    <div>{option.name}</div>
+                    <div className="text-xl">+{option.value} pts</div>
+                    <div className="text-xs opacity-70">{option.type.toUpperCase()}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-4">
+              <button
+                onClick={onUndo}
+                disabled={!canUndo}
+                className={`flex-1 py-3 rounded-xl font-bold transition ${canUndo ? 'bg-gray-600 hover:bg-gray-500 text-white' : 'bg-gray-700 text-gray-500 cursor-not-allowed'}`}
+              >
+                ↩️ Undo
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ==================== GAME WRAPPER ====================
+    function GameWrapper({ game, players, teamNames, onAddScore, onAddTeamScore, onEnd, notification }) {
+      const config = SCORING_CONFIG[game];
+
+      const renderGame = () => {
+        switch(game) {
+          case 'Family Feud':
+            return <FamilyFeudGame players={players} teamNames={teamNames} onAddScore={onAddScore} onAddTeamScore={onAddTeamScore} />;
+          case 'Jeopardy':
+            return <JeopardyGame players={players} teamNames={teamNames} onAddScore={onAddScore} onAddTeamScore={onAddTeamScore} />;
+          case 'Wheel of Fortune':
+            return <WheelOfFortuneGame players={players} teamNames={teamNames} onAddScore={onAddScore} onAddTeamScore={onAddTeamScore} />;
+          case 'Price Is Right':
+            return <PriceIsRightGame players={players} teamNames={teamNames} onAddScore={onAddScore} />;
+          case 'Are You Smarter Than Jon':
+            return <SmarterThanJonGame players={players} teamNames={teamNames} onAddScore={onAddScore} onAddTeamScore={onAddTeamScore} />;
+          default:
+            return <div className="text-white text-center text-2xl">Game not found</div>;
+        }
+      };
+
+      return (
+        <div className="min-h-screen">
+          {notification && (
+            <div className={`fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-bold z-50 score-popup ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+              {notification.message}
+            </div>
+          )}
+
+          {/* Header */}
+          <div className={`bg-gradient-to-r ${config.color} p-4 flex items-center justify-between`}>
+            <button onClick={onEnd} className="text-white hover:text-gray-200 font-semibold">
+              ← Back to Hub
+            </button>
+            <h1 className="text-2xl font-black text-white">{config.icon} {game}</h1>
+            <div className="w-24"></div>
+          </div>
+
+          {/* Game Content */}
+          <div className="p-4">
+            {renderGame()}
+          </div>
+        </div>
+      );
+    }
+
+    // ==================== FAMILY FEUD ====================
+    function FamilyFeudGame({ players, teamNames, onAddScore, onAddTeamScore }) {
+      const [currentQuestion, setCurrentQuestion] = useState(0);
+      const [revealedAnswers, setRevealedAnswers] = useState([]);
+      const [strikes, setStrikes] = useState({ A: 0, B: 0 });
+      const [activeTeam, setActiveTeam] = useState('A');
+      const question = FAMILY_FEUD_DATA[currentQuestion];
+
+      const revealAnswer = (idx) => {
+        if (revealedAnswers.includes(idx)) return;
+        setRevealedAnswers(prev => [...prev, idx]);
+        // Award points to active team's players
+        const points = question.answers[idx].points;
+        players.filter(p => p.team === activeTeam).forEach(p => {
+          onAddScore(p.name, Math.floor(points / players.filter(x => x.team === activeTeam).length), 'Family Feud');
+        });
+      };
+
+      const addStrike = () => {
+        setStrikes(prev => {
+          const newStrikes = { ...prev, [activeTeam]: prev[activeTeam] + 1 };
+          if (newStrikes[activeTeam] >= 3) {
+            // Switch teams
+            setActiveTeam(activeTeam === 'A' ? 'B' : 'A');
+            return { A: 0, B: 0 };
+          }
+          return newStrikes;
+        });
+      };
+
+      const nextQuestion = () => {
+        if (currentQuestion < FAMILY_FEUD_DATA.length - 1) {
+          setCurrentQuestion(prev => prev + 1);
+          setRevealedAnswers([]);
+          setStrikes({ A: 0, B: 0 });
+        }
+      };
+
+      return (
+        <div className="max-w-4xl mx-auto">
+          {/* Survey Board */}
+          <div className="feud-board rounded-2xl p-6 mb-6">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl md:text-3xl font-bold text-white">
+                {question.question}
+              </h2>
+            </div>
+
+            {/* Answers */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {question.answers.map((answer, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => revealAnswer(idx)}
+                  className={`p-4 rounded-xl flex justify-between items-center transition ${revealedAnswers.includes(idx) ? 'bg-blue-400' : 'bg-blue-900 hover:bg-blue-800'}`}
+                >
+                  <span className="text-white font-bold text-xl">
+                    {revealedAnswers.includes(idx) ? answer.text : `Answer ${idx + 1}`}
+                  </span>
+                  <span className="text-yellow-400 font-black text-2xl">
+                    {revealedAnswers.includes(idx) ? answer.points : '???'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Team Controls */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className={`rounded-xl p-4 text-center ${activeTeam === 'A' ? 'bg-blue-500 ring-4 ring-yellow-400' : 'bg-blue-500/50'}`}>
+              <div className="text-white font-bold text-xl">{teamNames.A}</div>
+              <div className="text-4xl my-2">{'❌'.repeat(strikes.A)}</div>
+              <button
+                onClick={() => setActiveTeam('A')}
+                className="mt-2 px-4 py-2 bg-white/20 rounded-lg text-white hover:bg-white/30"
+              >
+                Set Active
+              </button>
+            </div>
+            <div className={`rounded-xl p-4 text-center ${activeTeam === 'B' ? 'bg-red-500 ring-4 ring-yellow-400' : 'bg-red-500/50'}`}>
+              <div className="text-white font-bold text-xl">{teamNames.B}</div>
+              <div className="text-4xl my-2">{'❌'.repeat(strikes.B)}</div>
+              <button
+                onClick={() => setActiveTeam('B')}
+                className="mt-2 px-4 py-2 bg-white/20 rounded-lg text-white hover:bg-white/30"
+              >
+                Set Active
+              </button>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-4">
+            <button
+              onClick={addStrike}
+              className="flex-1 py-4 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold text-xl"
+            >
+              ❌ STRIKE!
+            </button>
+            <button
+              onClick={nextQuestion}
+              className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold text-xl"
+            >
+              Next Question →
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // ==================== JEOPARDY ====================
+    function JeopardyGame({ players, teamNames, onAddScore, onAddTeamScore }) {
+      const [selectedClue, setSelectedClue] = useState(null);
+      const [answered, setAnswered] = useState([]);
+      const [activeTeam, setActiveTeam] = useState('A');
+
+      const handleSelect = (category, value) => {
+        const clue = JEOPARDY_DATA.clues[category]?.find(c => c.value === value);
+        if (clue && !answered.includes(`${category}-${value}`)) {
+          setSelectedClue({ ...clue, category, value });
+        }
+      };
+
+      const handleAnswer = (correct) => {
+        if (!selectedClue) return;
+        setAnswered(prev => [...prev, `${selectedClue.category}-${selectedClue.value}`]);
+        if (correct) {
+          const teamPlayers = players.filter(p => p.team === activeTeam);
+          const pointsPerPlayer = Math.floor(selectedClue.value / 100); // Scale down for game night
+          teamPlayers.forEach(p => onAddScore(p.name, pointsPerPlayer, 'Jeopardy'));
+        }
+        setSelectedClue(null);
+      };
+
+      return (
+        <div className="max-w-6xl mx-auto">
+          {/* Clue Modal */}
+          {selectedClue && (
+            <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+              <div className="jeopardy-board rounded-2xl p-8 max-w-2xl w-full text-center">
+                <div className="text-yellow-400 mb-2">{selectedClue.category} - ${selectedClue.value}</div>
+                <div className="text-white text-2xl md:text-3xl font-bold mb-8">{selectedClue.clue}</div>
+                <div className="text-gray-400 mb-6">Answer: {selectedClue.answer}</div>
+                <div className="flex gap-4 justify-center">
+                  <button
+                    onClick={() => handleAnswer(true)}
+                    className="px-8 py-4 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold text-xl"
+                  >
+                    ✅ Correct ({teamNames[activeTeam]})
+                  </button>
+                  <button
+                    onClick={() => handleAnswer(false)}
+                    className="px-8 py-4 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold text-xl"
+                  >
+                    ❌ Wrong
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Board */}
+          <div className="jeopardy-board rounded-2xl p-4 mb-6 overflow-x-auto">
+            <div className="grid grid-cols-5 gap-2 min-w-[600px]">
+              {/* Category Headers */}
+              {JEOPARDY_DATA.categories.slice(0, 5).map(cat => (
+                <div key={cat} className="bg-blue-800 p-2 text-center text-white font-bold text-sm">
+                  {cat}
+                </div>
+              ))}
+
+              {/* Clue Values */}
+              {[200, 400, 600, 800, 1000].map(value => (
+                JEOPARDY_DATA.categories.slice(0, 5).map(cat => {
+                  const isAnswered = answered.includes(`${cat}-${value}`);
+                  return (
+                    <button
+                      key={`${cat}-${value}`}
+                      onClick={() => handleSelect(cat, value)}
+                      disabled={isAnswered || !JEOPARDY_DATA.clues[cat]}
+                      className={`p-4 text-2xl font-black transition ${isAnswered ? 'bg-blue-900/30 text-transparent' : 'bg-blue-600 hover:bg-blue-500 text-yellow-400'}`}
+                    >
+                      ${value}
+                    </button>
+                  );
+                })
+              ))}
+            </div>
+          </div>
+
+          {/* Team Selector */}
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={() => setActiveTeam('A')}
+              className={`px-6 py-3 rounded-xl font-bold ${activeTeam === 'A' ? 'bg-blue-500 text-white ring-4 ring-yellow-400' : 'bg-blue-500/30 text-white'}`}
+            >
+              {teamNames.A} Active
+            </button>
+            <button
+              onClick={() => setActiveTeam('B')}
+              className={`px-6 py-3 rounded-xl font-bold ${activeTeam === 'B' ? 'bg-red-500 text-white ring-4 ring-yellow-400' : 'bg-red-500/30 text-white'}`}
+            >
+              {teamNames.B} Active
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // ==================== WHEEL OF FORTUNE ====================
+    function WheelOfFortuneGame({ players, teamNames, onAddScore, onAddTeamScore }) {
+      const [puzzleIdx, setPuzzleIdx] = useState(0);
+      const [revealed, setRevealed] = useState([]);
+      const [spinning, setSpinning] = useState(false);
+      const [wheelAngle, setWheelAngle] = useState(0);
+      const [currentValue, setCurrentValue] = useState(null);
+      const [activeTeam, setActiveTeam] = useState('A');
+      const [roundMoney, setRoundMoney] = useState({ A: 0, B: 0 });
+      const puzzle = WHEEL_PUZZLES[puzzleIdx];
+      const wheelRef = useRef(null);
+
+      const spin = () => {
+        if (spinning) return;
+        setSpinning(true);
+        const spins = 5 + Math.random() * 5;
+        const newAngle = wheelAngle + spins * 360;
+        setWheelAngle(newAngle);
+
+        setTimeout(() => {
+          const wedgeAngle = 360 / WHEEL_WEDGES.length;
+          const normalizedAngle = newAngle % 360;
+          const wedgeIdx = Math.floor((360 - normalizedAngle + wedgeAngle/2) % 360 / wedgeAngle);
+          const wedge = WHEEL_WEDGES[wedgeIdx % WHEEL_WEDGES.length];
+          setCurrentValue(wedge.value);
+          setSpinning(false);
+
+          if (wedge.value === 'BANKRUPT') {
+            setRoundMoney(prev => ({ ...prev, [activeTeam]: 0 }));
+            setActiveTeam(activeTeam === 'A' ? 'B' : 'A');
+          } else if (wedge.value === 'LOSE TURN') {
+            setActiveTeam(activeTeam === 'A' ? 'B' : 'A');
+          }
+        }, 4000);
+      };
+
+      const guessLetter = (letter) => {
+        const upper = letter.toUpperCase();
+        if (revealed.includes(upper)) return;
+
+        const matches = puzzle.answer.split('').filter(c => c === upper).length;
+        setRevealed(prev => [...prev, upper]);
+
+        if (matches > 0 && typeof currentValue === 'number') {
+          const earnings = matches * currentValue;
+          setRoundMoney(prev => ({ ...prev, [activeTeam]: prev[activeTeam] + earnings }));
+        } else if (matches === 0) {
+          setActiveTeam(activeTeam === 'A' ? 'B' : 'A');
+        }
+        setCurrentValue(null);
+      };
+
+      const solvePuzzle = () => {
+        // Award round money to winning team
+        const winningMoney = roundMoney[activeTeam];
+        const teamPlayers = players.filter(p => p.team === activeTeam);
+        teamPlayers.forEach(p => {
+          onAddScore(p.name, Math.floor(winningMoney / 100) + 10, 'Wheel of Fortune'); // Convert to game points
+        });
+
+        // Next puzzle
+        if (puzzleIdx < WHEEL_PUZZLES.length - 1) {
+          setPuzzleIdx(prev => prev + 1);
+          setRevealed([]);
+          setRoundMoney({ A: 0, B: 0 });
+          setCurrentValue(null);
+        }
+      };
+
+      return (
+        <div className="max-w-4xl mx-auto">
+          {/* Puzzle Board */}
+          <div className="bg-gradient-to-b from-green-800 to-green-900 rounded-2xl p-6 mb-6">
+            <div className="text-center text-yellow-400 mb-4">{puzzle.category}</div>
+            <div className="flex flex-wrap justify-center gap-2 mb-4">
+              {puzzle.answer.split('').map((char, idx) => (
+                <div
+                  key={idx}
+                  className={`w-10 h-14 md:w-12 md:h-16 flex items-center justify-center text-2xl md:text-3xl font-black rounded ${char === ' ' ? 'bg-transparent' : revealed.includes(char) ? 'bg-white text-black' : 'bg-green-700 text-green-700'}`}
+                >
+                  {char === ' ' ? '' : revealed.includes(char) ? char : '?'}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Wheel */}
+          <div className="wheel-container flex justify-center mb-6">
+            <div className="relative">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 text-4xl z-10">▼</div>
+              <div
+                ref={wheelRef}
+                className="wheel w-64 h-64 rounded-full relative"
+                style={{
+                  transform: `rotate(${wheelAngle}deg)`,
+                  background: `conic-gradient(${WHEEL_WEDGES.map((w, i) => `${w.color} ${i * (360/WHEEL_WEDGES.length)}deg ${(i+1) * (360/WHEEL_WEDGES.length)}deg`).join(', ')})`
+                }}
+              >
+                {WHEEL_WEDGES.map((wedge, idx) => (
+                  <div
+                    key={idx}
+                    className="absolute text-xs font-bold text-white"
+                    style={{
+                      top: '50%',
+                      left: '50%',
+                      transform: `rotate(${idx * (360/WHEEL_WEDGES.length) + (180/WHEEL_WEDGES.length)}deg) translateY(-90px)`,
+                      transformOrigin: '0 0'
+                    }}
+                  >
+                    {typeof wedge.value === 'number' ? `$${wedge.value}` : wedge.value}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="text-center mb-6">
+            <button
+              onClick={spin}
+              disabled={spinning}
+              className={`px-8 py-4 rounded-xl font-black text-xl transition ${spinning ? 'bg-gray-600 cursor-not-allowed' : 'bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-black'}`}
+            >
+              {spinning ? 'SPINNING...' : '🎡 SPIN!'}
+            </button>
+            {currentValue && typeof currentValue === 'number' && (
+              <div className="mt-4 text-2xl text-yellow-400 font-bold">
+                Landed on: ${currentValue} - Pick a letter!
+              </div>
+            )}
+          </div>
+
+          {/* Letter Grid */}
+          <div className="bg-white/10 rounded-xl p-4 mb-6">
+            <div className="grid grid-cols-9 gap-2">
+              {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => (
+                <button
+                  key={letter}
+                  onClick={() => guessLetter(letter)}
+                  disabled={revealed.includes(letter) || !currentValue || typeof currentValue !== 'number'}
+                  className={`p-2 rounded font-bold transition ${revealed.includes(letter) ? 'bg-gray-700 text-gray-500' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                >
+                  {letter}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Team Money & Actions */}
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className={`rounded-xl p-4 text-center ${activeTeam === 'A' ? 'ring-4 ring-yellow-400' : ''} bg-blue-500/30`}>
+              <div className="text-white">{teamNames.A}</div>
+              <div className="text-2xl font-black text-green-400">${roundMoney.A}</div>
+            </div>
+            <div className={`rounded-xl p-4 text-center ${activeTeam === 'B' ? 'ring-4 ring-yellow-400' : ''} bg-red-500/30`}>
+              <div className="text-white">{teamNames.B}</div>
+              <div className="text-2xl font-black text-green-400">${roundMoney.B}</div>
+            </div>
+          </div>
+
+          <button
+            onClick={solvePuzzle}
+            className="w-full py-4 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold text-xl"
+          >
+            ✅ {teamNames[activeTeam]} Solved It!
+          </button>
+        </div>
+      );
+    }
+
+    // ==================== PRICE IS RIGHT ====================
+    function PriceIsRightGame({ players, teamNames, onAddScore }) {
+      const [currentItem, setCurrentItem] = useState(0);
+      const [guesses, setGuesses] = useState({});
+      const [revealed, setRevealed] = useState(false);
+      const [selectedPlayer, setSelectedPlayer] = useState(null);
+      const item = PRICE_IS_RIGHT_ITEMS[currentItem];
+
+      const submitGuess = (playerName, guess) => {
+        setGuesses(prev => ({ ...prev, [playerName]: parseInt(guess) || 0 }));
+      };
+
+      const revealPrice = () => {
+        setRevealed(true);
+        // Find closest without going over
+        let winner = null;
+        let closestDiff = Infinity;
+
+        Object.entries(guesses).forEach(([name, guess]) => {
+          if (guess <= item.actualPrice) {
+            const diff = item.actualPrice - guess;
+            if (diff < closestDiff) {
+              closestDiff = diff;
+              winner = name;
+            }
+          }
+        });
+
+        if (winner) {
+          onAddScore(winner, closestDiff === 0 ? 25 : 15, 'Price Is Right');
+        }
+      };
+
+      const nextItem = () => {
+        if (currentItem < PRICE_IS_RIGHT_ITEMS.length - 1) {
+          setCurrentItem(prev => prev + 1);
+          setGuesses({});
+          setRevealed(false);
+        }
+      };
+
+      return (
+        <div className="max-w-4xl mx-auto">
+          {/* Item Display */}
+          <div className="bg-gradient-to-b from-yellow-500 to-orange-600 rounded-2xl p-8 text-center mb-6">
+            <div className="text-8xl mb-4">{item.image}</div>
+            <h2 className="text-3xl font-black text-white mb-2">{item.name}</h2>
+            {revealed && (
+              <div className="text-4xl font-black text-white">
+                Actual Price: ${item.actualPrice}
+              </div>
+            )}
+          </div>
+
+          {/* Player Guesses */}
+          <div className="bg-white/10 rounded-xl p-6 mb-6">
+            <h3 className="text-xl font-bold text-white mb-4">Enter Your Guesses:</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {players.map((player, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="text-white font-semibold flex-1">{player.name}:</span>
+                  <input
+                    type="number"
+                    value={guesses[player.name] || ''}
+                    onChange={(e) => submitGuess(player.name, e.target.value)}
+                    disabled={revealed}
+                    className="w-24 p-2 rounded bg-white/20 text-white border-2 border-white/30"
+                    placeholder="$?"
+                  />
+                  {revealed && guesses[player.name] && (
+                    <span className={guesses[player.name] <= item.actualPrice ? 'text-green-400' : 'text-red-400'}>
+                      {guesses[player.name] <= item.actualPrice ? '✓' : '✗'}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-4">
+            <button
+              onClick={revealPrice}
+              disabled={revealed || Object.keys(guesses).length === 0}
+              className={`flex-1 py-4 rounded-xl font-bold text-xl ${revealed ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500'} text-white`}
+            >
+              💰 Reveal Price!
+            </button>
+            <button
+              onClick={nextItem}
+              disabled={!revealed}
+              className={`flex-1 py-4 rounded-xl font-bold text-xl ${!revealed ? 'bg-gray-600' : 'bg-blue-600 hover:bg-blue-500'} text-white`}
+            >
+              Next Item →
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // ==================== ARE YOU SMARTER THAN JON ====================
+    function SmarterThanJonGame({ players, teamNames, onAddScore, onAddTeamScore }) {
+      const [currentQ, setCurrentQ] = useState(0);
+      const [answered, setAnswered] = useState(false);
+      const [activeTeam, setActiveTeam] = useState('A');
+      const [lifelinesUsed, setLifelinesUsed] = useState({ A: [], B: [] });
+      const question = SMARTER_QUESTIONS[currentQ];
+
+      const handleAnswer = (answer, correct) => {
+        setAnswered(true);
+        if (correct) {
+          const teamPlayers = players.filter(p => p.team === activeTeam);
+          teamPlayers.forEach(p => onAddScore(p.name, 10, 'Are You Smarter Than Jon'));
+        } else {
+          setActiveTeam(activeTeam === 'A' ? 'B' : 'A');
+        }
+      };
+
+      const useLifeline = (type) => {
+        if (lifelinesUsed[activeTeam].includes(type)) return;
+        setLifelinesUsed(prev => ({
+          ...prev,
+          [activeTeam]: [...prev[activeTeam], type]
+        }));
+        // Deduct points for using lifeline
+        const teamPlayers = players.filter(p => p.team === activeTeam);
+        teamPlayers.forEach(p => onAddScore(p.name, -5, 'Are You Smarter Than Jon'));
+      };
+
+      const nextQuestion = () => {
+        if (currentQ < SMARTER_QUESTIONS.length - 1) {
+          setCurrentQ(prev => prev + 1);
+          setAnswered(false);
+        }
+      };
+
+      return (
+        <div className="max-w-4xl mx-auto">
+          {/* Question Card */}
+          <div className="bg-gradient-to-b from-red-600 to-pink-700 rounded-2xl p-8 mb-6">
+            <div className="text-center mb-4">
+              <span className="bg-yellow-400 text-black px-4 py-2 rounded-full font-bold">
+                {question.grade} Grade Question
+              </span>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-8">
+              {question.question}
+            </h2>
+
+            {/* Answer Options */}
+            <div className="grid grid-cols-2 gap-4">
+              {question.options.map((option, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleAnswer(option, option === question.answer)}
+                  disabled={answered}
+                  className={`p-4 rounded-xl font-bold text-lg transition ${answered ? (option === question.answer ? 'bg-green-500' : 'bg-red-900') : 'bg-white/20 hover:bg-white/30'} text-white`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Team Display & Lifelines */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className={`rounded-xl p-4 ${activeTeam === 'A' ? 'ring-4 ring-yellow-400' : ''} bg-blue-500/30`}>
+              <div className="text-white font-bold text-center mb-2">{teamNames.A}</div>
+              <div className="flex gap-2 justify-center">
+                <button
+                  onClick={() => useLifeline('peek')}
+                  disabled={lifelinesUsed.A.includes('peek') || activeTeam !== 'A'}
+                  className={`px-3 py-1 rounded text-sm ${lifelinesUsed.A.includes('peek') ? 'bg-gray-600 text-gray-400' : 'bg-purple-500 text-white'}`}
+                >
+                  👀 Peek
+                </button>
+                <button
+                  onClick={() => useLifeline('copy')}
+                  disabled={lifelinesUsed.A.includes('copy') || activeTeam !== 'A'}
+                  className={`px-3 py-1 rounded text-sm ${lifelinesUsed.A.includes('copy') ? 'bg-gray-600 text-gray-400' : 'bg-purple-500 text-white'}`}
+                >
+                  📋 Copy
+                </button>
+              </div>
+            </div>
+            <div className={`rounded-xl p-4 ${activeTeam === 'B' ? 'ring-4 ring-yellow-400' : ''} bg-red-500/30`}>
+              <div className="text-white font-bold text-center mb-2">{teamNames.B}</div>
+              <div className="flex gap-2 justify-center">
+                <button
+                  onClick={() => useLifeline('peek')}
+                  disabled={lifelinesUsed.B.includes('peek') || activeTeam !== 'B'}
+                  className={`px-3 py-1 rounded text-sm ${lifelinesUsed.B.includes('peek') ? 'bg-gray-600 text-gray-400' : 'bg-purple-500 text-white'}`}
+                >
+                  👀 Peek
+                </button>
+                <button
+                  onClick={() => useLifeline('copy')}
+                  disabled={lifelinesUsed.B.includes('copy') || activeTeam !== 'B'}
+                  className={`px-3 py-1 rounded text-sm ${lifelinesUsed.B.includes('copy') ? 'bg-gray-600 text-gray-400' : 'bg-purple-500 text-white'}`}
+                >
+                  📋 Copy
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Next Button */}
+          <button
+            onClick={nextQuestion}
+            disabled={!answered}
+            className={`w-full py-4 rounded-xl font-bold text-xl ${!answered ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500'} text-white`}
+          >
+            Next Question →
+          </button>
+        </div>
+      );
+    }
+
+    // ==================== RENDER ====================
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
