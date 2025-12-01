@@ -79,7 +79,7 @@ export default function FamilyFeudApp() {
 
   // Auto-start from hub data if available
   useEffect(() => {
-    if (autoStarted || gameSettings) return;
+    if (autoStarted || gameSettings || !loaded) return;
 
     const hubData = loadHubData();
     if (hubData && hubData.players && hubData.players.length >= 2) {
@@ -111,16 +111,18 @@ export default function FamilyFeudApp() {
         }));
 
       if (playersA.length > 0 && playersB.length > 0) {
+        // Use all available rounds from the JSON
+        const totalRounds = data.rounds.length;
         setAutoStarted(true);
         setPlayers([...playersA, ...playersB]);
         setTeamAName(teamNames.A);
         setTeamBName(teamNames.B);
         setHubEnabled(true);
-        setGameSettings({ numRounds: 3, players: [...playersA, ...playersB], teamAName: teamNames.A, teamBName: teamNames.B });
-        console.log('Family Feud: Hub scoring enabled with teams', teamNames.A, 'and', teamNames.B);
+        setGameSettings({ numRounds: totalRounds, players: [...playersA, ...playersB], teamAName: teamNames.A, teamBName: teamNames.B });
+        console.log('Family Feud: Hub scoring enabled with teams', teamNames.A, 'and', teamNames.B, '- Playing', totalRounds, 'rounds');
       }
     }
-  }, [autoStarted, gameSettings]);
+  }, [autoStarted, gameSettings, loaded, data.rounds.length]);
 
   const addAction = (message) => {
     const time = new Date().toLocaleTimeString();
