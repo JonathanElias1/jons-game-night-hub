@@ -521,7 +521,8 @@ export default function FamilyFeudApp() {
     }
   }, [phase, fmCombined, fmTargetHit, hubEnabled, teamA, teamB]);
 
-  const awardDisabled = bank <= 0 || isAwarding;
+  // Disable award during steal phase - steal resolution handles awarding
+  const awardDisabled = bank <= 0 || isAwarding || phase === "steal";
   const activeMult = phase === "sudden" ? suddenMultiplier : roundMultiplier;
   const multLabel = labelForMult(activeMult);
 
