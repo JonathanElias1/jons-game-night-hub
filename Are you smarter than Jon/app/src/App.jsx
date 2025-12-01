@@ -143,6 +143,49 @@ const QUESTIONS = [
 
 ];
 
+// --- Hub Scoring Integration ---
+function getHubData() {
+  try {
+    const saved = localStorage.getItem('jonsGameNightData');
+    if (saved) return JSON.parse(saved);
+  } catch (e) {
+    console.error('Failed to load hub data:', e);
+  }
+  return null;
+}
+
+function getTopScorer() {
+  const hubData = getHubData();
+  if (!hubData || !hubData.players) return null;
+
+  // Get scores from GameNightScoring
+  let topPlayer = null;
+  let topScore = -1;
+
+  hubData.players.forEach(player => {
+    const score = window.GameNightScoring?.getPlayerScore?.(player.name) || 0;
+    if (score > topScore) {
+      topScore = score;
+      topPlayer = { name: player.name, score, team: player.team };
+    }
+  });
+
+  // Also get runner-up
+  let runnerUp = null;
+  let runnerUpScore = -1;
+
+  hubData.players.forEach(player => {
+    if (topPlayer && player.name === topPlayer.name) return;
+    const score = window.GameNightScoring?.getPlayerScore?.(player.name) || 0;
+    if (score > runnerUpScore) {
+      runnerUpScore = score;
+      runnerUp = { name: player.name, score, team: player.team };
+    }
+  });
+
+  return { top: topPlayer, runnerUp };
+}
+
 // Currency formatter
 const USD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
@@ -229,10 +272,17 @@ function CountTo({ to = 0, duration = 1200, prefix = "", suffix = "" }) {
 // Main App
 // ————————————————————————————————————————————
 export default function JonSmarterGame() {
-  const [phase, setPhase] = useState("board"); // board | question | million | win | lose | cashout
+  const [phase, setPhase] = useState("splash"); // splash | board | question | million | win | lose | cashout
   const [currentId, setCurrentId] = useState(null);
   const [played, setPlayed] = useState(new Set());
   const [score, setScore] = useState(0);
+  const [topScorerData, setTopScorerData] = useState(null);
+
+  // Load top scorer data on mount
+  useEffect(() => {
+    const data = getTopScorer();
+    setTopScorerData(data);
+  }, []);
 
   // Lifelines (once per game)
   const [lifelines, setLifelines] = useState({ peek: false, copy: false, hint: false, save: false });
@@ -591,6 +641,61 @@ function playFanfare() {
               {lifelinePill("Save", lifelines.save)}
             </div>
           </div>
+        )}
+
+        {/* SPLASH PHASE - Top Scorer Display */}
+        {phase === "splash" && (
+          <main className="px-4 md:px-8 py-10 text-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="max-w-lg mx-auto"
+            >
+              <h2 className="text-3xl md:text-4xl font-black mb-4 text-yellow-300">
+                🧠 Are You Smarter Than Jon?
+              </h2>
+              <p className="text-xl md:text-2xl mb-8 opacity-90">THE FINALE</p>
+
+              {topScorerData?.top ? (
+                <>
+                  <div className="bg-white/20 rounded-2xl p-6 mb-6 backdrop-blur-md">
+                    <p className="text-lg mb-4 font-bold uppercase tracking-wider">🏆 TOP SCORER PLAYS!</p>
+                    <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black rounded-xl p-6 mb-4">
+                      <div className="text-4xl mb-2">🥇</div>
+                      <div className="text-3xl font-black">{topScorerData.top.name}</div>
+                      <div className="text-xl">{topScorerData.top.score} points</div>
+                      <div className="text-sm opacity-80">Team {topScorerData.top.team}</div>
+                    </div>
+                    {topScorerData.runnerUp && (
+                      <p className="text-sm opacity-80">
+                        Runner-up: {topScorerData.runnerUp.name} ({topScorerData.runnerUp.score} pts)
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setPhase("board")}
+                    className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl font-bold text-xl shadow-lg hover:scale-105 transition"
+                  >
+                    ▶️ Start Game with {topScorerData.top.name}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="bg-white/20 rounded-2xl p-6 mb-6 backdrop-blur-md">
+                    <p className="text-lg opacity-80">No Game Night Hub data found.</p>
+                    <p className="text-sm opacity-60 mt-2">Play this as a standalone game!</p>
+                  </div>
+                  <button
+                    onClick={() => setPhase("board")}
+                    className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl font-bold text-xl shadow-lg hover:scale-105 transition"
+                  >
+                    ▶️ Start Game
+                  </button>
+                </>
+              )}
+            </motion.div>
+          </main>
         )}
 
         {/* BOARD PHASE */}

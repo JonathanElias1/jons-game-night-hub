@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import useSfx from "./hooks/useSfx";
+import useImagePreloader from "./hooks/useImagePreloader";
 const GRADIENT = "bg-[radial-gradient(110%_110%_at_0%_0%,#5b7fff_0%,#21bd84_100%)]";
 const BASE_WHEEL_PX = 500;
 // --- bonus wheel orientation (used by draw + pick) ---
@@ -45,358 +47,23 @@ const LETTERS = "ABCDEFGHIKLMNOPQRSTUVWXYZ".split("");
 const ZOOM_WHEEL_PX = BASE_WHEEL_PX * 1.5;
 const BONUS_PRIZES = ["PIN", "STICKER", "T-SHIRT", "MAGNET", "KEYCHAIN"];
 const SOLVE_REVEAL_INTERVAL = 650;
-function useImagePreloader() {
-  const [imagesLoaded, setImagesLoaded] = useState(false);
-  
-  useEffect(() => {
-    // List of all images used in your game add any others below
-    const imagePaths = [
-      '/images/hub-image.png',
-      '/images/winner-icon.png'
-    ];
-    
-    if (imagePaths.length === 0) {
-      setImagesLoaded(true);
-      return;
-    }
-    
-    let loadedCount = 0;
-    const totalImages = imagePaths.length;
-    
-    const onImageLoad = () => {
-      loadedCount++;
-      if (loadedCount === totalImages) {
-        setImagesLoaded(true);
-      }
-    };
-    
-    const onImageError = (path) => {
-      console.warn(`Failed to load image: ${path}`);
-      loadedCount++; // Still count as "loaded" to prevent hanging
-      if (loadedCount === totalImages) {
-        setImagesLoaded(true);
-      }
-    };
-    
-    // Preload all images
-    imagePaths.forEach(path => {
-      const img = new Image();
-      img.onload = onImageLoad;
-      img.onerror = () => onImageError(path);
-      img.src = path;
-    });
-    
-  }, []);
-  
-  return imagesLoaded;
+
+// --- Hub Scoring Integration ---
+function getHubData() {
+  try {
+    const saved = localStorage.getItem('jonsGameNightData');
+    if (saved) return JSON.parse(saved);
+  } catch (e) {
+    console.error('Failed to load hub data:', e);
+  }
+  return null;
 }
-function useSfx() {
-  const audioCtxRef = useRef(null);
-  const bufferMapRef = useRef({});       // key -> AudioBuffer
-  const activeNodesRef = useRef({});     // key -> Set of active source nodes (one-shots)
-  const loopNodesRef = useRef({});       // key -> persistent loop node info { node, gainNode }
-  const masterGainRef = useRef(null);
- const loadedRef = useRef(false);  
-  const [volume, setVolume] = useState(0.9);
-  const [themeOn, setThemeOn] = useState(false);
-  const [loaded, setLoaded] = useState(false); // true when initial decode settled
-  
-  // list of files to decode (key -> filename)
-  const base = "/";
-  const FILES = {
-    spin: "sounds/wof-spin.mp3",
-    ding: "sounds/wof-correct.mp3",
-    buzzer: "sounds/wof-buzzer.mp3",
-    themeOpen: "sounds/wof-theme-open.mp3",
-    themeLoop: "sounds/wheel-theme.mp3",
-    bankrupt: "sounds/wof-bankrupt.mp3",
-    solve: "sounds/wof-solve.mp3",
-    wild: "sounds/wof-wild.mp3",
-    cashDing: "sounds/wof-ding.mp3",
-    cashDing2: "sounds/cash-ding.mp3",
-    tshirt: "sounds/tshirt-sound.mp3",
-    wrongLetter: "sounds/wrong-letter.mp3",
-    chargeUp: "sounds/charge-up.mp3",
-    startGame: "sounds/start-game.mp3",
-  };
-  // Create AudioContext + masterGain once
-  useEffect(() => {
-    try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) {
-        console.warn("Web Audio API not supported in this browser.");
-        return;
-      }
-      const ctx = new AudioContext();
-      audioCtxRef.current = ctx;
-      const gain = ctx.createGain();
-      gain.gain.value = volume;
-      gain.connect(ctx.destination);
-      masterGainRef.current = gain;
-    } catch (e) {
-      console.warn("Failed to create AudioContext:", e);
-      audioCtxRef.current = null;
-      masterGainRef.current = null;
-    }
-    return () => {
-      // stop all nodes on unmount
-      try {
-        Object.values(loopNodesRef.current).forEach(({ node, gainNode }) => {
-          try { node.stop(); } catch (e) {}
-          try { gainNode.disconnect(); } catch (e) {}
-        });
-        Object.values(activeNodesRef.current).forEach((set) => {
-          set.forEach((n) => { try { n.stop(); } catch (e) {} });
-        });
-        if (audioCtxRef.current && typeof audioCtxRef.current.close === "function") {
-          audioCtxRef.current.close().catch(() => {});
-        }
-      } catch (e) {}
-      bufferMapRef.current = {};
-      loopNodesRef.current = {};
-      activeNodesRef.current = {};
-      audioCtxRef.current = null;
-      masterGainRef.current = null;
-    };
-  }, []);
-  // decode all files in parallel (non-blocking)
-  useEffect(() => {
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-    const entries = Object.entries(FILES);
-    const decodes = entries.map(async ([key, filename]) => {
-      try {
-        const res = await fetch(base + filename, { cache: "no-store" });
-        if (!res.ok) throw new Error(`Failed fetch ${filename}: ${res.status}`);
-        const arr = await res.arrayBuffer();
-        // decodeAudioData in modern browsers returns a promise
-        const buf = await ctx.decodeAudioData(arr.slice(0));
-        bufferMapRef.current[key] = buf;
-      } catch (e) {
-        console.warn(`Failed to load/decode ${filename} for key "${key}":`, e);
-      }
-    });
-    Promise.allSettled(decodes).then(() => {
-        loadedRef.current = true; 
-      setLoaded(true);
-    }).catch(() => {
-       loadedRef.current = true;  
-      setLoaded(true);
-    });
-    // no cleanup needed here (buffers live until unmount)
-  }, [/* run once */]);
-  // update master gain when volume changes
-  useEffect(() => {
-    try {
-      if (masterGainRef.current) masterGainRef.current.gain.value = volume;
-    } catch (e) {}
-  }, [volume]);
-    useEffect(() => {
-    const handleVisibilityChange = () => {
-      // When the page becomes visible again, try to unlock the audio
-      if (document.visibilityState === 'visible') {
-        unlock();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []); // We can use an empty dependency array because unlock is stable
-  // helper: ensure AudioContext is running (resume on user gesture if needed)
-  const ensureCtxRunning = async () => {
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-    if (ctx.state === "suspended") {
-      try { await ctx.resume(); } catch (e) {}
-    }
-  };
-  // Exposed helper to unlock from a user gesture — call from a click handler
-const unlock = useCallback(async () => {
-  const ctx = audioCtxRef.current;
-  if (!ctx) return false;
-  try {
-    if (ctx.state === "suspended") {
-      await ctx.resume();
-    }
-    return true;
-  } catch (e) {
-    console.warn("AudioContext resume failed:", e);
-    return false;
-  }
-}, []);
-  // play a one-shot (gapless, buffer-based)
-  const play = async (key) => {
-    const ctx = audioCtxRef.current;
-    const buf = bufferMapRef.current[key];
-    if (!ctx || !buf) return;
-    await ensureCtxRunning();
-    try {
-      const node = ctx.createBufferSource();
-      node.buffer = buf;
-      node.loop = false;
-      // connect via master gain
-      node.connect(masterGainRef.current);
-      // record active node so stop(key) can cancel it
-      if (!activeNodesRef.current[key]) activeNodesRef.current[key] = new Set();
-      activeNodesRef.current[key].add(node);
-      node.onended = () => {
-        try {
-          activeNodesRef.current[key]?.delete(node);
-        } catch (e) {}
-      };
-      node.start();
-    } catch (e) {
-      console.error("Failed to play buffer", key, e);
-    }
-  };
-  // stop all currently playing one-shots for a key
-  const stop = (key) => {
-    try {
-      const set = activeNodesRef.current[key];
-      if (set) {
-        set.forEach((n) => {
-          try { n.stop(); } catch (e) {}
-        });
-        activeNodesRef.current[key] = new Set();
-      }
-    } catch (e) {
-      console.error("Failed to stop playing nodes for", key, e);
-    }
-    // also stop persistent loop if exists
-    if (loopNodesRef.current[key]) {
-      try {
-        loopNodesRef.current[key].node.stop();
-        loopNodesRef.current[key].gainNode.disconnect();
-      } catch (e) {}
-      delete loopNodesRef.current[key];
-    }
-  };
-  // start a persistent gapless loop for a key
-  // Implementation: create BufferSource -> gain node -> masterGain
-  // we keep the node reference in loopNodesRef so we can stop it later.
-  const loop = async (key) => {
-    const ctx = audioCtxRef.current;
-    const buf = bufferMapRef.current[key];
-    if (!ctx || !buf) return;
-    await ensureCtxRunning();
-    // if already looping for this key, leave it playing
-    if (loopNodesRef.current[key] && loopNodesRef.current[key].playing) return;
-    try {
-      const node = ctx.createBufferSource();
-      node.buffer = buf;
-      node.loop = true;
-      const g = ctx.createGain();
-      g.gain.value = volume; // route through a per-loop gain (so we can fade)
-      node.connect(g);
-      g.connect(masterGainRef.current);
-      node.start();
-      loopNodesRef.current[key] = { node, gainNode: g, playing: true };
-    } catch (e) {
-      console.error("Failed to start loop for", key, e);
-    }
-  };
-  // stop persistent loop for a key
-  const stopLoop = (key) => {
-    const rec = loopNodesRef.current[key];
-    if (rec) {
-      try {
-        rec.node.stop();
-      } catch (e) {}
-      try {
-        rec.gainNode.disconnect();
-      } catch (e) {}
-      delete loopNodesRef.current[key];
-    }
-  };
-  // Theme/music toggle that plays intro then starts loop
-  const toggleTheme = async () => {
-    const introKey = "themeOpen";
-    const loopKey = "themeLoop";
-    if (!audioCtxRef.current) return;
-    if (!themeOn) {
-      const ctx = audioCtxRef.current;
-      const introBuf = bufferMapRef.current[introKey];
-      const loopBuf = bufferMapRef.current[loopKey];
-      if (!introBuf && !loopBuf) return;
-      await ensureCtxRunning();
-      if (introBuf && loopBuf) {
-        // play intro then start persistent loop
-        try {
-          // play intro as one-shot
-          const introNode = ctx.createBufferSource();
-          introNode.buffer = introBuf;
-          introNode.loop = false;
-          introNode.connect(masterGainRef.current);
-          introNode.onended = () => {
-            try { loop(loopKey); } catch (e) {}
-          };
-          // keep a reference so we can stop if toggled off during intro
-          loopNodesRef.current.__themeIntro = { node: introNode, playing: true };
-          introNode.start();
-          setThemeOn(true);
-        } catch (e) {
-          console.error("Failed to play theme intro", e);
-        }
-      } else if (loopBuf) {
-        await loop(loopKey);
-        setThemeOn(true);
-      }
-    } else {
-      // stop intro if running
-      if (loopNodesRef.current.__themeIntro) {
-        try { loopNodesRef.current.__themeIntro.node.stop(); } catch (e) {}
- const introNode = loopNodesRef.current.__themeIntro.node;
-    if (introNode) {
-      introNode.onended = null; // <-- The key fix!
-      try { introNode.stop(); } catch (e) {}
-    }
-    delete loopNodesRef.current.__themeIntro;
-  }
-      stopLoop("themeLoop");
-      setThemeOn(false);
-    }
-  };
-  return {
-    play,
-    stop,
-    loop,
-    stopLoop,
-    volume,
-    setVolume,
-    themeOn,
-    toggleTheme,
-    loaded,
-    unlock,
-  };
+
+function addHubTeamScore(team, points, gameName, description) {
+  if (!window.GameNightScoring) return;
+  window.GameNightScoring.addTeamScore(team, points, gameName, description);
 }
-const FALLBACK = [
-  { category: "PLACE", answer: "JIMMYJONS" },
-  { category: "PHRASE", answer: "HAPPY BIRTHDAY JON" },
-  { category: "CLASSIC PHRASE", answer: "JON SAVED MY LIFE" },
-  { category: "RELIGIOUS STUFF", answer: "JONELUJAH" },
-  { category: "POLITICS", answer: "JONTRARIAN" },
-  { category: "MOVIE QUOTE", answer: "LOOK THE PROBLEM IS OVER" },
-  { category: "CULINARY", answer: "JON FOOD" },
-  { category: "WORD", answer: "MNEMONIC" },
-  { category: "SHOWS", answer: "JON SNOW" },
-  { category: "EVENT", answer: "JONCON" },
-  { category: "WORD", answer: "LYMPH" },
-  { category: "MUSIC", answer: "THIS IS THE RHYTHM OF THE NIGHT" },
-];
-async function loadPuzzles() {
-  try {
-    const res = await fetch("/wof.json", { cache: "no-store" });
-    if (!res.ok) throw new Error("Failed to fetch");
-    const js = await res.json();
-    const mainPuzzles = Array.isArray(js.puzzles) && js.puzzles.length ? js.puzzles : FALLBACK;
-    const bonusPuzzles = Array.isArray(js.bonusPuzzles) && js.bonusPuzzles.length ? js.bonusPuzzles : FALLBACK;
-    return { main: mainPuzzles, bonus: bonusPuzzles };
-  } catch (error) {
-    console.error("Could not load or parse puzzles from wof.json:", error);
-    return { main: FALLBACK, bonus: FALLBACK };
-  }
-}
+
 const cls = (...xs) => xs.filter(Boolean).join(" ");
 const isLetter = (ch) => /^[A-Z]$/.test(ch);
 function normalizeAnswer(raw) {
@@ -960,6 +627,11 @@ const bonusSpinnerRef = useRef(null);
   const [winners, setWinners] = useState([]);
   const winnersRef = useRef([]);
   const [showStats, setShowStats] = useState(false);
+
+  // Hub scoring integration state
+  const [hubEnabled, setHubEnabled] = useState(false);
+  const [hubWofTeamMap, setHubWofTeamMap] = useState({}); // Maps WoF team index to hub team ('A' or 'B')
+
 const [gameStats, setGameStats] = useState({
     totalSpins: 0,
     bankrupts: 0,
@@ -2099,6 +1771,11 @@ setGameStats((prev) => {
         // defensive - don't crash if teams/active not available for some reason
         setGameStats((prev) => ({ ...prev, puzzlesSolved: (prev.puzzlesSolved || 0) + 1 }));
       }
+      // Hub scoring: +10 to winning team when puzzle solved
+      if (hubEnabled && hubWofTeamMap[active]) {
+        addHubTeamScore(hubWofTeamMap[active], 10, 'Wheel of Fortune', 'Solved puzzle (+10)');
+      }
+
       // Resolve spinner if needed and capture the final landed wedge locally
       let resolvedLanded = lastWedge || landed;
       // C: defensively clear any running mystery/bonus intervals so we don't leak or double-finalize
@@ -2574,6 +2251,14 @@ function selectBonusPrizeAndSnap(currentAngle, setBonusPrize, setBonusSpinnerAng
       }
      try { sfx.play("solve"); } catch (e) {}
       setBonusResult("win");
+      // Hub scoring: +20 to winning team for bonus round win
+      if (hubEnabled && winners.length > 0) {
+        const winnerTeamIdx = teams.findIndex(t => winners.includes(t.name));
+        if (winnerTeamIdx !== -1 && hubWofTeamMap[winnerTeamIdx]) {
+          addHubTeamScore(hubWofTeamMap[winnerTeamIdx], 20, 'Wheel of Fortune', 'Bonus round win (+20)');
+        }
+      }
+
     } else {
       try { sfx.play("buzzer"); } catch (e) {}
       setBonusResult("lose");
@@ -3733,6 +3418,39 @@ if (phase === "setup") {
       });
       setPhase("play");
     };
+    // Hub import function - imports players from Game Night Hub and splits into WoF teams of 2
+    const importHubPlayers = () => {
+      const hubData = getHubData();
+      if (!hubData || !hubData.players || hubData.players.length < 2) {
+        alert('No Game Night Hub data found or not enough players');
+        return;
+      }
+      const allPlayers = hubData.players;
+      // Shuffle players
+      const shuffled = [...allPlayers].sort(() => Math.random() - 0.5);
+      // Split into teams of 2
+      const newTeamCount = Math.ceil(shuffled.length / 2);
+      const newTeamNames = [];
+      const hubTeamMapping = {}; // Maps WoF team index to hub team
+      for (let i = 0; i < newTeamCount; i++) {
+        const p1 = shuffled[i * 2];
+        const p2 = shuffled[i * 2 + 1];
+        if (p1 && p2) {
+          newTeamNames.push(`${p1.name} \u0026 ${p2.name}`);
+          // Map to hub team (use first player team if both same, otherwise A)
+          hubTeamMapping[i] = p1.team === p2.team ? p1.team : 'A';
+        } else if (p1) {
+          newTeamNames.push(p1.name);
+          hubTeamMapping[i] = p1.team;
+        }
+      }
+      setTeamCount(newTeamCount);
+      setTempTeamCount(String(newTeamCount));
+      setTeamNames(newTeamNames);
+      setHubWofTeamMap(hubTeamMapping);
+      setHubEnabled(true);
+    };
+
     return (
       // MODIFIED: Added overflow-y-auto and changed justify-center to justify-start on mobile
       <div className={cls("min-h-screen h-screen text-white flex flex-col items-center justify-start lg:justify-center overflow-y-auto p-4 sm:p-6", GRADIENT)}>
@@ -3773,6 +3491,17 @@ if (phase === "setup") {
   <div className="rounded-2xl p-6 md:p-8 backdrop-blur-md bg-white/10 border border-white/10 shadow-lg">
               <h2 className="text-3xl font-bold text-center text-white mb-8">Game Setup</h2>
               <div className="space-y-6">
+              {/* Hub Import Button */}
+              <div className="mb-6 text-center">
+                <button
+                  onClick={importHubPlayers}
+                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl font-bold text-white shadow-lg hover:scale-105 transition"
+                >
+                  🎮 Import from Game Night Hub
+                </button>
+                {hubEnabled && <span className="ml-2 text-green-300 text-sm">✓ Hub Connected</span>}
+              </div>
+
                 
                 {/* MODIFIED: Number of Teams - Stacks on mobile */}
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-4">

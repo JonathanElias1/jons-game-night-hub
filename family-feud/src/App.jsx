@@ -31,6 +31,17 @@ function loadHubData() {
   return null;
 }
 
+// --- Hub Scoring Integration ---
+function addHubTeamScore(team, points, gameName, description) {
+  if (!window.GameNightScoring) return;
+  window.GameNightScoring.addTeamScore(team, points, gameName, description);
+}
+
+function addHubPlayerScore(playerName, points, gameName, description) {
+  if (!window.GameNightScoring) return;
+  window.GameNightScoring.addPlayerScore(playerName, points, gameName, description);
+}
+
 export default function FamilyFeudApp() {
   const [gameSettings, setGameSettings] = useState(null);
   const [autoStarted, setAutoStarted] = useState(false);
@@ -56,7 +67,9 @@ export default function FamilyFeudApp() {
   const [actionHistory, setActionHistory] = useState([]);
   const [timerActive, setTimerActive] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(20);
-  
+  const [hubEnabled, setHubEnabled] = useState(false);
+  const [fmTargetHit, setFmTargetHit] = useState(false);
+
   const typewriterTimerRef = useRef(null);
   
   const { data, loaded } = useGameData();
@@ -101,7 +114,9 @@ export default function FamilyFeudApp() {
         setPlayers([...playersA, ...playersB]);
         setTeamAName(teamNames.A);
         setTeamBName(teamNames.B);
+        setHubEnabled(true);
         setGameSettings({ numRounds: 3, players: [...playersA, ...playersB], teamAName: teamNames.A, teamBName: teamNames.B });
+        console.log('Family Feud: Hub scoring enabled with teams', teamNames.A, 'and', teamNames.B);
       }
     }
   }, [autoStarted, gameSettings]);
@@ -333,6 +348,11 @@ export default function FamilyFeudApp() {
         ding();
         const isTopAnswer = i === 0;
         addAction(`Revealed: "${slot.text}" for ${slot.points} points${isTopAnswer ? " (TOP ANSWER!)" : ""}`);
+
+        // Hub scoring: +10 to team that buzzed if they revealed the #1 answer
+        if (isTopAnswer && hubEnabled && faceoffBuzz) {
+          addHubTeamScore(faceoffBuzz, 10, 'Family Feud', 'Top answer (+10)');
+        }
       } else {
         setBank((b) => Math.max(0, b - slot.points));
         addAction(`Hidden: "${slot.text}"`);
@@ -365,6 +385,12 @@ export default function FamilyFeudApp() {
     if (team === "A") setTeamA((s) => s + payout);
     else setTeamB((s) => s + payout);
     addAction(`${awardedTeamName} awarded ${payout} points! (${bank} × ${mult})`);
+
+    // Hub scoring: +25 to winning team
+    if (hubEnabled) {
+      addHubTeamScore(team, 25, 'Family Feud', `Won round (+25)`);
+    }
+
     setBank(0);
     setTimeout(() => setIsAwarding(false), 300);
   }
@@ -426,9 +452,12 @@ export default function FamilyFeudApp() {
     setFmPoints1(Array(5).fill(0));
     setFmPoints2(Array(5).fill(0));
     setFmShown(Array(5).fill(false));
+    setFmTargetHit(false);
     setIsAwarding(false);
     setActionHistory([]);
     setTimerActive(false);
+    setHubEnabled(false);
+    setAutoStarted(false);
   }
 
   function toggleFullscreen() {
@@ -473,6 +502,18 @@ export default function FamilyFeudApp() {
 
   const fmTotal1 = fmPoints1.reduce((a, b) => a + (Number(b) || 0), 0);
   const fmTotal2 = fmPoints2.reduce((a, b) => a + (Number(b) || 0), 0);
+  const fmCombined = fmTotal1 + fmTotal2;
+
+  // Fast Money target detection - award hub points when 200+ is hit
+  useEffect(() => {
+    if (phase === 'fast' && fmCombined >= 200 && !fmTargetHit && hubEnabled) {
+      setFmTargetHit(true);
+      // Award +20 to the winning team (team with higher score, or A if tied)
+      const winningTeam = teamA >= teamB ? 'A' : 'B';
+      addHubTeamScore(winningTeam, 20, 'Family Feud', 'Fast Money target hit (+20)');
+      addAction('Fast Money target hit! +20 hub points awarded');
+    }
+  }, [phase, fmCombined, fmTargetHit, hubEnabled, teamA, teamB]);
 
   const awardDisabled = bank <= 0 || isAwarding;
   const activeMult = phase === "sudden" ? suddenMultiplier : roundMultiplier;

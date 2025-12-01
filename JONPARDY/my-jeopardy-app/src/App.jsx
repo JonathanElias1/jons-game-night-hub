@@ -1,5 +1,27 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
+// --- Hub Scoring Integration ---
+function getHubData() {
+  try {
+    const saved = localStorage.getItem('jonsGameNightData');
+    if (saved) return JSON.parse(saved);
+  } catch (e) {
+    console.error('Failed to load hub data:', e);
+  }
+  return null;
+}
+
+function addHubTeamScore(team, points, gameName) {
+  // team is 'A' or 'B'
+  if (!window.GameNightScoring) return;
+  window.GameNightScoring.addTeamScore(team, points, gameName, `+${points} pts`);
+}
+
+// Convert question dollar value to hub points (scaled: $200 = 2pts, $1000 = 10pts)
+function dollarToHubPoints(dollars) {
+  return Math.round(dollars / 100);
+}
+
 // --- Game Data ---
 const JONpardyData = {
   categories: [
@@ -94,7 +116,9 @@ export default function App() {
   const [currentRound, setCurrentRound] = useState('JONpardy');
   const [board, setBoard] = useState([]);
   const [teams, setTeams] = useState([]);
-  const [numTeams, setNumTeams] = useState(1);
+  const [numTeams, setNumTeams] = useState(2);
+  const [hubTeamMap, setHubTeamMap] = useState({}); // Maps Jonpardy team index to hub team ('A' or 'B')
+  const [hubEnabled, setHubEnabled] = useState(false);
   const [currentTeamIndex, setCurrentTeamIndex] = useState(0);
   const [questionChooserIndex, setQuestionChooserIndex] = useState(0);
   const [activeQuestion, setActiveQuestion] = useState(null);
@@ -255,8 +279,26 @@ useEffect(() => {
     if (audioContext.current.state === 'suspended') {
         audioContext.current.resume();
     }
-    const initialTeams = Array.from({ length: numTeams }, (_, i) => ({ name: `Team ${i + 1}`, score: 0 }));
-    setTeams(initialTeams);
+
+    // Check for hub data and set up team mapping
+    const hubData = getHubData();
+    if (hubData && hubData.players && hubData.players.length >= 2) {
+      const teamNames = hubData.teamNames || { A: 'Team A', B: 'Team B' };
+      // For 2 teams: Team 0 = Hub Team A, Team 1 = Hub Team B
+      const initialTeams = [
+        { name: teamNames.A, score: 0 },
+        { name: teamNames.B, score: 0 }
+      ];
+      setTeams(initialTeams);
+      setHubTeamMap({ 0: 'A', 1: 'B' });
+      setHubEnabled(true);
+      setNumTeams(2);
+    } else {
+      const initialTeams = Array.from({ length: numTeams }, (_, i) => ({ name: `Team ${i + 1}`, score: 0 }));
+      setTeams(initialTeams);
+      setHubEnabled(false);
+    }
+
     setCurrentTeamIndex(0);
     setQuestionChooserIndex(0);
     setAttemptedBy([]);
@@ -366,6 +408,20 @@ const handleBuzzIn = useCallback((event) => {
       const newBoard = [...board];
       newBoard[activeQuestion.catIndex].questions[activeQuestion.qIndex].answered = true;
       setBoard(newBoard);
+
+      // Auto-score to hub
+      if (hubEnabled && hubTeamMap[currentTeamIndex]) {
+        const hubTeam = hubTeamMap[currentTeamIndex];
+        if (activeQuestion.isDailyDouble) {
+          // Daily Double: +15 hub points
+          addHubTeamScore(hubTeam, 15, 'Jonpardy');
+        } else {
+          // Regular question: scale by dollar value ($200 = 2pts, etc.)
+          const hubPoints = dollarToHubPoints(activeQuestion.points);
+          addHubTeamScore(hubTeam, hubPoints, 'Jonpardy');
+        }
+      }
+
       setTimeout(() => {
         setActiveQuestion(null);
         setUserAnswer('');
@@ -446,7 +502,14 @@ const handleBuzzIn = useCallback((event) => {
       if (team.score <= 0) return team;
       const answer = (finalAnswers[i] || "").trim().toLowerCase();
       const wager = finalWagers[i] || 0;
-      return answer === finalJONpardyData.answer.toLowerCase()
+      const isCorrect = answer === finalJONpardyData.answer.toLowerCase();
+
+      // Auto-score Final Jonpardy to hub (+25 for correct)
+      if (isCorrect && hubEnabled && hubTeamMap[i]) {
+        addHubTeamScore(hubTeamMap[i], 25, 'Jonpardy');
+      }
+
+      return isCorrect
         ? { ...team, score: team.score + wager }
         : { ...team, score: team.score - wager };
     });
@@ -471,23 +534,42 @@ const handleBuzzIn = useCallback((event) => {
   };
   
   if (gameState === 'setup') {
+    const hubData = getHubData();
+    const hasHubData = hubData && hubData.players && hubData.players.length >= 2;
+    const hubTeamNames = hubData?.teamNames || { A: 'Team A', B: 'Team B' };
+
     return (
       <div className="min-h-screen w-screen bg-gray-900 text-white font-sans flex flex-col items-center justify-center p-4">
         <div className="bg-blue-900 p-8 rounded-lg shadow-2xl text-center w-full max-w-md">
             <h1 className="text-4xl md:text-5xl font-bold tracking-widest text-yellow-400 mb-8" style={{ textShadow: '2px 2px 4px #000000' }}>JONPARDY!</h1>
-            <h2 className="text-2xl mb-4">Select Number of Teams</h2>
-            <p className="text-gray-400 mb-6">Buzzer keys: Team 1 (Q), Team 2 (P), Team 3 (Z), Team 4 (M)</p>
-            <div className="flex justify-center gap-4 mb-8">
-                {[2, 3, 4, 5].map(num => (
-                    <button 
-                        key={num}
-                        onClick={() => setNumTeams(num)}
-                        className={`w-16 h-16 text-2xl font-bold rounded-lg transition-all flex items-center justify-center ${numTeams === num ? 'bg-yellow-400 text-blue-900 scale-110' : 'bg-blue-700 hover:bg-blue-600'}`}
-                    >
-                        {num}
-                    </button>
-                ))}
-            </div>
+
+            {hasHubData ? (
+              <>
+                <div className="bg-green-600/30 border border-green-500 rounded-lg p-4 mb-6">
+                  <p className="text-green-400 font-bold mb-2">✓ Game Night Hub Connected!</p>
+                  <p className="text-sm text-gray-300">Teams: {hubTeamNames.A} vs {hubTeamNames.B}</p>
+                  <p className="text-xs text-gray-400 mt-1">Points will auto-sync to the hub</p>
+                </div>
+                <p className="text-gray-400 mb-6">Buzzer keys: {hubTeamNames.A} (Q), {hubTeamNames.B} (P)</p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl mb-4">Select Number of Teams</h2>
+                <p className="text-gray-400 mb-6">Buzzer keys: Team 1 (Q), Team 2 (P), Team 3 (Z), Team 4 (M)</p>
+                <div className="flex justify-center gap-4 mb-8">
+                    {[2, 3, 4].map(num => (
+                        <button
+                            key={num}
+                            onClick={() => setNumTeams(num)}
+                            className={`w-16 h-16 text-2xl font-bold rounded-lg transition-all flex items-center justify-center ${numTeams === num ? 'bg-yellow-400 text-blue-900 scale-110' : 'bg-blue-700 hover:bg-blue-600'}`}
+                        >
+                            {num}
+                        </button>
+                    ))}
+                </div>
+              </>
+            )}
+
             <button onClick={handleStartGame} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-md text-xl transition-transform transform hover:scale-105">
                 Start Game
             </button>

@@ -1,4 +1,6 @@
-function useSfx() {
+import { useEffect, useState, useRef, useCallback } from "react";
+
+export default function useSfx() {
   const audioCtxRef = useRef(null);
   const bufferMapRef = useRef({});       // key -> AudioBuffer
   const activeNodesRef = useRef({});     // key -> Set of active source nodes (one-shots)
