@@ -1,0 +1,28 @@
+[build]
+  publish = "deploy"
+
+# Handle SPA routing for each game
+[[redirects]]
+  from = "/family-feud/*"
+  to = "/family-feud/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/jeopardy/*"
+  to = "/jeopardy/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/wheel-of-fortune/*"
+  to = "/wheel-of-fortune/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/price-is-right/*"
+  to = "/price-is-right/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/smarter-than-jon/*"
+  to = "/smarter-than-jon/index.html"
+  status = 200
