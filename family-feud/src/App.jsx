@@ -290,9 +290,7 @@ export default function FamilyFeudApp() {
   
   function passFaceoff() {
     if (!faceoffBuzz) return;
-    if (phase === "faceoff") {
-      revealFullQuestion();
-    }
+    // Don't reveal full question - keep it at whatever was shown when they buzzed
     const nextTurn = faceoffTurn === "A" ? "B" : "A";
     const nextTeamName = nextTurn === "A" ? teamAName : teamBName;
     setFaceoffTurn(nextTurn);
@@ -301,9 +299,7 @@ export default function FamilyFeudApp() {
   }
 
   function toggleReveal(i) {
-    if (phase === "faceoff") {
-      revealFullQuestion();
-    }
+    // Don't auto-reveal full question - keep it at whatever was shown when they buzzed
     const slot = answers[i];
     if (!slot || !slot.points) return;
 
