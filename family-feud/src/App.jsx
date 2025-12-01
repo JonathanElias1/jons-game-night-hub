@@ -290,7 +290,8 @@ export default function FamilyFeudApp() {
   
   function passFaceoff() {
     if (!faceoffBuzz) return;
-    // Don't reveal full question - keep it at whatever was shown when they buzzed
+    // Reveal full question when they get it wrong or pass
+    revealFullQuestion();
     const nextTurn = faceoffTurn === "A" ? "B" : "A";
     const nextTeamName = nextTurn === "A" ? teamAName : teamBName;
     setFaceoffTurn(nextTurn);
