@@ -618,13 +618,19 @@ export default function FamilyFeudApp() {
               toggleReveal={toggleReveal}
             />
 
-            {/* Answer Input - shown during round play */}
-            {(phase === "round" || phase === "faceoff" || phase === "steal") && controlTeam && (
+            {/* Answer Input - shown during gameplay */}
+            {((phase === "round" && controlTeam) ||
+              (phase === "faceoff" && faceoffBuzz) ||
+              (phase === "steal" && controlTeam)) && (
               <AnswerInput
                 answers={answers}
                 revealed={revealed}
                 onReveal={(idx) => {
                   toggleReveal(idx);
+                  // During faceoff, if they get an answer, they take control
+                  if (phase === "faceoff" && faceoffTurn) {
+                    beginRound(faceoffTurn);
+                  }
                 }}
                 onWrongAnswer={(answer) => {
                   if (phase === "round") {
@@ -633,13 +639,21 @@ export default function FamilyFeudApp() {
                   } else if (phase === "steal") {
                     // Steal attempt failed
                     resolveSteal(false);
+                  } else if (phase === "faceoff") {
+                    // Wrong answer in faceoff - pass to other team
+                    passFaceoff();
+                    addAction(`Wrong answer: "${answer}"`);
                   } else {
                     buzz();
                     addAction(`Wrong answer: "${answer}"`);
                   }
                 }}
                 disabled={phase === "gameover" || phase === "fast"}
-                placeholder={phase === "steal" ? "Type steal attempt..." : "Type an answer..."}
+                placeholder={
+                  phase === "steal" ? "Type steal attempt..." :
+                  phase === "faceoff" ? "Type your faceoff answer..." :
+                  "Type an answer..."
+                }
               />
             )}
 
