@@ -1,7 +1,7 @@
 import React from "react";
 import { cls } from "../utils/helpers";
 
-export function RoundControls({ award, awardDisabled, nextRound, restart }) {
+export function RoundControls({ award, awardDisabled, nextRound, restart, teamAName, teamBName }) {
   return (
     <>
       <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -14,7 +14,7 @@ export function RoundControls({ award, awardDisabled, nextRound, restart }) {
           )}
           title="Award bank to Team A (A)"
         >
-          Award → Team A
+          Award → {teamAName || "Team A"}
         </button>
         <button
           onClick={() => award("B")}
@@ -25,7 +25,7 @@ export function RoundControls({ award, awardDisabled, nextRound, restart }) {
           )}
           title="Award bank to Team B (L)"
         >
-          Award → Team B
+          Award → {teamBName || "Team B"}
         </button>
         <button
           onClick={nextRound}

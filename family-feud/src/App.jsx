@@ -267,8 +267,8 @@ export default function FamilyFeudApp() {
     }
   }
 
-  function startFaceoff() {
-    if (phase === "round" || phase === "steal") return;
+  function startFaceoff(force = false) {
+    if (!force && (phase === "round" || phase === "steal")) return;
     stopTyping();
     setPhase("faceoff");
     setFaceoffBuzz(null);
@@ -429,7 +429,7 @@ export default function FamilyFeudApp() {
 
     setRoundIndex((i) => i + 1);
     addAction(`Moving to Round ${roundIndex + 2}`);
-    startFaceoff();
+    startFaceoff(true);  // Force reset even from steal phase
   }
 
   function restart() {
@@ -475,13 +475,18 @@ export default function FamilyFeudApp() {
   function resolveSteal(success) {
     const stealTeamName = stealingTeam === "A" ? teamAName : teamBName;
     const controlTeamName = controlTeam === "A" ? teamAName : teamBName;
-    
+
     if (success) {
       award(stealingTeam);
       addAction(`${stealTeamName} successfully stole!`);
+      // Reveal all remaining answers after successful steal
+      setRevealed(answers.map((a, i) => revealed[i] || (a.text && a.points > 0)));
     } else {
       award(controlTeam || "A");
       addAction(`Steal failed! ${controlTeamName} keeps points`);
+      // Reveal all remaining answers to show what was on the board
+      setRevealed(answers.map((a, i) => revealed[i] || (a.text && a.points > 0)));
+      addAction("Revealing remaining answers...");
     }
   }
 
@@ -624,27 +629,32 @@ export default function FamilyFeudApp() {
             )}
 
             {(phase === "round" || phase === "steal") && (
-              <StrikesDisplay 
-                strikes={strikes} 
-                controlTeam={controlTeam} 
-                phase={phase} 
-                addStrike={addStrike} 
+              <StrikesDisplay
+                strikes={strikes}
+                controlTeam={controlTeam}
+                controlTeamName={controlTeam === "A" ? teamAName : teamBName}
+                phase={phase}
+                addStrike={addStrike}
               />
             )}
 
             {phase === "steal" && (
-              <StealPanel 
-                stealingTeam={stealingTeam} 
-                controlTeam={controlTeam} 
-                resolveSteal={resolveSteal} 
+              <StealPanel
+                stealingTeam={stealingTeam}
+                controlTeam={controlTeam}
+                resolveSteal={resolveSteal}
+                stealingTeamName={stealingTeam === "A" ? teamAName : teamBName}
+                controlTeamName={controlTeam === "A" ? teamAName : teamBName}
               />
             )}
 
-            <RoundControls 
-              award={award} 
-              awardDisabled={awardDisabled} 
-              nextRound={nextRound} 
-              restart={restart} 
+            <RoundControls
+              award={award}
+              awardDisabled={awardDisabled}
+              nextRound={nextRound}
+              restart={restart}
+              teamAName={teamAName}
+              teamBName={teamBName}
             />
 
             <ActionHistory history={actionHistory} />

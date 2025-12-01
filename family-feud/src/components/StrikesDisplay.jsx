@@ -1,10 +1,10 @@
 import React from "react";
 import { cls } from "../utils/helpers";
 
-export function StrikesDisplay({ strikes, controlTeam, phase, addStrike }) {
+export function StrikesDisplay({ strikes, controlTeam, controlTeamName, phase, addStrike }) {
   return (
     <div className="mt-4 flex items-center gap-2">
-      <div className="text-sm uppercase tracking-widest opacity-80">Strikes — Team {controlTeam}</div>
+      <div className="text-sm uppercase tracking-widest opacity-80">Strikes — {controlTeamName || `Team ${controlTeam}`}</div>
       <div className="flex items-center gap-2">
         {[0, 1, 2].map((n) => (
           <div
