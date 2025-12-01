@@ -178,29 +178,6 @@
     .leader-team { font-size: 0.8rem; color: #94a3b8; }
     .leader-score { font-size: 1.5rem; font-weight: 900; color: #fbbf24; }
 
-    /* Progress Bar */
-    .progress-section {
-      background: rgba(255,255,255,0.1);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 30px;
-    }
-    .progress-section h3 { margin-bottom: 12px; font-size: 1rem; }
-    .progress-bar {
-      height: 12px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 6px;
-      overflow: hidden;
-      margin-bottom: 8px;
-    }
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #10b981, #fbbf24);
-      border-radius: 6px;
-      transition: width 0.5s ease;
-    }
-    .progress-text { font-size: 0.85rem; color: #94a3b8; }
-
     /* Actions */
     .actions { display: flex; gap: 15px; flex-wrap: wrap; }
     .action-btn {
@@ -287,15 +264,6 @@
           <div class="name" id="display-team-b">Team B</div>
           <div class="score" id="score-team-b">0</div>
         </div>
-      </div>
-
-      <!-- Progress Section -->
-      <div class="progress-section">
-        <h3>🎯 Game Night Progress</h3>
-        <div class="progress-bar">
-          <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
-        </div>
-        <div class="progress-text" id="progress-text">0 of 5 games played</div>
       </div>
 
       <!-- Game Cards -->
@@ -512,11 +480,6 @@
       document.getElementById('display-team-b').textContent = teamNames.B;
       document.getElementById('score-team-a').textContent = totals.teamA;
       document.getElementById('score-team-b').textContent = totals.teamB;
-
-      // Update progress
-      const progress = (gamesPlayed.length / GAMES.length) * 100;
-      document.getElementById('progress-fill').style.width = progress + '%';
-      document.getElementById('progress-text').textContent = `${gamesPlayed.length} of ${GAMES.length} games played`;
 
       // Update games grid
       const gamesGrid = document.getElementById('games-grid');
