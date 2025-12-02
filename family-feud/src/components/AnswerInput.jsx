@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { findMatchingAnswer } from "../utils/answerMatching";
 
 export function AnswerInput({
@@ -12,6 +12,11 @@ export function AnswerInput({
   const [inputValue, setInputValue] = useState("");
   const [pendingMatch, setPendingMatch] = useState(null); // For host approval of close matches
   const inputRef = useRef(null);
+
+  // Auto-focus input when component mounts (e.g., when someone buzzes in)
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
