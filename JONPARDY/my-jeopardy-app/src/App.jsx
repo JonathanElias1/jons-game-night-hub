@@ -40,9 +40,9 @@ const JONpardyData = {
     ]},
     { name: "Geography", questions: [
         { points: 200, question: "Jon made a detailed itinerary for this Southeast Asian country.", answer: "Thailand", aliases: ["tailand", "thai land", "thai"] },
-        { points: 400, question: "A small country known for its feud with its neighbors.", answer: "Israel", aliases: ["isreal", "izrael", "the holy land"] },
+        { points: 400, question: "A small country known for its feud with all of its neighbors.", answer: "Israel", aliases: ["isreal", "izrael", "the holy land"] },
         { points: 600, question: "When Jon visited this European country, known for being the worlds largest wine producer, everybody thought he was a native.", answer: "Italy", aliases: ["italia", "italian"] },
-        { points: 800, question: "This 'Wolverine State' features a city where dreams are made, _______ city.", answer: "Minden", aliases: ["minden city", "minden michigan"] },
+        { points: 800, question: "This 'Wolverine State' features a city where your story begins, _______ city.", answer: "Minden", aliases: ["minden city", "minden michigan"] },
         { points: 1000, question: "Jon's documentary premiered in this major U.S. borough.", answer: "Manhattan", aliases: ["manhatten", "new york", "nyc"] },
     ]},
     { name: "Television", questions: [
