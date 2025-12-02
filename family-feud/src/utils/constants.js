@@ -37,19 +37,19 @@ export const FALLBACK = {
         { text: "Bad Talent", points: 24, aliases: ["actors", "bad acting", "performers", "talent", "acting"] },
         { text: "Last-minute script changes", points: 22, aliases: ["rewrites", "script rewrites", "script", "changes"] },
         { text: "Lighting setup", points: 6, aliases: ["lights", "lighting", "light problems"] },
-        { text: "Location issues", points: 9, aliases: ["venue", "setting", "location", "place","travel","far","its far","it's far","rain", "storm", "wind", "snow", "cold", "hot","weather"] }
+        { text: "Location issues", points: 9, aliases: ["venue", "setting", "location", "traffic", "place","travel","far","its far","it's far","rain", "storm", "wind", "snow", "cold", "hot","weather"] }
       ]
     },
     {
       question: "Which race does Jon get confused for?",
       multiplier: 1,
       answers: [
-        { text: "Russian", points: 40, aliases: ["soviet", "russia"] },
-        { text: "Ukranian", points: 18, aliases: ["ukraine", "ukrainian"] },
+        { text: "Russian/Ukranian", points: 40, aliases: ["soviet", "russia", "Ukranian", "ukraine", "ukrainian" ] },
         { text: "Mexican", points: 15, aliases: ["Mexico"] },
         { text: "Spanish", points: 13, aliases: ["hispanic", "spanish"] },
         { text: "Greek", points: 12, aliases: ["Greece", "Roman"] },
         { text: "Mongolian", points: 11, aliases: ["mongol", "mongolia"] },
+          { text: "Italian", points: 10, aliases: ["mongol", "mongolia"] },
         { text: "Unknown", points: 8, aliases: ["other", "idk", "dont know", "mystery", "unclear"] },
         { text: "Homo Sapien", points: 4, aliases: ["human", "person", "man", "guy"] }
       ]
@@ -72,7 +72,10 @@ export const FALLBACK = {
       answers: [
         { text: "Six Seven", points: 65, aliases: ["67", "sixty seven"] },
         { text: "Fender Bender", points: 20, aliases: ["car accident", "fenderbender"] },
-        { text: "LOL", points: 15, aliases: ["laugh out loud", "lmao", "lmfao", "rofl"] }
+        { text: "LOL", points: 15, aliases: ["laugh out loud", "lmao", "lmfao", "rofl"] },
+        { text: "Lets Touch Base", points: 3, aliases: ["Touch Base", "Let's Touch Base"] },
+        { text: "Hows the Weather", points: 2, aliases: ["Weather"] }
+
       ]
     },
     {
@@ -127,12 +130,12 @@ export const FALLBACK = {
     {
       prompt: "Name something Jon is known for",
       answers: [
-        { text: "FGL/Best friend/best person", points: 60, aliases: ["fgl", "best friend", "friend", "friendship", "best person"] },
+        { text: "FGL/Best friend/best person/being hard", points: 60, aliases: ["fgl", "best friend", "friend", "friendship", "best person","hard","hardest"] },
         { text: "JON-E Worldwide/Filming", points: 55, aliases: ["jon e worldwide", "jone worldwide", "filming", "videos", "youtube"] },
         { text: "JON FOOD", points: 50, aliases: ["jonfood", "food reviews", "eating", "food channel"] },
         { text: "Cooking/Meat Night", points: 40, aliases: ["cooking", "meat night", "grilling", "bbq", "chef"] },
-        { text: "Acting/Art The Clown", points: 10, aliases: ["acting", "art the clown", "terrifier", "movies", "horror"] },
-        { text: "Sports", points: 7, aliases: ["basketball", "football", "athletics", "athlete"] }
+        { text: "Acting/Art The Clown/Jokes", points: 10, aliases: ["acting", "art the clown", "terrifier", "movies", "horror","jokes"] },
+        { text: "Sports/Hair", points: 7, aliases: ["basketball", "football", "athletics", "athlete","hairs"] }
       ]
     },
     {
