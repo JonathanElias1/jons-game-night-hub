@@ -73,6 +73,7 @@ export default function FamilyFeudApp() {
   const [hubEnabled, setHubEnabled] = useState(false);
   const [fmTargetHit, setFmTargetHit] = useState(false);
   const [stealAttempted, setStealAttempted] = useState(false);
+  const [stealResult, setStealResult] = useState(null); // 'success' or 'failed'
 
   const typewriterTimerRef = useRef(null);
   
@@ -287,8 +288,9 @@ export default function FamilyFeudApp() {
     setBank(0);
     setTimerActive(false);
     setStealAttempted(false);
+    setStealResult(null);
   }
-  
+
   function startSudden() {
     if (phase === "round" || phase === "steal") return;
     stopTyping();
@@ -465,6 +467,7 @@ export default function FamilyFeudApp() {
     setFmShown(Array(5).fill(false));
     setFmTargetHit(false);
     setStealAttempted(false);
+    setStealResult(null);
     setIsAwarding(false);
     setActionHistory([]);
     setTimerActive(false);
@@ -489,6 +492,7 @@ export default function FamilyFeudApp() {
     const controlTeamName = controlTeam === "A" ? teamAName : teamBName;
 
     setStealAttempted(true); // Disable further input after steal attempt
+    setStealResult(success ? 'success' : 'failed');
 
     if (success) {
       award(stealingTeam);
@@ -795,6 +799,7 @@ export default function FamilyFeudApp() {
                 resolveSteal={resolveSteal}
                 stealingTeamName={stealingTeam === "A" ? teamAName : teamBName}
                 controlTeamName={controlTeam === "A" ? teamAName : teamBName}
+                stealResult={stealResult}
               />
             )}
 

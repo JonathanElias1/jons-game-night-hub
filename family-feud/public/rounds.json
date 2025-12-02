@@ -38,7 +38,7 @@
         { "text": "Ukranian", "points": 18, "aliases": ["ukraine", "ukrainian"] },
         { "text": "Mexican", "points": 15, "aliases": ["Mexico"] },
         { "text": "Spanish", "points": 13, "aliases": ["hispanic", "spanish"] },
-        { "text": "Greek", "points": 12, "aliases": ["Greece", "Roman"] },
+            { "text": "Greek", "points": 12, "aliases": ["Greece", "Roman"] },
         { "text": "Mongolian", "points": 11, "aliases": ["mongol", "mongolia"] },
         { "text": "Unknown", "points": 8, "aliases": ["other", "idk", "dont know", "mystery", "unclear"] },
         { "text": "Homo Sapien", "points": 4, "aliases": ["human", "person", "man", "guy"] }
@@ -60,12 +60,12 @@
       "question": "Name something you hate when people say out loud?",
       "multiplier": 3,
       "answers": [
-        { "text": "Fender Bender", "points": 28, "aliases": ["car accident", "fenderbender"] },
-        { "text": "Moist", "points": 24, "aliases": ["wet", "damp"] },
-        { "text": "Baby Talk", "points": 18, "aliases": ["goo goo", "talking like a baby", "babytalk", "cooing"] },
-        { "text": "LOL", "points": 14, "aliases": ["laugh out loud", "lmao", "lmfao", "rofl"] },
-        { "text": "Six Seven", "points": 10, "aliases": ["67", "sixty seven"] },
-        { "text": "Marmalade", "points": 6, "aliases": ["jam", "jelly", "preserve"] }
+        { "text": "Six Seven", "points": 50, "aliases": ["67", "sixty seven"] },
+        { "text": "Fender Bender", "points": 20, "aliases": ["car accident", "fenderbender"] },
+        { "text": "Moist", "points": 15, "aliases": ["wet", "damp"] },
+        { "text": "LOL", "points": 10, "aliases": ["laugh out loud", "lmao", "lmfao", "rofl"] },
+        { "text": "Kerfuffle", "points": 3, "aliases": ["kerfufle", "kerfufflee", "kerfuffulle", "kerffufle"] },
+        { "text": "Marmalade", "points": 2, "aliases": ["jam", "jelly", "preserve"] }
       ]
     },
     {
