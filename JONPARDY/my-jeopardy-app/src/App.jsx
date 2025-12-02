@@ -17,6 +17,11 @@ function addHubTeamScore(team, points, gameName) {
   window.GameNightScoring.addTeamScore(team, points, gameName, `+${points} pts`);
 }
 
+function addHubPlayerScore(playerId, points, gameName, description) {
+  if (!window.GameNightScoring) return;
+  window.GameNightScoring.addPlayerScore(playerId, points, gameName, description);
+}
+
 // Convert question dollar value to hub points (scaled: $200 = 2pts, $1000 = 10pts)
 function dollarToHubPoints(dollars) {
   return Math.round(dollars / 100);
@@ -120,6 +125,11 @@ export default function App() {
   const [hubTeamMap, setHubTeamMap] = useState({}); // Maps Jonpardy team index to hub team ('A' or 'B')
   const [hubEnabled, setHubEnabled] = useState(false);
   const [gameWinBonusAwarded, setGameWinBonusAwarded] = useState(false);
+
+  // Individual player tracking
+  const [players, setPlayers] = useState([]);
+  const [selectedPlayerId, setSelectedPlayerId] = useState(null);
+  const [awaitingPlayerSelect, setAwaitingPlayerSelect] = useState(false);
   const [currentTeamIndex, setCurrentTeamIndex] = useState(0);
   const [questionChooserIndex, setQuestionChooserIndex] = useState(0);
   const [activeQuestion, setActiveQuestion] = useState(null);
@@ -145,6 +155,36 @@ export default function App() {
         clearInterval(typewriterTimerRef.current);
         typewriterTimerRef.current = null;
     }
+  }, []);
+
+  // Update individual player stats and calculate personal score
+  const updatePlayerStats = useCallback((playerId, statUpdate) => {
+    setPlayers(prev => prev.map(p => {
+      if (p.id !== playerId) return p;
+      const newStats = { ...p.stats };
+
+      // Individual actions
+      if (statUpdate.correctAnswer) newStats.correctAnswers = (newStats.correctAnswers || 0) + 1;
+      if (statUpdate.dailyDoubleCorrect) newStats.dailyDoubleCorrect = (newStats.dailyDoubleCorrect || 0) + 1;
+      if (statUpdate.finalCorrect) newStats.finalCorrect = (newStats.finalCorrect || 0) + 1;
+
+      // Team bonuses
+      if (statUpdate.gameWinBonus) newStats.gameWinBonus = (newStats.gameWinBonus || 0) + statUpdate.gameWinBonus;
+
+      // Calculate personal score
+      const personalScore =
+        (newStats.correctAnswers || 0) * 10 +    // +10 per correct answer
+        (newStats.dailyDoubleCorrect || 0) * 15 + // +15 per Daily Double correct
+        (newStats.finalCorrect || 0) * 20 +       // +20 for Final Jonpardy correct
+        (newStats.gameWinBonus || 0);             // +10 for team game win
+
+      // Sync to hub
+      if (statUpdate.hubPoints && window.GameNightScoring) {
+        addHubPlayerScore(playerId, statUpdate.hubPoints, 'Jonpardy', statUpdate.description || '+points');
+      }
+
+      return { ...p, stats: newStats, personalScore };
+    }));
   }, []);
 
 useEffect(() => {
@@ -294,10 +334,28 @@ useEffect(() => {
       setHubTeamMap({ 0: 'A', 1: 'B' });
       setHubEnabled(true);
       setNumTeams(2);
+
+      // Load players with individual tracking
+      const loadedPlayers = hubData.players.map(p => ({
+        id: p.id,
+        name: p.name,
+        team: p.team, // 'A' or 'B'
+        teamIndex: p.team === 'A' ? 0 : 1,
+        avatar: p.avatar || '🎮',
+        personalScore: 0,
+        stats: {
+          correctAnswers: 0,
+          dailyDoubleCorrect: 0,
+          finalCorrect: 0,
+          gameWinBonus: 0
+        }
+      }));
+      setPlayers(loadedPlayers);
     } else {
       const initialTeams = Array.from({ length: numTeams }, (_, i) => ({ name: `Team ${i + 1}`, score: 0 }));
       setTeams(initialTeams);
       setHubEnabled(false);
+      setPlayers([]);
     }
 
     setCurrentTeamIndex(0);
@@ -337,6 +395,20 @@ useEffect(() => {
     setActiveQuestion(prev => ({ ...prev, wager }));
     setDailyDoubleWager('');
     setWagerError('');
+
+    // For Daily Double, show player selector if we have players
+    const teamPlayers = players.filter(p => p.teamIndex === currentTeamIndex);
+    if (teamPlayers.length > 0) {
+      setAwaitingPlayerSelect(true);
+      setSelectedPlayerId(null);
+    }
+  };
+
+  // Handle player selection after buzz-in
+  const handleSelectPlayer = (playerId) => {
+    setSelectedPlayerId(playerId);
+    setAwaitingPlayerSelect(false);
+    setQuestionPhase('answering');
   };
 
 const handleBuzzIn = useCallback((event) => {
@@ -344,13 +416,21 @@ const handleBuzzIn = useCallback((event) => {
 
     const teamIndex = BUZZER_KEYS[event.key.toLowerCase()];
     if (teamIndex < numTeams && !attemptedBy.includes(teamIndex)) {
-        event.preventDefault(); // <-- ADD THIS LINE
+        event.preventDefault();
         stopTyping();
         playSound('select');
         setCurrentTeamIndex(teamIndex);
-        setQuestionPhase('answering');
+
+        // If we have players on this team, show player selector first
+        const teamPlayers = players.filter(p => p.teamIndex === teamIndex);
+        if (teamPlayers.length > 0) {
+          setAwaitingPlayerSelect(true);
+          setSelectedPlayerId(null);
+        } else {
+          setQuestionPhase('answering');
+        }
     }
-  }, [questionPhase, numTeams, attemptedBy, stopTyping]);
+  }, [questionPhase, numTeams, attemptedBy, stopTyping, players]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleBuzzIn);
@@ -388,6 +468,8 @@ const handleBuzzIn = useCallback((event) => {
         setTimeout(() => {
           setActiveQuestion(null);
           setShowResult(null);
+          setSelectedPlayerId(null);
+          setAwaitingPlayerSelect(false);
           setGameState('playing');
         }, 3000);
     }
@@ -405,21 +487,41 @@ const handleBuzzIn = useCallback((event) => {
     if (isCorrect) {
       playSound('correct');
       team.score += points;
-      setShowResult({ status: 'correct', message: `Correct! +$${points} for ${team.name}` });
+
+      // Get the answering player's name for the message
+      const answeringPlayer = players.find(p => p.id === selectedPlayerId);
+      const playerName = answeringPlayer ? answeringPlayer.name : team.name;
+      setShowResult({ status: 'correct', message: `Correct! +$${points} for ${playerName}` });
+
       const newBoard = [...board];
       newBoard[activeQuestion.catIndex].questions[activeQuestion.qIndex].answered = true;
       setBoard(newBoard);
 
-      // Auto-score to hub
+      // Auto-score to hub (team)
       if (hubEnabled && hubTeamMap[currentTeamIndex]) {
         const hubTeam = hubTeamMap[currentTeamIndex];
         if (activeQuestion.isDailyDouble) {
-          // Daily Double: +15 hub points
           addHubTeamScore(hubTeam, 15, 'Jonpardy');
         } else {
-          // Regular question: scale by dollar value ($200 = 2pts, etc.)
           const hubPoints = dollarToHubPoints(activeQuestion.points);
           addHubTeamScore(hubTeam, hubPoints, 'Jonpardy');
+        }
+      }
+
+      // Track individual player scoring
+      if (selectedPlayerId) {
+        if (activeQuestion.isDailyDouble) {
+          updatePlayerStats(selectedPlayerId, {
+            dailyDoubleCorrect: true,
+            hubPoints: 15,
+            description: 'Daily Double correct (+15)'
+          });
+        } else {
+          updatePlayerStats(selectedPlayerId, {
+            correctAnswer: true,
+            hubPoints: 10,
+            description: 'Correct answer (+10)'
+          });
         }
       }
 
@@ -427,6 +529,7 @@ const handleBuzzIn = useCallback((event) => {
         setActiveQuestion(null);
         setUserAnswer('');
         setShowResult(null);
+        setSelectedPlayerId(null);
         setGameState('playing');
       }, 3000);
     } else { // Incorrect Answer
@@ -443,6 +546,7 @@ const handleBuzzIn = useCallback((event) => {
             setActiveQuestion(null);
             setUserAnswer('');
             setShowResult(null);
+            setSelectedPlayerId(null);
             setGameState('playing');
           }, 3000);
           return;
@@ -459,13 +563,15 @@ const handleBuzzIn = useCallback((event) => {
         newBoard[activeQuestion.catIndex].questions[activeQuestion.qIndex].answered = true;
         setBoard(newBoard);
         setCurrentTeamIndex(questionChooserIndex);
-        
+
         setTimeout(() => {
           setActiveQuestion(null);
           setShowResult(null);
+          setSelectedPlayerId(null);
           setGameState('playing');
         }, 3000);
       } else {
+        setSelectedPlayerId(null);
         setQuestionPhase('buzzing');
         setDisplayedQuestion(activeQuestion.question);
       }
@@ -495,7 +601,7 @@ const handleBuzzIn = useCallback((event) => {
     }
   }, [board, gameState]);
 
-  // Award game win bonus (+25) when game ends
+  // Award game win bonus (+25 team, +10 per player) when game ends
   useEffect(() => {
     if (gameState === 'gameOver' && hubEnabled && !gameWinBonusAwarded) {
       const maxScore = Math.max(...teams.map(t => t.score));
@@ -506,11 +612,21 @@ const handleBuzzIn = useCallback((event) => {
         if (winnerIndex !== -1 && hubTeamMap[winnerIndex]) {
           setGameWinBonusAwarded(true);
           addHubTeamScore(hubTeamMap[winnerIndex], 25, 'Jonpardy');
-          console.log('Jonpardy: Awarded +25 game win bonus to', winners[0].name);
+
+          // Award individual game win bonus (+10) to all winning team players
+          const winningTeam = hubTeamMap[winnerIndex]; // 'A' or 'B'
+          players.filter(p => p.team === winningTeam).forEach(p => {
+            updatePlayerStats(p.id, {
+              gameWinBonus: 10,
+              hubPoints: 10,
+              description: 'Game win bonus (+10)'
+            });
+          });
+          console.log('Jonpardy: Awarded +25 team, +10/player to', winners[0].name);
         }
       }
     }
-  }, [gameState, hubEnabled, gameWinBonusAwarded, teams, hubTeamMap]);
+  }, [gameState, hubEnabled, gameWinBonusAwarded, teams, hubTeamMap, players, updatePlayerStats]);
 
   const handleFinalWagers = (e) => { e.preventDefault(); setFinalJONpardyStep('answer'); };
   const handleFinalAnswers = (e) => {
@@ -525,6 +641,16 @@ const handleBuzzIn = useCallback((event) => {
       // Auto-score Final Jonpardy to hub (+25 for correct)
       if (isCorrect && hubEnabled && hubTeamMap[i]) {
         addHubTeamScore(hubTeamMap[i], 25, 'Jonpardy');
+
+        // Award individual Final Jonpardy correct (+20) to all players on this team
+        const teamLetter = hubTeamMap[i]; // 'A' or 'B'
+        players.filter(p => p.team === teamLetter).forEach(p => {
+          updatePlayerStats(p.id, {
+            finalCorrect: true,
+            hubPoints: 20,
+            description: 'Final Jonpardy correct (+20)'
+          });
+        });
       }
 
       return isCorrect
@@ -544,6 +670,9 @@ const handleBuzzIn = useCallback((event) => {
     setFinalAnswers({});
     setAttemptedBy([]);
     setGameWinBonusAwarded(false);
+    setSelectedPlayerId(null);
+    setAwaitingPlayerSelect(false);
+    setPlayers([]);
   };
   
   const getWinner = () => {
@@ -716,17 +845,48 @@ const handleBuzzIn = useCallback((event) => {
               </p>
               
               <div className="h-16">
-                {questionPhase === 'buzzing' && 
+                {questionPhase === 'buzzing' && !awaitingPlayerSelect &&
                     <div className="flex flex-col items-center">
                         <div className="text-3xl text-yellow-400 animate-pulse">Buzz In!</div>
                         <div className="mt-2 text-2xl font-bold text-white">{buzzInTimer}</div>
                     </div>
                 }
               </div>
-              
-              {questionPhase === 'answering' && (
+
+              {/* Player Selection after buzz-in */}
+              {awaitingPlayerSelect && (
+                <div className="w-full">
+                  <h3 className="text-xl md:text-2xl font-bold text-green-400 mb-4">
+                    Who buzzed in for {teams[currentTeamIndex].name}?
+                  </h3>
+                  <div className="flex flex-wrap justify-center gap-3 mb-4">
+                    {players.filter(p => p.teamIndex === currentTeamIndex).map(player => (
+                      <button
+                        key={player.id}
+                        onClick={() => handleSelectPlayer(player.id)}
+                        className="px-4 py-3 rounded-lg font-semibold transition bg-white/20 text-white hover:bg-yellow-400 hover:text-black flex items-center gap-2"
+                      >
+                        <span className="text-xl">{player.avatar}</span>
+                        <span>{player.name}</span>
+                        {player.personalScore > 0 && (
+                          <span className="text-xs bg-black/30 px-1.5 py-0.5 rounded">
+                            {player.personalScore}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {questionPhase === 'answering' && !awaitingPlayerSelect && (
                 <>
-                  <h3 className="text-xl md:text-2xl font-bold text-green-400 mb-4">{teams[currentTeamIndex].name}'s Turn</h3>
+                  <h3 className="text-xl md:text-2xl font-bold text-green-400 mb-4">
+                    {selectedPlayerId
+                      ? `${players.find(p => p.id === selectedPlayerId)?.name}'s Turn`
+                      : `${teams[currentTeamIndex].name}'s Turn`
+                    }
+                  </h3>
                   <form onSubmit={handleSubmitAnswer} className="w-full flex flex-col sm:flex-row gap-2">
                     <input type="text" value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} autoFocus placeholder="What is...?" className="flex-grow p-3 rounded-md bg-gray-800 text-white border-2 border-blue-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-lg"/>
                     <button type="submit" className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-md transition-transform transform hover:scale-105 text-lg"> Answer </button>

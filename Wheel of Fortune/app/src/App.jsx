@@ -827,6 +827,11 @@ function addHubTeamScore(team, points, gameName, description) {
   window.GameNightScoring.addTeamScore(team, points, gameName, description);
 }
 
+function addHubPlayerScore(playerId, points, gameName, description) {
+  if (!window.GameNightScoring) return;
+  window.GameNightScoring.addPlayerScore(playerId, points, gameName, description);
+}
+
 export default function App() {
 const [phase, setPhase] = useState("setup");
 const [roundWinnerIndex, setRoundWinnerIndex] = useState(null); // Add this line
@@ -837,6 +842,10 @@ const [teamNames, setTeamNames] = useState(["Team 1", "Team 2", "Team 3"]);
 const [hubEnabled, setHubEnabled] = useState(false);
 const [hubTeamMap, setHubTeamMap] = useState({}); // Maps WoF team index to hub team ('A' or 'B')
 const [gameWinBonusAwarded, setGameWinBonusAwarded] = useState(false);
+
+// Individual player tracking
+const [players, setPlayers] = useState([]);
+const [activePlayerIndex, setActivePlayerIndex] = useState({}); // { teamIndex: playerIndex within team }
 const [puzzles, setPuzzles] = useState(FALLBACK);
 const [bonusPuzzles, setBonusPuzzles] = useState([]);
 const [idx, setIdx] = useState(0);
@@ -1004,6 +1013,66 @@ wedgeLandingStats: {},
 categoryStats: {},
 incorrectLetters: {},
 });
+// --- Individual Player Tracking Functions ---
+
+// Get current active player for the active team
+const getActivePlayer = useCallback(() => {
+  const teamPlayers = players.filter(p => p.teamIndex === active);
+  if (teamPlayers.length === 0) return null;
+  const playerIdx = activePlayerIndex[active] || 0;
+  return teamPlayers[playerIdx % teamPlayers.length];
+}, [players, active, activePlayerIndex]);
+
+// Rotate to next player within the current team
+const rotatePlayerInTeam = useCallback((teamIdx) => {
+  const teamPlayers = players.filter(p => p.teamIndex === teamIdx);
+  if (teamPlayers.length <= 1) return; // No rotation needed
+  setActivePlayerIndex(prev => ({
+    ...prev,
+    [teamIdx]: ((prev[teamIdx] || 0) + 1) % teamPlayers.length
+  }));
+}, [players]);
+
+// Set specific player as active (for manual override)
+const setActivePlayerForTeam = useCallback((teamIdx, playerIdx) => {
+  setActivePlayerIndex(prev => ({
+    ...prev,
+    [teamIdx]: playerIdx
+  }));
+}, []);
+
+// Update individual player stats and calculate personal score
+const updatePlayerStats = useCallback((playerId, statUpdate) => {
+  setPlayers(prev => prev.map(p => {
+    if (p.id !== playerId) return p;
+    const newStats = { ...p.stats };
+
+    // Individual actions
+    if (statUpdate.correctConsonant) newStats.correctConsonants = (newStats.correctConsonants || 0) + 1;
+    if (statUpdate.correctVowel) newStats.correctVowels = (newStats.correctVowels || 0) + 1;
+    if (statUpdate.puzzleSolve) newStats.puzzleSolves = (newStats.puzzleSolves || 0) + 1;
+    if (statUpdate.bonusSolve) newStats.bonusSolves = (newStats.bonusSolves || 0) + 1;
+
+    // Team bonuses
+    if (statUpdate.gameWinBonus) newStats.gameWinBonus = (newStats.gameWinBonus || 0) + statUpdate.gameWinBonus;
+
+    // Calculate personal score
+    const personalScore =
+      (newStats.correctConsonants || 0) * 5 +    // +5 per correct consonant
+      (newStats.correctVowels || 0) * 3 +        // +3 per correct vowel
+      (newStats.puzzleSolves || 0) * 15 +        // +15 per puzzle solve
+      (newStats.bonusSolves || 0) * 20 +         // +20 for bonus round solve
+      (newStats.gameWinBonus || 0);              // +10 for team game win
+
+    // Sync to hub
+    if (statUpdate.hubPoints && window.GameNightScoring) {
+      addHubPlayerScore(playerId, statUpdate.hubPoints, 'Wheel of Fortune', statUpdate.description || '+points');
+    }
+
+    return { ...p, stats: newStats, personalScore };
+  }));
+}, []);
+
 // Remove the gameStats initialization from the useEffect and create a separate function
 const initializeGameStats = useCallback(() => {
 const puzzlesCount = (puzzles && puzzles.length) || FALLBACK.length;
@@ -1170,7 +1239,7 @@ document.addEventListener("fullscreenchange", onFullscreenChange);
 return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
 }, []);
 
-// Hub scoring: Award game win bonus (+25) when game ends
+// Hub scoring: Award game win bonus (+25 team, +10 per player) when game ends
 useEffect(() => {
   if (phase === "done" && hubEnabled && !gameWinBonusAwarded && winners.length > 0) {
     setGameWinBonusAwarded(true);
@@ -1179,9 +1248,19 @@ useEffect(() => {
     const winnerIndex = teams.findIndex(t => t.name === winnerName);
     if (winnerIndex !== -1 && hubTeamMap[winnerIndex]) {
       addHubTeamScore(hubTeamMap[winnerIndex], 25, 'Wheel of Fortune', 'Game won (+25)');
+
+      // Award individual game win bonus (+10) to all winning team players
+      const winningTeam = hubTeamMap[winnerIndex]; // 'A' or 'B'
+      players.filter(p => p.team === winningTeam).forEach(p => {
+        updatePlayerStats(p.id, {
+          gameWinBonus: 10,
+          hubPoints: 10,
+          description: 'Game win bonus (+10)'
+        });
+      });
     }
   }
-}, [phase, hubEnabled, gameWinBonusAwarded, winners, teams, hubTeamMap]);
+}, [phase, hubEnabled, gameWinBonusAwarded, winners, teams, hubTeamMap, players, updatePlayerStats]);
 
 // NEW: This effect conditionally resizes the wheel ONLY on mobile screens.
 useEffect(() => {
@@ -1976,6 +2055,16 @@ setIsRevealingLetters(false);
 revealTimeoutRef.current = null;
 }, totalRevealTime + 50);
 setAwaitingConsonant(false);
+
+// Track individual player scoring for correct consonant
+const activePlayer = getActivePlayer();
+if (activePlayer) {
+  updatePlayerStats(activePlayer.id, {
+    correctConsonant: true,
+    hubPoints: 5,
+    description: 'Correct consonant (+5)'
+  });
+}
 } else {
 setGameStats((prev) => {
 const prevTeam = prev.teamStats[currentTeamName] || {};
@@ -2060,6 +2149,16 @@ revealTimeoutRef.current = setTimeout(() => {
 setIsRevealingLetters(false);
 revealTimeoutRef.current = null;
 }, totalRevealTime + 50);
+
+// Track individual player scoring for correct vowel
+const activePlayer = getActivePlayer();
+if (activePlayer) {
+  updatePlayerStats(activePlayer.id, {
+    correctVowel: true,
+    hubPoints: 3,
+    description: 'Correct vowel (+3)'
+  });
+}
 } else {
 setGameStats((prev) => {
 const prevTeam = prev.teamStats[currentTeamName] || {};
@@ -2132,6 +2231,16 @@ puzzlesSolved: ((prev.teamStats[solverName] || {}).puzzlesSolved || 0) + 1,
 // Hub scoring: +15 to solving team
 if (hubEnabled && hubTeamMap[active]) {
   addHubTeamScore(hubTeamMap[active], 15, 'Wheel of Fortune', 'Puzzle solved (+15)');
+}
+
+// Track individual player scoring for puzzle solve
+const activePlayer = getActivePlayer();
+if (activePlayer) {
+  updatePlayerStats(activePlayer.id, {
+    puzzleSolve: true,
+    hubPoints: 15,
+    description: 'Puzzle solved (+15)'
+  });
 }
 } catch (err) {
 // defensive - don't crash if teams/active not available for some reason
@@ -2344,7 +2453,10 @@ setGameStats((prev) => ({ ...prev, turnStartTime: Date.now() }));
   // This prevents stale state issues
   const nextActive = nextIdx(active, teams.length);
   console.log(`Passing turn: Team ${active + 1} -> Team ${nextActive + 1}`);
-  
+
+  // Rotate player within the CURRENT team before passing to next team
+  rotatePlayerInTeam(active);
+
   // Rotate active player & reset awaiting state
   setActive(nextActive);
   setAwaitingConsonant(false);
@@ -2617,6 +2729,15 @@ if (hubEnabled) {
   const hubTeam = winnerIndex !== -1 ? hubTeamMap[winnerIndex] : hubTeamMap[active];
   if (hubTeam) {
     addHubTeamScore(hubTeam, 20, 'Wheel of Fortune', 'Bonus round won (+20)');
+
+    // Award individual bonus round solve (+20) to all players on the winning team
+    players.filter(p => p.team === hubTeam).forEach(p => {
+      updatePlayerStats(p.id, {
+        bonusSolve: true,
+        hubPoints: 20,
+        description: 'Bonus round solved (+20)'
+      });
+    });
   }
 }
 } else {
@@ -2769,6 +2890,8 @@ setLanded(null);
 setAwaitingConsonant(false);
 setActive(0);
 setAngle(0);
+setPlayers([]);
+setActivePlayerIndex({});
 setMysteryPrize(null);
 setWonSpecialWedges([]);
 setCurrentWedges([...WEDGES]);
@@ -2827,6 +2950,12 @@ const k = String(h).toUpperCase();
 acc[k] = (acc[k] || 0) + 1;
 return acc;
 }, {});
+
+// Get players for this team
+const teamPlayers = players.filter(p => p.teamIndex === i);
+const currentPlayerIdx = activePlayerIndex[i] || 0;
+const currentPlayer = teamPlayers.length > 0 ? teamPlayers[currentPlayerIdx % teamPlayers.length] : null;
+
 return (
 <div
 className={cls(
@@ -2841,6 +2970,36 @@ aria-current={i === active ? "true" : "false"}
 <div>
 <div className="text-[10px] sm:text-xs uppercase tracking-widest opacity-90 select-none">{t.name}</div>
 <div className="text-[10px] sm:text-xs opacity-70">Total: ${t.total.toLocaleString()}</div>
+{/* Show current player for this team */}
+{currentPlayer && i === active && (
+  <div className="mt-1 flex items-center gap-1">
+    <span className="text-xs">{currentPlayer.avatar}</span>
+    <span className="text-[10px] sm:text-xs font-semibold text-yellow-300">{currentPlayer.name}</span>
+    {currentPlayer.personalScore > 0 && (
+      <span className="text-[8px] bg-black/30 px-1 rounded">{currentPlayer.personalScore}</span>
+    )}
+  </div>
+)}
+{/* Show all players with click to select (manual override) */}
+{teamPlayers.length > 1 && i === active && phase === "play" && (
+  <div className="mt-1 flex flex-wrap gap-1">
+    {teamPlayers.map((player, pIdx) => (
+      <button
+        key={player.id}
+        onClick={() => setActivePlayerForTeam(i, pIdx)}
+        className={cls(
+          "px-1 py-0.5 text-[8px] rounded transition",
+          pIdx === (currentPlayerIdx % teamPlayers.length)
+            ? "bg-yellow-400 text-black font-bold"
+            : "bg-white/20 hover:bg-white/30"
+        )}
+        title={`Switch to ${player.name}`}
+      >
+        {player.avatar}
+      </button>
+    ))}
+  </div>
+)}
 </div>
 <div className="flex flex-col items-end gap-0.5 sm:gap-1">
 {Object.entries(prizeCounts).map(([prizeLabel, count]) => (
@@ -3764,9 +3923,30 @@ const names = useHubTeams ? hubNames : makeTeamNamesArray(finalTeamCount, teamNa
 if (useHubTeams) {
   setHubEnabled(true);
   setHubTeamMap({ 0: 'A', 1: 'B' }); // Map WoF team 0 to hub team A, team 1 to hub team B
+
+  // Load players with individual tracking
+  const loadedPlayers = hubData.players.map(p => ({
+    id: p.id,
+    name: p.name,
+    team: p.team, // 'A' or 'B'
+    teamIndex: p.team === 'A' ? 0 : 1,
+    avatar: p.avatar || '🎮',
+    personalScore: 0,
+    stats: {
+      correctConsonants: 0,
+      correctVowels: 0,
+      puzzleSolves: 0,
+      bonusSolves: 0,
+      gameWinBonus: 0
+    }
+  }));
+  setPlayers(loadedPlayers);
+  setActivePlayerIndex({ 0: 0, 1: 0 }); // Start with first player on each team
 } else {
   setHubEnabled(false);
   setHubTeamMap({});
+  setPlayers([]);
+  setActivePlayerIndex({});
 }
 setGameWinBonusAwarded(false);
 
