@@ -492,6 +492,7 @@ const handleBuzzIn = useCallback((event) => {
       }
 
       // Award ALL players on the team - Jonpardy is collaborative!
+      // Since teams discuss answers together, everyone on the team gets credit.
       // Points scale by question value: $200=2, $400=4, $600=6, $800=8, $1000=10
       const teamLetter = hubTeamMap[currentTeamIndex]; // 'A' or 'B'
       if (teamLetter) {
