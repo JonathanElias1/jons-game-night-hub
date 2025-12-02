@@ -4,7 +4,7 @@
   "rounds": [
     {
       "question": "Name a reason a video shoot runs late?",
-      "multiplier": 1,
+      "multiplier": 2,
       "answers": [
         { "text": "Technical issues", "points": 29, "aliases": ["tech problems", "equipment failure", "camera issues", "computer problems", "equipment", "technology"] },
         { "text": "Bad Talent", "points": 24, "aliases": ["actors", "bad acting", "performers", "talent", "acting"] },
@@ -18,13 +18,13 @@
     },
     {
       "question": "Which race does Jon get most confused for?",
-      "multiplier": 2,
+      "multiplier": 1,
       "answers": [
         { "text": "Russian", "points": 40, "aliases": ["soviet", "russia"] },
         { "text": "Ukranian", "points": 18, "aliases": ["ukraine", "ukrainian"] },
         { "text": "Mexican", "points": 15, "aliases": ["Mexico"] },
         { "text": "Spanish", "points": 13, "aliases": ["hispanic", "spanish"] },
-            { "text": "Greek", "points": 12, "aliases": ["Greece", "Roman"] },
+        { "text": "Greek", "points": 12, "aliases": ["Greece", "Roman"] },
         { "text": "Mongolian", "points": 11, "aliases": ["mongol", "mongolia"] },
         { "text": "Unknown", "points": 8, "aliases": ["other", "idk", "dont know", "mystery", "unclear"] },
         { "text": "Homo Sapien", "points": 4, "aliases": ["human", "person", "man", "guy"] }
@@ -44,7 +44,7 @@
     },
     {
       "question": "Name something you hate when people say out loud?",
-      "multiplier": 3,
+      "multiplier": 2,
       "answers": [
         { "text": "Six Seven", "points": 50, "aliases": ["67", "sixty seven"] },
         { "text": "Fender Bender", "points": 20, "aliases": ["car accident", "fenderbender"] },

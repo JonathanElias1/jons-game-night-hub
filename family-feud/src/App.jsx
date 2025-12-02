@@ -208,6 +208,7 @@ export default function FamilyFeudApp() {
 
       if ((phase === "faceoff" || phase === "sudden") && !faceoffBuzz) {
         if (k === "q") {
+          e.preventDefault(); // Prevent 'q' from being typed into the input
           setFaceoffBuzz("A");
           setFaceoffTurn("A");
           buzzA();
@@ -215,6 +216,7 @@ export default function FamilyFeudApp() {
           return;
         }
         if (k === "p") {
+          e.preventDefault(); // Prevent 'p' from being typed into the input
           setFaceoffBuzz("B");
           setFaceoffTurn("B");
           buzzB();
