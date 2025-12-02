@@ -6,14 +6,11 @@
       "question": "Name a reason a video shoot runs late?",
       "multiplier": 2,
       "answers": [
-        { "text": "Technical issues", "points": 29, "aliases": ["tech problems", "equipment failure", "camera issues", "computer problems", "equipment", "technology"] },
+        { "text": "Technical issues", "points": 39, "aliases": ["tech problems", "equipment failure", "camera issues", "computer problems", "equipment", "technology","sound issues", "microphone", "mic problems", "sound", "audio"] },
         { "text": "Bad Talent", "points": 24, "aliases": ["actors", "bad acting", "performers", "talent", "acting"] },
-        { "text": "Last-minute script changes", "points": 17, "aliases": ["rewrites", "script rewrites", "script", "changes"] },
-        { "text": "Lighting setup", "points": 12, "aliases": ["lights", "lighting", "light problems"] },
-        { "text": "Audio problems", "points": 8, "aliases": ["sound issues", "microphone", "mic problems", "sound", "audio"] },
-        { "text": "Location issues", "points": 6, "aliases": ["venue", "setting", "location", "place"] },
-        { "text": "Wardrobe", "points": 3, "aliases": ["clothes", "costumes", "makeup", "hair", "styling", "outfit"] },
-        { "text": "Weather", "points": 1, "aliases": ["rain", "storm", "wind", "snow", "cold", "hot"] }
+        { "text": "Last-minute script changes", "points": 22, "aliases": ["rewrites", "script rewrites", "script", "changes"] },
+        { "text": "Lighting setup", "points": 6, "aliases": ["lights", "lighting", "light problems"] },
+        { "text": "Location issues", "points": 9, "aliases": ["venue", "setting", "location", "place","travel","far","its far","it's far","rain", "storm", "wind", "snow", "cold", "hot","weather"] }
       ]
     },
     {
@@ -48,9 +45,7 @@
       "answers": [
         { "text": "Six Seven", "points": 65, "aliases": ["67", "sixty seven"] },
         { "text": "Fender Bender", "points": 20, "aliases": ["car accident", "fenderbender"] },
-        { "text": "LOL", "points": 10, "aliases": ["laugh out loud", "lmao", "lmfao", "rofl"] },
-        { "text": "Kerfuffle", "points": 3, "aliases": ["kerfufle", "kerfufflee", "kerfuffulle", "kerffufle"] },
-        { "text": "Marmalade", "points": 2, "aliases": ["jam", "jelly", "preserve"] }
+        { "text": "LOL", "points": 15, "aliases": ["laugh out loud", "lmao", "lmfao", "rofl"] },
       ]
     },
     {

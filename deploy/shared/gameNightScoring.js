@@ -20,7 +20,7 @@
 
   // Scoring configuration per game
   const SCORING_CONFIG = {
-    'Family Feud': {
+    'Jon Feud': {
       pointOptions: [
         { name: 'Top Answer', value: 10, type: 'individual' },
         { name: 'Fast Money Win', value: 20, type: 'individual' },
@@ -28,7 +28,7 @@
       ],
       maxPoints: 125
     },
-    'Jeopardy': {
+    'JONpardy': {
       pointOptions: [
         { name: 'Daily Double', value: 15, type: 'team' },
         { name: 'Round Win', value: 25, type: 'team' }

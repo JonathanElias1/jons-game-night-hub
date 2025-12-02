@@ -171,16 +171,16 @@ export default function FamilyFeudApp() {
         (newStats.fastMoneyPoints || 0);
       // Also send to hub scoring (reduced values)
       if (hubEnabled && statUpdate.answersRevealed) {
-        addHubPlayerScore(player.name, 6, 'Family Feud', 'Correct answer (+6)');
+        addHubPlayerScore(player.name, 6, 'Jon Feud', 'Correct answer (+6)');
       }
       if (hubEnabled && statUpdate.topAnswers) {
-        addHubPlayerScore(player.name, 10, 'Family Feud', 'Top answer (+10)');
+        addHubPlayerScore(player.name, 10, 'Jon Feud', 'Top answer (+10)');
       }
       if (hubEnabled && statUpdate.faceoffWins) {
-        addHubPlayerScore(player.name, 12, 'Family Feud', 'Won faceoff (+12)');
+        addHubPlayerScore(player.name, 12, 'Jon Feud', 'Won faceoff (+12)');
       }
       if (hubEnabled && statUpdate.stealsWon) {
-        addHubPlayerScore(player.name, 15, 'Family Feud', 'Successful steal (+15)');
+        addHubPlayerScore(player.name, 15, 'Jon Feud', 'Successful steal (+15)');
       }
       return { ...player, stats: newStats, personalScore };
     }));
@@ -512,7 +512,7 @@ export default function FamilyFeudApp() {
 
         // Hub scoring: +10 to team that buzzed if they revealed the #1 answer
         if (isTopAnswer && hubEnabled && faceoffBuzz) {
-          addHubTeamScore(faceoffBuzz, 10, 'Family Feud', 'Top answer (+10)');
+          addHubTeamScore(faceoffBuzz, 10, 'Jon Feud', 'Top answer (+10)');
         }
 
         // Auto-rotate to next player after correct answer during main play
@@ -557,7 +557,7 @@ export default function FamilyFeudApp() {
 
     // Hub scoring: +25 to winning team
     if (hubEnabled) {
-      addHubTeamScore(team, 25, 'Family Feud', `Won round (+25)`);
+      addHubTeamScore(team, 25, 'Jon Feud', `Won round (+25)`);
     }
 
     // Award round win bonus (+5) to all players on winning team
@@ -707,7 +707,7 @@ export default function FamilyFeudApp() {
       // Award +20 hub points to the winning team (team with higher score, or A if tied)
       const winningTeam = teamA >= teamB ? 'A' : 'B';
       if (hubEnabled) {
-        addHubTeamScore(winningTeam, 20, 'Family Feud', 'Fast Money target hit (+20)');
+        addHubTeamScore(winningTeam, 20, 'Jon Feud', 'Fast Money target hit (+20)');
       }
       // Award +10 personal points to all players on winning team for Fast Money win
       players.filter(p => p.team === winningTeam).forEach(p => {

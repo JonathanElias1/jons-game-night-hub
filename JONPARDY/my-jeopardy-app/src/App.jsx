@@ -162,7 +162,7 @@ export default function App() {
   const [board, setBoard] = useState([]);
   const [teams, setTeams] = useState([]);
   const [numTeams, setNumTeams] = useState(2);
-  const [hubTeamMap, setHubTeamMap] = useState({}); // Maps Jonpardy team index to hub team ('A' or 'B')
+  const [hubTeamMap, setHubTeamMap] = useState({}); // Maps JONpardy team index to hub team ('A' or 'B')
   const [hubEnabled, setHubEnabled] = useState(false);
   const [gameWinBonusAwarded, setGameWinBonusAwarded] = useState(false);
 
@@ -198,7 +198,7 @@ export default function App() {
   }, []);
 
   // Update individual player stats and calculate personal score
-  // Jonpardy is team-based - all players on the team earn points together
+  // JONpardy is team-based - all players on the team earn points together
   const updatePlayerStats = useCallback((playerId, statUpdate) => {
     setPlayers(prev => prev.map(p => {
       if (p.id !== playerId) return p;
@@ -220,7 +220,7 @@ export default function App() {
 
       // Sync to hub
       if (statUpdate.hubPoints && window.GameNightScoring) {
-        addHubPlayerScore(playerId, statUpdate.hubPoints, 'Jonpardy', statUpdate.description || '+points');
+        addHubPlayerScore(playerId, statUpdate.hubPoints, 'JONpardy', statUpdate.description || '+points');
       }
 
       return { ...p, stats: newStats, personalScore };
@@ -436,7 +436,7 @@ useEffect(() => {
     setActiveQuestion(prev => ({ ...prev, wager }));
     setDailyDoubleWager('');
     setWagerError('');
-    // Jonpardy is team-based - go straight to answering
+    // JONpardy is team-based - go straight to answering
   };
 
   // Handle player selection after buzz-in
@@ -455,7 +455,7 @@ const handleBuzzIn = useCallback((event) => {
         stopTyping();
         playSound('select');
         setCurrentTeamIndex(teamIndex);
-        // Go straight to answering - Jonpardy is team-based (teams discuss together)
+        // Go straight to answering - JONpardy is team-based (teams discuss together)
         setQuestionPhase('answering');
     }
   }, [questionPhase, numTeams, attemptedBy, stopTyping]);
@@ -503,6 +503,26 @@ const handleBuzzIn = useCallback((event) => {
     }
   }, [buzzInTimer, activeQuestion, board, questionChooserIndex]);
 
+  // Skip question - host can click if no one knows the answer
+  const handleSkipQuestion = () => {
+    if (buzzInInterval.current) {
+      clearInterval(buzzInInterval.current);
+      buzzInInterval.current = null;
+    }
+    setShowResult({ status: 'incorrect', message: `Skipped! The answer was: ${activeQuestion.answer}` });
+    const newBoard = [...board];
+    newBoard[activeQuestion.catIndex].questions[activeQuestion.qIndex].answered = true;
+    setBoard(newBoard);
+    setCurrentTeamIndex(questionChooserIndex);
+    setTimeout(() => {
+      setActiveQuestion(null);
+      setShowResult(null);
+      setSelectedPlayerId(null);
+      setAwaitingPlayerSelect(false);
+      setGameState('playing');
+    }, 3000);
+  };
+
   const handleSubmitAnswer = (e) => {
     e.preventDefault();
     if (!userAnswer.trim()) return;
@@ -527,14 +547,14 @@ const handleBuzzIn = useCallback((event) => {
       if (hubEnabled && hubTeamMap[currentTeamIndex]) {
         const hubTeam = hubTeamMap[currentTeamIndex];
         if (activeQuestion.isDailyDouble) {
-          addHubTeamScore(hubTeam, 15, 'Jonpardy');
+          addHubTeamScore(hubTeam, 15, 'JONpardy');
         } else {
           const hubPoints = dollarToHubPoints(activeQuestion.points);
-          addHubTeamScore(hubTeam, hubPoints, 'Jonpardy');
+          addHubTeamScore(hubTeam, hubPoints, 'JONpardy');
         }
       }
 
-      // Award ALL players on the team - Jonpardy is collaborative!
+      // Award ALL players on the team - JONpardy is collaborative!
       // Since teams discuss answers together, everyone on the team gets credit.
       // Points scale by question value: $200=2, $400=4, $600=6, $800=8, $1000=10
       const teamLetter = hubTeamMap[currentTeamIndex]; // 'A' or 'B'
@@ -654,7 +674,7 @@ const handleBuzzIn = useCallback((event) => {
         const winnerIndex = teams.findIndex(t => t.score === maxScore);
         if (winnerIndex !== -1 && hubTeamMap[winnerIndex]) {
           setGameWinBonusAwarded(true);
-          addHubTeamScore(hubTeamMap[winnerIndex], 25, 'Jonpardy');
+          addHubTeamScore(hubTeamMap[winnerIndex], 25, 'JONpardy');
 
           // Award individual game win bonus (+10) to all winning team players
           const winningTeam = hubTeamMap[winnerIndex]; // 'A' or 'B'
@@ -665,7 +685,7 @@ const handleBuzzIn = useCallback((event) => {
               description: 'Game win bonus (+10)'
             });
           });
-          console.log('Jonpardy: Awarded +25 team, +10/player to', winners[0].name);
+          console.log('JONpardy: Awarded +25 team, +10/player to', winners[0].name);
         }
       }
     }
@@ -683,17 +703,17 @@ const handleBuzzIn = useCallback((event) => {
       const isCorrect = isAnswerMatch(answer, finalJONpardyData.answer) ||
                         (finalJONpardyData.aliases && finalJONpardyData.aliases.some(alias => isAnswerMatch(answer, alias)));
 
-      // Auto-score Final Jonpardy to hub (+25 for correct)
+      // Auto-score Final JONpardy to hub (+25 for correct)
       if (isCorrect && hubEnabled && hubTeamMap[i]) {
-        addHubTeamScore(hubTeamMap[i], 25, 'Jonpardy');
+        addHubTeamScore(hubTeamMap[i], 25, 'JONpardy');
 
-        // Award individual Final Jonpardy correct (+20) to all players on this team
+        // Award individual Final JONpardy correct (+20) to all players on this team
         const teamLetter = hubTeamMap[i]; // 'A' or 'B'
         players.filter(p => p.team === teamLetter).forEach(p => {
           updatePlayerStats(p.id, {
             finalCorrect: true,
             hubPoints: 20,
-            description: 'Final Jonpardy correct (+20)'
+            description: 'Final JONpardy correct (+20)'
           });
         });
       }
@@ -894,6 +914,12 @@ const handleBuzzIn = useCallback((event) => {
                     <div className="flex flex-col items-center">
                         <div className="text-3xl text-yellow-400 animate-pulse">Buzz In!</div>
                         <div className="mt-2 text-2xl font-bold text-white">{buzzInTimer}</div>
+                        <button
+                          onClick={handleSkipQuestion}
+                          className="mt-3 px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg text-sm font-semibold transition-colors"
+                        >
+                          Skip Question
+                        </button>
                     </div>
                 }
               </div>

@@ -257,12 +257,6 @@ export function FastMoney({
             </button>
           )}
           <button
-            onClick={handleReset}
-            className="px-3 py-2 rounded-xl bg-white text-black hover:opacity-90 transition font-semibold"
-          >
-            Reset Fast Money
-          </button>
-          <button
             onClick={() => {
               const idx = fmShown.findIndex((x) => !x);
               if (idx !== -1) {
