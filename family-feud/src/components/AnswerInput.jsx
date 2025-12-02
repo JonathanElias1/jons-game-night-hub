@@ -98,8 +98,8 @@ export function AnswerInput({
             <span className="opacity-70">Player said:</span>{" "}
             <span className="font-bold">"{pendingMatch.userAnswer}"</span>
             <br />
-            <span className="opacity-70">Board answer:</span>{" "}
-            <span className="font-bold">"{pendingMatch.correctAnswer}"</span>
+            <span className="opacity-70">Check Answer Key:</span>{" "}
+            <span className="font-bold text-yellow-300">Answer #{pendingMatch.answerIndex + 1}</span>
           </div>
           <div className="flex gap-2">
             <button
