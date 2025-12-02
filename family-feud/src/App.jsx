@@ -421,7 +421,9 @@ export default function FamilyFeudApp() {
     const losingTeam = winningTeam === "A" ? "B" : "A";
     setFaceoffWinner(winningTeam);
     setPhase("passOrPlay");
-    // Rotate losing team so their next player is ready for steal or next round
+    // BOTH faceoff players answered, so rotate BOTH teams
+    // This way whichever team plays, their next player starts
+    rotateToNextPlayer(winningTeam);
     rotateToNextPlayer(losingTeam);
     const winnerName = winningTeam === "A" ? teamAName : teamBName;
     addAction(`${winnerName} won the faceoff! Play or Pass?`);
@@ -453,8 +455,7 @@ export default function FamilyFeudApp() {
     blip();
     const teamName = team === "A" ? teamAName : teamBName;
     addAction(`${teamName} takes control!`);
-    // Rotate to next player for main round (faceoff player already answered)
-    rotateToNextPlayer(team);
+    // No rotation here - both teams already rotated after faceoff in showPassOrPlay
   }
 
   // Legacy function for compatibility
