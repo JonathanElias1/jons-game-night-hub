@@ -38,80 +38,120 @@ const JONpardyData = {
         { points: 1000, question: "JON tried and loved this controversial food in a Southeast Asian Country. 1 word!", answer: "Durian" },
     ]},
     { name: "Geography", questions: [
-        { points: 200, question: "The place where dreams are made, _______ city.", answer: "Minden" },
+        { points: 200, question: "Jon made a detailed itinerary for this Southeast Asian country.", answer: "Thailand" }, 
         { points: 400, question: "A small country known for its feud with its neighbors.", answer: "Israel" },
-      { points: 200, question: "Jon made a detailed itinerary for this Southeast Asian country.", answer: "Thailand" },
-        { points: 800, question: "When Jon visited this European country, everybody thought he was a native.", answer: "Italy" },
-  { points: 1000, question: "Jon's documentary premiered in this major U.S. borough.", answer: "Manhattan" },
+        { points: 600, question: "When Jon visited this European country, known for being the worlds largest wine producer, everybody thought he was a native.", answer: "Italy" },
+        { points: 800, question: "This 'Wolverine State' features a city where dreams are made, _______ city.", answer: "Minden" },
+        { points: 1000, question: "Jon's documentary premiered in this major U.S. borough.", answer: "Manhattan" },
     ]},
     { name: "Television", questions: [
         { points: 200, question: "This classic 1 word show which Jon describes as the most entertaining, involves a serial killer who kills bad guys.", answer: "Dexter" },
-        { points: 400, question: "This series of books is about a young wizard attending Hogwarts.", answer: "Harry Potter" },
-        { points: 600, question: "In 'The Hobbit', this is the name of the dragon who guards the treasure.", answer: "Smaug" },
-        { points: 800, question: "This is the author of the 'A Song of Ice and Fire' series, adapted into 'Game of Thrones'.", answer: "George R.R. Martin" },
-        { points: 1000, question: "'Call me Ishmael' is the famous opening line from this novel.", answer: "Moby Dick" },
+        { points: 400, question: "This popular 2017 tv show on Netflix featuring the profiling of serial killers was on a roll for its first 2 seasons until David Lynch forgot about it.", answer: "Mindhunter" },
+        { points: 600, question: "In a 'Stark' contrast to Breaking Bad this popular tv show featuring dragons, magic, and rape ended on a bad note", answer: "Game of Thrones" },
+        { points: 800, question: "This old comedy show with a very unique theme song features a man who doesn't know how to open doors.", answer: "Seinfeld" },
+        { points: 1000, question: "Basic people love saying they LOVE this tv show on dating apps", answer: "The Office" },
     ]},
     { name: "JONNISMS", questions: [
-        { points: 200, question: "", answer: "Paris" },
-        { points: 400, question: "The capital of Japan.", answer: "Tokyo" },
-        { points: 600, question: "The capital of Australia.", answer: "Canberra" },
-        { points: 800, question: "", answer: "Ottawa" },
-        { points: 1000, question: "Instead of sending prayers, Jon frequently sends this to pals.", answer: "Thoughts" },
+        { points: 200, question: "This popular Jon saying about abuse became notorious through an organization called Crysalis.", answer: "No abuse is okay" },
+        { points: 400, question: "Jon says this when calling pals to verify his identity for security purposes.", answer: "Hi this is Jon" },
+        { points: 600, question: "Instead of sending prayers, Jon frequently sends this to pals.", answer: "Thoughts" },
+        { points: 800, question: "A popular YouTube channel called JonFood has an amazing host who says this at the start of almost every Jon Food video.", answer: "Hey Jon Fooders" },
+        { points: 1000, question: "After Jon met Cody, who loves knitting, he started saying this to show his love.", answer: "I love knitters" },
     ]},
-    { name: "POP CULTURE", questions: [
-        { points: 200, question: "This pop star is known for her 'Beyhive' fanbase.", answer: "Beyonce" },
-        { points: 400, question: "This is the highest-grossing film of all time (unadjusted for inflation).", answer: "Avatar" },
-        { points: 600, question: "The four members of The Beatles were John, Paul, George, and who?", answer: "Ringo" },
-        { points: 800, question: "This TV show is set in the fictional city of Westeros.", answer: "Game of Thrones" },
-        { points: 1000, question: "This artist painted the Mona Lisa.", answer: "Leonardo da Vinci" },
+    { name: "MOVIES", questions: [
+        { points: 200, question: "This popular movie features Leonardo Di Caprio taking quaaludes in a pool.", answer: "Wolf of Wall Street" },
+        { points: 400, question: "This movie featuring actors in blueface is the highest-grossing film of all time (unadjusted for inflation).", answer: "Avatar" },
+        { points: 600, question: "This movie has Jon's favorite movie plot. It features a man with memory loss trying to hunt clues to solve a mystery. Made by the same director who made Interstellar.", answer: "Memento" },
+        { points: 800, question: "This Office Comedy movie features a slow motion printer battle.", answer: "Office Space" },
+        { points: 1000, question: "In 'The Hobbit', this is the name of the funny looking guy, He's also known as the dwarf who wrote the Book of Mazarbul found by the Fellowship in Moria.", answer: "Ori" },
     ]},
   ],
 };
 
 const doubleJONpardyData = {
     categories: [
-      { name: "CULINARY", questions: [
-          { points: 400, question: "E=mc^2 is this scientist's famous equation.", answer: "Jicama" },
-          { points: 800, question: "The unit of electrical resistance.", answer: "Ohm" },
-          { points: 1200, question: "The tendency of an object to resist a change in its state of motion.", answer: "Inertia" },
-          { points: 1600, question: "The type of energy possessed by an object due to its motion.", answer: "Kinetic Energy" },
-          { points: 2000, question: "The law that states that for every action, there is an equal and opposite reaction.", answer: "Newton's Third Law" },
+      { name: "HARD MATH", questions: [
+          { points: 400, question: "This famous English mathematician is often credited as the inventor of calculus and also gave his name to three laws of motion.", answer: "Isaac Newton" },
+          { points: 800, question: "In algebra class, this formula gives the solutions to ax² + bx + c = 0 and is often sung as 'x equals negative b, plus or minus the square root of b squared minus 4ac, all over 2a.", answer: "quadratic formula" },
+          { points: 1200, question: "This integration technique comes from the product rule for derivatives and is summarized by the formula “∫u dv = uv − ∫v du.", answer: "integration by parts" },
+          { points: 1600, question: "In right triangle trigonometry, this function is remembered as 'opposite over hypotenuse' in the SOHCAHTOA mnemonic.", answer: "sine" },
+          { points: 2000, question: "A right triangle has legs of length 5 and 12. Using the Pythagorean theorem you learned in school, this is the length of the hypotenuse.", answer: "13" },
       ]},
-      { name: "WORLD LEADERS", questions: [
-          { points: 400, question: "She was the first female Prime Minister of the United Kingdom.", answer: "Margaret Thatcher" },
-          { points: 800, question: "He was the first black president of South Africa.", answer: "Nelson Mandela" },
-          { points: 1200, question: "The leader of the Soviet Union during the Cuban Missile Crisis.", answer: "Nikita Khrushchev" },
-          { points: 1600, question: "The longest-reigning monarch in British history.", answer: "Queen Elizabeth II" },
-          { points: 2000, question: "He was the emperor of France who was defeated at the Battle of Waterloo.", answer: "Napoleon Bonaparte" },
+      { name: "MAKEUP", questions: [
+          { points: 400, question: "This speedy step that takes about 1 minute—just a swipe or two to wake up the eyes.", answer: "Mascara" },
+          { points: 800, question: "Taking about 2 minutes, this step evens out the skin tone before anything else goes on.", answer: "Foundation" },
+          { points: 1200, question: "At roughly 3 minutes, this step adds shape back into the cheeks using powders, sticks, or creams.", answer: "Contouring" },
+          { points: 1600, question: "This colorful ritual requires multiple shades, three brushes minimum, and the blending dedication of someone buffing a rare gemstone. One wrong swipe and you start the whole lid over.", answer: "eyeshadow" },
+          { points: 2000, question: "Often saved for last, this step can take the longest—one slip outside the lines and you're redoing half your face.", answer: "Lipstick" },
       ]},
-      { name: "CLASSIC FILMS", questions: [
-          { points: 400, question: "In 'The Godfather', this head of the Corleone family is played by Marlon Brando.", answer: "Vito Corleone" },
-          { points: 800, question: "'Here's looking at you, kid' is a famous line from this 1942 film.", answer: "Casablanca" },
-          { points: 1200, question: "This Alfred Hitchcock thriller features a famous shower scene.", answer: "Psycho" },
-          { points: 1600, question: "Dorothy's ruby slippers are a key element in this 1939 classic.", answer: "The Wizard of Oz" },
-          { points: 2000, question: "This epic science fiction film from 1968 was directed by Stanley Kubrick.", answer: "2001: A Space Odyssey" },
+      { name: "BOARD GAMES", questions: [
+          { points: 400, question: "This board game features an old man with a monacle as its logo.", answer: "Monopoly" },
+          { points: 800, question: "This board game involves using dice to gather resources to build roads, settlements, and cities. You can also buy development cards.", answer: "Catan" },
+          { points: 1200, question: "This 4 x 4 grid board game involves players conecting letters to make words.", answer: "Boggle" },
+          { points: 1600, question: "Scorned from PTSD in past experiences from an english teacher who made fun of him for being bad at this game, Jon overcame the abuse beat her and has never lost this game since as a result.", answer: "Scrabble" },
+          { points: 2000, question: "The goal of this Hasbro published 1963 game is to be the last one standing after activating traps", answer: "Mousetrap" },
       ]},
-      { name: "GEOGRAPHY", questions: [
-        { points: 400, question: "This is the longest river in the world.", answer: "The Nile" },
-        { points: 800, question: "This is the largest desert in the world.", answer: "The Antarctic Polar Desert" },
-        { points: 1200, question: "Mount Everest is located in this mountain range.", answer: "The Himalayas" },
-        { points: 1600, question: "This is the only continent that lies in all four hemispheres.", answer: "Africa" },
-        { points: 2000, question: "The Strait of Gibraltar separates Spain from this African country.", answer: "Morocco" },
+      { name: "DIABETES", questions: [
+        { points: 400, question: "This organ, located behind the stomach, produces the hormone insulin.", answer: "pancreas" },
+        { points: 800, question: "This hormone helps move glucose from the bloodstream into the body's cells for energy.", answer: "insulin" },
+        { points: 1200, question: "In this type of diabetes, the body’s immune system destroys the insulin-producing cells in the pancreas.", answer: "Type 1" },
+        { points: 1600, question: "This blood test, often reported as a percentage, shows average blood sugar levels over the past two to three months.", answer: "A1C" },
+        { points: 2000, question: "This serious complication of diabetes involves very high blood sugar and a buildup of acids called ketones, and can be life-threatening if untreated.", answer: "ketoacidosis" },
     ]},
-      { name: "MYTHOLOGY", questions: [
-          { points: 400, question: "In Greek mythology, he is the king of the gods.", answer: "Zeus" },
-          { points: 800, question: "In Norse mythology, this is the hammer of Thor.", answer: "Mjolnir" },
-          { points: 1200, question: "In Egyptian mythology, she is the goddess of cats.", answer: "Bastet" },
-          { points: 1600, question: "The Roman equivalent of the Greek god of war, Ares.", answer: "Mars" },
-          { points: 2000, question: "This half-man, half-bull creature was kept in the Labyrinth on Crete.", answer: "The Minotaur" },
+      { name: "VIDEO GAMES", questions: [
+          { points: 400, question: "This shitty simulation franchise features Orange Juice, B-Fresh, BO$$ Key Yacht$, Michael B Jordan, and Ronnie.", answer: "NBA 2K" }, 
+          { points: 800, question: "This walking simulator stars Stanley.", answer: "The Stanley Parable" },
+          { points: 1200, question: "This virtual reality rhythm game lets you slash the tunes away.", answer: "Beat Saber" },
+          { points: 1600, question: "This game has you shouting stuff at dragons. Fus Ro Dah", answer: "Skyrim" },
+          { points: 2000, question: "This action adventure video game franchise follows Kratos.", answer: "God of War" },
+      ]},
+    ],
+  };
+
+const tripleJONpardyData = {
+    categories: [
+      { name: "CATEGORY 1", questions: [
+          { points: 600, question: "Placeholder question 1", answer: "Answer 1" },
+          { points: 1200, question: "Placeholder question 2", answer: "Answer 2" },
+          { points: 1800, question: "Placeholder question 3", answer: "Answer 3" },
+          { points: 2400, question: "Placeholder question 4", answer: "Answer 4" },
+          { points: 3000, question: "Placeholder question 5", answer: "Answer 5" },
+      ]},
+      { name: "CATEGORY 2", questions: [
+          { points: 600, question: "Placeholder question 1", answer: "Answer 1" },
+          { points: 1200, question: "Placeholder question 2", answer: "Answer 2" },
+          { points: 1800, question: "Placeholder question 3", answer: "Answer 3" },
+          { points: 2400, question: "Placeholder question 4", answer: "Answer 4" },
+          { points: 3000, question: "Placeholder question 5", answer: "Answer 5" },
+      ]},
+      { name: "CATEGORY 3", questions: [
+          { points: 600, question: "Placeholder question 1", answer: "Answer 1" },
+          { points: 1200, question: "Placeholder question 2", answer: "Answer 2" },
+          { points: 1800, question: "Placeholder question 3", answer: "Answer 3" },
+          { points: 2400, question: "Placeholder question 4", answer: "Answer 4" },
+          { points: 3000, question: "Placeholder question 5", answer: "Answer 5" },
+      ]},
+      { name: "CATEGORY 4", questions: [
+          { points: 600, question: "Placeholder question 1", answer: "Answer 1" },
+          { points: 1200, question: "Placeholder question 2", answer: "Answer 2" },
+          { points: 1800, question: "Placeholder question 3", answer: "Answer 3" },
+          { points: 2400, question: "Placeholder question 4", answer: "Answer 4" },
+          { points: 3000, question: "Placeholder question 5", answer: "Answer 5" },
+      ]},
+      { name: "CATEGORY 5", questions: [
+          { points: 600, question: "Placeholder question 1", answer: "Answer 1" },
+          { points: 1200, question: "Placeholder question 2", answer: "Answer 2" },
+          { points: 1800, question: "Placeholder question 3", answer: "Answer 3" },
+          { points: 2400, question: "Placeholder question 4", answer: "Answer 4" },
+          { points: 3000, question: "Placeholder question 5", answer: "Answer 5" },
       ]},
     ],
   };
 
 const finalJONpardyData = {
-    category: "INVENTIONS",
-    question: "This 15th-century invention by Johannes Gutenberg revolutionized communication and the spread of knowledge throughout Europe.",
-    answer: "The printing press"
+    category: "JON",
+    question: "Pronounced like a pirate mistakenly by ASU at his graduation, what is Jon's middle name?",
+    answer: "Yair"
 };
 
 const BUZZER_KEYS = { 'q': 0, 'p': 1, 'z': 2, 'm': 3 };
@@ -285,7 +325,8 @@ useEffect(() => {
   };
 
   const setupRound = (round) => {
-    const data = round === 'JONpardy' ? JONpardyData : doubleJONpardyData;
+    const data = round === 'JONpardy' ? JONpardyData :
+                 round === 'doubleJONpardy' ? doubleJONpardyData : tripleJONpardyData;
     let questionPool = [];
     const newBoard = data.categories.map((cat, catIndex) => ({
       ...cat,
@@ -295,7 +336,7 @@ useEffect(() => {
         return questionData;
       }),
     }));
-    const numDailyDoubles = round === 'JONpardy' ? 1 : 2;
+    const numDailyDoubles = round === 'JONpardy' ? 1 : round === 'doubleJONpardy' ? 2 : 3;
     for (let i = 0; i < numDailyDoubles; i++) {
       let placed = false;
       while (!placed) {
@@ -387,7 +428,7 @@ useEffect(() => {
     e.preventDefault();
     const wager = parseInt(dailyDoubleWager);
     const teamScore = teams[currentTeamIndex].score;
-    const maxWager = Math.max(teamScore, currentRound === 'JONpardy' ? 1000 : 2000);
+    const maxWager = Math.max(teamScore, currentRound === 'JONpardy' ? 1000 : currentRound === 'doubleJONpardy' ? 2000 : 3000);
     if (isNaN(wager) || wager < 5 || wager > maxWager) {
       setWagerError(`Wager must be between $5 and $${maxWager}.`);
       return;
@@ -580,6 +621,13 @@ const handleBuzzIn = useCallback((event) => {
             const startingTeamIndex = teams.findIndex(t => t.score === lowestScore);
             setCurrentTeamIndex(startingTeamIndex >= 0 ? startingTeamIndex : 0);
             setupRound('doubleJONpardy');
+        }, 3000);
+      } else if (currentRound === 'doubleJONpardy') {
+        setTimeout(() => {
+            const lowestScore = Math.min(...teams.map(t => t.score));
+            const startingTeamIndex = teams.findIndex(t => t.score === lowestScore);
+            setCurrentTeamIndex(startingTeamIndex >= 0 ? startingTeamIndex : 0);
+            setupRound('tripleJONpardy');
         }, 3000);
       } else {
         setTimeout(() => {
@@ -789,7 +837,7 @@ const handleBuzzIn = useCallback((event) => {
       <div className="w-full max-w-7xl">
         <header className="w-full mb-6 text-center">
             <h1 className="text-4xl md:text-5xl font-bold tracking-widest text-yellow-400" style={{ textShadow: '2px 2px 4px #000000' }}>
-                {currentRound === 'doubleJONpardy' ? 'Double JONpardy!' : 'JONPARDY!'}
+                {currentRound === 'tripleJONpardy' ? 'Triple JONpardy!' : currentRound === 'doubleJONpardy' ? 'Double JONpardy!' : 'JONPARDY!'}
             </h1>
             <div className="mt-4 flex flex-col md:flex-row justify-center items-center gap-4">
                 <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2">
