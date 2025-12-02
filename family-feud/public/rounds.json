@@ -3,20 +3,6 @@
 
   "rounds": [
     {
-      "question": "Name something you bring to a birthday party?",
-      "multiplier": 1,
-      "answers": [
-        { "text": "A gift for Jon", "points": 70, "aliases": ["gift", "present", "presents", "birthday gift", "birthday present"] },
-        { "text": "Napkins", "points": 10, "aliases": ["paper towels", "tissues", "serviettes"] },
-        { "text": "Drugs", "points": 9, "aliases": ["weed", "marijuana", "pot", "pills", "edibles","blow","cocaine"] },
-        { "text": "Food", "points": 5, "aliases": ["pizza", "cake", "snacks", "chips", "candy", "cookies", "cupcakes", "appetizers"] },
-        { "text": "Drinks", "points": 4, "aliases": ["soda", "beer", "wine", "beverages", "alcohol", "juice", "water", "pop", "booze"] },
-        { "text": "Candles", "points": 3, "aliases": ["birthday candles"] },
-        { "text": "Plates/Cups", "points": 2, "aliases": ["dishes", "utensils", "silverware", "forks", "spoons", "paper plates", "plasticware", "cups"] },
-        { "text": "Games", "points": 1, "aliases": ["board games", "video games", "party games", "card games"] }
-      ]
-    },
-    {
       "question": "Name a reason a video shoot runs late?",
       "multiplier": 1,
       "answers": [
@@ -110,14 +96,16 @@
 
   "fastMoneyPrompts": [
     {
-      "prompt": "Name something you might find at a birthday party",
+      "prompt": "Name something you bring to a birthday party?",
       "answers": [
-        { "text": "people", "points": 40, "aliases": ["friends", "family", "guests", "crowd", "person"] },
-        { "text": "cake", "points": 25, "aliases": ["birthday cake", "cupcakes", "dessert"] },
-        { "text": "presents", "points": 15, "aliases": ["gifts", "gift", "present", "birthday gifts"] },
-        { "text": "candles", "points": 10, "aliases": ["birthday candles"] },
-        { "text": "party hats", "points": 6, "aliases": ["hats", "party hat", "cone hats"] },
-        { "text": "animals", "points": 4, "aliases": ["pets", "dogs", "cats", "dog", "cat", "pony", "horse"] }
+        { "text": "A gift for Jon", "points": 70, "aliases": ["gift", "present", "presents", "birthday gift", "birthday present"] },
+        { "text": "Napkins", "points": 10, "aliases": ["paper towels", "tissues", "serviettes"] },
+        { "text": "Drugs", "points": 9, "aliases": ["weed", "marijuana", "pot", "pills", "edibles","blow","cocaine"] },
+        { "text": "Food", "points": 5, "aliases": ["pizza", "cake", "snacks", "chips", "candy", "cookies", "cupcakes", "appetizers"] },
+        { "text": "Drinks", "points": 4, "aliases": ["soda", "beer", "wine", "beverages", "alcohol", "juice", "water", "pop", "booze"] },
+        { "text": "Candles", "points": 3, "aliases": ["birthday candles"] },
+        { "text": "Plates/Cups", "points": 2, "aliases": ["dishes", "utensils", "silverware", "forks", "spoons", "paper plates", "plasticware", "cups"] },
+        { "text": "Games", "points": 1, "aliases": ["board games", "video games", "party games", "card games"] }
       ]
     },
     {

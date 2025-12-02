@@ -21,6 +21,35 @@ export function FastMoney({
   const [answers2, setAnswers2] = useState(Array(5).fill(""));
   const [duplicates, setDuplicates] = useState(Array(5).fill(false));
   const [player, setPlayer] = useState(1); // 1 = first player, 2 = second player
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const timerRef = React.useRef(null);
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (timerRunning && timeLeft > 0) {
+      timerRef.current = setTimeout(() => {
+        setTimeLeft(t => t - 1);
+      }, 1000);
+    } else if (timeLeft === 0 && timerRunning) {
+      setTimerRunning(false);
+      // Play a sound or alert when time's up
+      blip();
+    }
+    return () => clearTimeout(timerRef.current);
+  }, [timerRunning, timeLeft]);
+
+  const startTimer = () => {
+    const duration = player === 1 ? 20 : 25;
+    setTimeLeft(duration);
+    setTimerRunning(true);
+    blip();
+  };
+
+  const stopTimer = () => {
+    setTimerRunning(false);
+    clearTimeout(timerRef.current);
+  };
 
   // Check for duplicates when Player 2 types
   useEffect(() => {
@@ -50,10 +79,16 @@ export function FastMoney({
     setAnswers2(Array(5).fill(""));
     setDuplicates(Array(5).fill(false));
     setPlayer(1);
+    setTimerRunning(false);
+    setTimeLeft(0);
+    clearTimeout(timerRef.current);
   };
 
   const switchToPlayer2 = () => {
     setPlayer(2);
+    setTimerRunning(false);
+    setTimeLeft(0);
+    clearTimeout(timerRef.current);
     blip();
   };
 
@@ -117,7 +152,33 @@ export function FastMoney({
             Player {player}
           </span>
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
+          {/* Timer Display */}
+          {(timerRunning || timeLeft > 0) && (
+            <div className={cls(
+              "px-4 py-2 rounded-xl font-black text-2xl min-w-[80px] text-center",
+              timeLeft <= 5 ? "bg-red-500 text-white animate-pulse" : "bg-yellow-400 text-black"
+            )}>
+              {timeLeft}s
+            </div>
+          )}
+          {/* Start Timer Button */}
+          {!timerRunning && (
+            <button
+              onClick={startTimer}
+              className="px-3 py-2 rounded-xl bg-yellow-400 text-black hover:bg-yellow-300 transition font-bold"
+            >
+              ▶ Start ({player === 1 ? "20s" : "25s"})
+            </button>
+          )}
+          {timerRunning && (
+            <button
+              onClick={stopTimer}
+              className="px-3 py-2 rounded-xl bg-red-500 text-white hover:bg-red-400 transition font-bold"
+            >
+              ⏹ Stop
+            </button>
+          )}
           {player === 1 && (
             <button
               onClick={switchToPlayer2}
