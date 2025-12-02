@@ -358,6 +358,9 @@
       if (data.players && data.players.length > 0) {
         document.getElementById('team-a-name').value = data.teamNames?.A || 'Team A';
         document.getElementById('team-b-name').value = data.teamNames?.B || 'Team B';
+        // Also update the team selection buttons
+        document.getElementById('select-team-a').textContent = data.teamNames?.A || 'Team A';
+        document.getElementById('select-team-b').textContent = data.teamNames?.B || 'Team B';
       }
     }
 
@@ -373,8 +376,8 @@
       });
 
       // Team name changes
-      document.getElementById('team-a-name').addEventListener('change', saveTeamNames);
-      document.getElementById('team-b-name').addEventListener('change', saveTeamNames);
+      document.getElementById('team-a-name').addEventListener('input', saveTeamNames);
+      document.getElementById('team-b-name').addEventListener('input', saveTeamNames);
 
       // Start game night
       document.getElementById('start-btn').addEventListener('click', startGameNight);
@@ -430,6 +433,9 @@
         B: document.getElementById('team-b-name').value || 'Team B'
       };
       GameNightScoring.saveData(data);
+      // Update the team selection buttons with new names
+      document.getElementById('select-team-a').textContent = data.teamNames.A;
+      document.getElementById('select-team-b').textContent = data.teamNames.B;
       updateUI();
     }
 
