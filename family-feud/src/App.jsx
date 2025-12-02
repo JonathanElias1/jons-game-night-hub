@@ -483,7 +483,7 @@ export default function FamilyFeudApp() {
   }
 
   const stealingTeam = controlTeam === "A" ? "B" : "A";
-  
+
   function resolveSteal(success) {
     const stealTeamName = stealingTeam === "A" ? teamAName : teamBName;
     const controlTeamName = controlTeam === "A" ? teamAName : teamBName;
@@ -643,8 +643,8 @@ export default function FamilyFeudApp() {
               toggleReveal={toggleReveal}
             />
 
-            {/* Answer Input - shown during gameplay */}
-            {((phase === "round" && controlTeam) ||
+            {/* Answer Input - shown during gameplay, hidden when all answers revealed */}
+            {!allAnswersRevealed && ((phase === "round" && controlTeam) ||
               (phase === "faceoff" && faceoffBuzz) ||
               (phase === "steal" && controlTeam && !stealAttempted)) && (
               <AnswerInput
