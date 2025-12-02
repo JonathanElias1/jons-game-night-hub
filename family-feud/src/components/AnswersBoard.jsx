@@ -1,22 +1,20 @@
 import React from "react";
 import { cls } from "../utils/helpers";
 
-export function AnswersBoard({ answers, revealed, phase, toggleReveal }) {
+export function AnswersBoard({ answers, revealed, phase }) {
   return (
     <div className={cls("mt-4 grid gap-3", phase === "sudden" ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
       {answers.map((a, i) => {
         const isBlank = !a.points;
         const shown = revealed[i];
         return (
-          <button
+          <div
             key={i}
-            disabled={isBlank}
-            onClick={() => toggleReveal(i)}
             className={cls(
-              "relative text-left rounded-2xl p-4 min-h-[64px] shadow transition focus:outline-none",
-              "bg-white text-black hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
+              "relative text-left rounded-2xl p-4 min-h-[64px] shadow",
+              "bg-white text-black",
+              isBlank && "opacity-40"
             )}
-            title={isBlank ? "" : `Toggle answer ${i + 1} (key ${i + 1})`}
           >
             {!isBlank && <div className="absolute right-3 top-2 text-xs font-bold opacity-60">{i + 1}</div>}
             {isBlank ? (
@@ -29,11 +27,11 @@ export function AnswersBoard({ answers, revealed, phase, toggleReveal }) {
             ) : (
               <div className="flex items-center justify-between gap-3">
                 <div className="h-5 w-5 rounded-full bg-black/10" />
-                <div className="text-lg font-semibold opacity-60">Reveal</div>
+                <div className="text-lg font-semibold opacity-60">???</div>
                 <div className="h-5 w-10 rounded bg-black/10" />
               </div>
             )}
-          </button>
+          </div>
         );
       })}
     </div>

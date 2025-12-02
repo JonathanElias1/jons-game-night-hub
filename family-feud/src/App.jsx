@@ -60,6 +60,8 @@ export default function FamilyFeudApp() {
   const [faceoffBuzz, setFaceoffBuzz] = useState(null);
   const [faceoffTurn, setFaceoffTurn] = useState(null);
   const [controlTeam, setControlTeam] = useState(null);
+  const [faceoffAnswerA, setFaceoffAnswerA] = useState(null); // Index of answer Team A got
+  const [faceoffAnswerB, setFaceoffAnswerB] = useState(null); // Index of answer Team B got
   const [fmPoints1, setFmPoints1] = useState(Array(5).fill(0));
   const [fmPoints2, setFmPoints2] = useState(Array(5).fill(0));
   const [fmShown, setFmShown] = useState(Array(5).fill(false));
@@ -277,6 +279,8 @@ export default function FamilyFeudApp() {
     setFaceoffBuzz(null);
     setFaceoffTurn(null);
     setControlTeam(null);
+    setFaceoffAnswerA(null);
+    setFaceoffAnswerB(null);
     setRevealed(Array(8).fill(false));
     setStrikes(0);
     setBank(0);
@@ -452,6 +456,8 @@ export default function FamilyFeudApp() {
     setFaceoffBuzz(null);
     setFaceoffTurn(null);
     setControlTeam(null);
+    setFaceoffAnswerA(null);
+    setFaceoffAnswerB(null);
     setFmPoints1(Array(5).fill(0));
     setFmPoints2(Array(5).fill(0));
     setFmShown(Array(5).fill(false));
@@ -641,9 +647,63 @@ export default function FamilyFeudApp() {
                 revealed={revealed}
                 onReveal={(idx) => {
                   toggleReveal(idx);
-                  // During faceoff, if they get an answer, they take control
+                  // During faceoff - track answers and let both teams guess
                   if (phase === "faceoff" && faceoffTurn) {
-                    beginRound(faceoffTurn);
+                    // Reveal full question after any faceoff guess
+                    revealFullQuestion();
+
+                    const answerPoints = answers[idx]?.points || 0;
+                    const isTopAnswer = idx === 0;
+
+                    // If someone gets the #1 answer, they automatically win!
+                    if (isTopAnswer) {
+                      const winnerName = faceoffTurn === "A" ? teamAName : teamBName;
+                      addAction(`🎯 ${winnerName} got the #1 answer and wins the faceoff!`);
+                      beginRound(faceoffTurn);
+                      return;
+                    }
+
+                    if (faceoffTurn === "A") {
+                      setFaceoffAnswerA(idx);
+                      // Team A got an answer, now Team B gets a chance
+                      const otherTeamAnswer = faceoffAnswerB;
+                      if (otherTeamAnswer !== null) {
+                        // Both teams have answered - compare
+                        const teamAPoints = answerPoints;
+                        const teamBPoints = answers[otherTeamAnswer]?.points || 0;
+                        if (teamAPoints >= teamBPoints) {
+                          addAction(`${teamAName} wins faceoff with higher answer!`);
+                          beginRound("A");
+                        } else {
+                          addAction(`${teamBName} wins faceoff with higher answer!`);
+                          beginRound("B");
+                        }
+                      } else {
+                        // Team A answered first, switch to Team B
+                        addAction(`${teamAName} got "${answers[idx].text}" for ${answerPoints}! ${teamBName}'s turn to beat it.`);
+                        setFaceoffTurn("B");
+                      }
+                    } else {
+                      setFaceoffAnswerB(idx);
+                      // Team B got an answer
+                      const otherTeamAnswer = faceoffAnswerA;
+                      if (otherTeamAnswer !== null) {
+                        // Both teams have answered - compare
+                        const teamBPoints = answerPoints;
+                        const teamAPoints = answers[otherTeamAnswer]?.points || 0;
+                        if (teamBPoints > teamAPoints) {
+                          addAction(`${teamBName} wins faceoff with higher answer!`);
+                          beginRound("B");
+                        } else {
+                          addAction(`${teamAName} wins faceoff with higher/equal answer!`);
+                          beginRound("A");
+                        }
+                      } else {
+                        // Team B answered first, switch to Team A
+                        addAction(`${teamBName} got "${answers[idx].text}" for ${answerPoints}! ${teamAName}'s turn to beat it.`);
+                        setFaceoffTurn("A");
+                      }
+                    }
                   }
                   // During steal, if they get a correct answer, auto-succeed the steal
                   if (phase === "steal") {
@@ -660,9 +720,33 @@ export default function FamilyFeudApp() {
                     addAction(`Steal failed! "${answer}" was wrong`);
                     resolveSteal(false);
                   } else if (phase === "faceoff") {
-                    // Wrong answer in faceoff - pass to other team
-                    passFaceoff();
-                    addAction(`Wrong answer: "${answer}"`);
+                    // Reveal full question after any faceoff guess
+                    revealFullQuestion();
+
+                    // Wrong answer in faceoff
+                    if (faceoffTurn === "A") {
+                      // Check if Team B already answered
+                      if (faceoffAnswerB !== null) {
+                        // Team A got it wrong, Team B already has an answer - Team B wins
+                        addAction(`Wrong! ${teamBName} wins the faceoff!`);
+                        beginRound("B");
+                      } else {
+                        // Team A wrong, pass to Team B
+                        addAction(`Wrong answer: "${answer}". ${teamBName}'s turn!`);
+                        setFaceoffTurn("B");
+                      }
+                    } else {
+                      // Team B got it wrong
+                      if (faceoffAnswerA !== null) {
+                        // Team B got it wrong, Team A already has an answer - Team A wins
+                        addAction(`Wrong! ${teamAName} wins the faceoff!`);
+                        beginRound("A");
+                      } else {
+                        // Team B wrong, pass to Team A
+                        addAction(`Wrong answer: "${answer}". ${teamAName}'s turn!`);
+                        setFaceoffTurn("A");
+                      }
+                    }
                   } else {
                     buzz();
                     addAction(`Wrong answer: "${answer}"`);
@@ -671,7 +755,7 @@ export default function FamilyFeudApp() {
                 disabled={phase === "gameover" || phase === "fast"}
                 placeholder={
                   phase === "steal" ? "Type steal attempt..." :
-                  phase === "faceoff" ? "Type your faceoff answer..." :
+                  phase === "faceoff" ? `${faceoffTurn === "A" ? teamAName : teamBName}: Type your faceoff answer...` :
                   "Type an answer..."
                 }
               />
