@@ -72,6 +72,7 @@ export default function FamilyFeudApp() {
   const [timerSeconds, setTimerSeconds] = useState(20);
   const [hubEnabled, setHubEnabled] = useState(false);
   const [fmTargetHit, setFmTargetHit] = useState(false);
+  const [stealAttempted, setStealAttempted] = useState(false);
 
   const typewriterTimerRef = useRef(null);
   
@@ -285,6 +286,7 @@ export default function FamilyFeudApp() {
     setStrikes(0);
     setBank(0);
     setTimerActive(false);
+    setStealAttempted(false);
   }
   
   function startSudden() {
@@ -462,6 +464,7 @@ export default function FamilyFeudApp() {
     setFmPoints2(Array(5).fill(0));
     setFmShown(Array(5).fill(false));
     setFmTargetHit(false);
+    setStealAttempted(false);
     setIsAwarding(false);
     setActionHistory([]);
     setTimerActive(false);
@@ -484,6 +487,8 @@ export default function FamilyFeudApp() {
   function resolveSteal(success) {
     const stealTeamName = stealingTeam === "A" ? teamAName : teamBName;
     const controlTeamName = controlTeam === "A" ? teamAName : teamBName;
+
+    setStealAttempted(true); // Disable further input after steal attempt
 
     if (success) {
       award(stealingTeam);
@@ -641,7 +646,7 @@ export default function FamilyFeudApp() {
             {/* Answer Input - shown during gameplay */}
             {((phase === "round" && controlTeam) ||
               (phase === "faceoff" && faceoffBuzz) ||
-              (phase === "steal" && controlTeam)) && (
+              (phase === "steal" && controlTeam && !stealAttempted)) && (
               <AnswerInput
                 answers={answers}
                 revealed={revealed}
