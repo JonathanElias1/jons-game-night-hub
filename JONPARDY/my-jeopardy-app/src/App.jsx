@@ -157,6 +157,7 @@ const finalJONpardyData = {
 const BUZZER_KEYS = { 'q': 0, 'p': 1, 'z': 2, 'm': 3 };
 
 export default function App() {
+  // Build: 2025-12-02-v3 - ensures fresh cache
   const [gameState, setGameState] = useState('setup');
   const [currentRound, setCurrentRound] = useState('JONpardy');
   const [board, setBoard] = useState([]);
@@ -967,4 +968,3 @@ const handleBuzzIn = useCallback((event) => {
     </div>
   );
 }
-
