@@ -153,28 +153,28 @@ export default function FamilyFeudApp() {
       if (statUpdate.roundWinBonus) newStats.roundWinBonus = (newStats.roundWinBonus || 0) + statUpdate.roundWinBonus;
       if (statUpdate.fastMoneyBonus) newStats.fastMoneyBonus = (newStats.fastMoneyBonus || 0) + statUpdate.fastMoneyBonus;
       if (statUpdate.gameWinBonus) newStats.gameWinBonus = (newStats.gameWinBonus || 0) + statUpdate.gameWinBonus;
-      // Calculate personal score: 10 per answer, +15 bonus for top answer, +20 for faceoff win, +25 for steal + team bonuses
+      // Calculate personal score (reduced to balance across games)
       const personalScore =
-        (newStats.answersRevealed * 10) +
-        (newStats.topAnswers * 15) +
-        (newStats.faceoffWins * 20) +
-        (newStats.stealsWon * 25) +
+        (newStats.answersRevealed * 6) +     // +6 per answer (was 10)
+        (newStats.topAnswers * 10) +         // +10 for top answer (was 15)
+        (newStats.faceoffWins * 12) +        // +12 for faceoff win (was 20)
+        (newStats.stealsWon * 15) +          // +15 for steal (was 25)
         (newStats.roundWinBonus || 0) +      // +5 per round win
         (newStats.fastMoneyBonus || 0) +     // +10 for FM win
-        (newStats.gameWinBonus || 0) +       // +20 for game win
+        (newStats.gameWinBonus || 0) +       // +15 for game win
         (newStats.fastMoneyPoints || 0);
-      // Also send to hub scoring
+      // Also send to hub scoring (reduced values)
       if (hubEnabled && statUpdate.answersRevealed) {
-        addHubPlayerScore(player.name, 10, 'Family Feud', 'Correct answer');
+        addHubPlayerScore(player.name, 6, 'Family Feud', 'Correct answer (+6)');
       }
       if (hubEnabled && statUpdate.topAnswers) {
-        addHubPlayerScore(player.name, 15, 'Family Feud', 'Top answer bonus');
+        addHubPlayerScore(player.name, 10, 'Family Feud', 'Top answer (+10)');
       }
       if (hubEnabled && statUpdate.faceoffWins) {
-        addHubPlayerScore(player.name, 20, 'Family Feud', 'Won faceoff');
+        addHubPlayerScore(player.name, 12, 'Family Feud', 'Won faceoff (+12)');
       }
       if (hubEnabled && statUpdate.stealsWon) {
-        addHubPlayerScore(player.name, 25, 'Family Feud', 'Successful steal');
+        addHubPlayerScore(player.name, 15, 'Family Feud', 'Successful steal (+15)');
       }
       return { ...player, stats: newStats, personalScore };
     }));
@@ -628,15 +628,15 @@ export default function FamilyFeudApp() {
 
   const winner = teamA > teamB ? teamAName : teamB > teamA ? teamBName : "Tie";
 
-  // Award game win bonus (+20 per player) when game ends
+  // Award game win bonus (+15 per player) when game ends (reduced from 20)
   useEffect(() => {
     if (phase === "gameover" && !gameWinBonusAwarded && winner !== "Tie") {
       setGameWinBonusAwarded(true);
       const winningTeamLetter = teamA > teamB ? "A" : "B";
       players.filter(p => p.team === winningTeamLetter).forEach(p => {
-        updatePlayerStats(p.id, { gameWinBonus: 20 });
+        updatePlayerStats(p.id, { gameWinBonus: 15 });
       });
-      addAction(`+20 personal points to all ${winner} players for winning the game!`);
+      addAction(`+15 personal points to all ${winner} players for winning the game!`);
     }
   }, [phase, gameWinBonusAwarded, winner, teamA, teamB, players]);
 

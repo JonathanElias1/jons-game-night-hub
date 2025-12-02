@@ -158,25 +158,25 @@ export default function App() {
   }, []);
 
   // Update individual player stats and calculate personal score
+  // Jonpardy is team-based - all players on the team earn points together
   const updatePlayerStats = useCallback((playerId, statUpdate) => {
     setPlayers(prev => prev.map(p => {
       if (p.id !== playerId) return p;
       const newStats = { ...p.stats };
 
-      // Individual actions
+      // Track counts for stats display
       if (statUpdate.correctAnswer) newStats.correctAnswers = (newStats.correctAnswers || 0) + 1;
       if (statUpdate.dailyDoubleCorrect) newStats.dailyDoubleCorrect = (newStats.dailyDoubleCorrect || 0) + 1;
       if (statUpdate.finalCorrect) newStats.finalCorrect = (newStats.finalCorrect || 0) + 1;
 
+      // Accumulate points (now scaled by question value)
+      if (statUpdate.hubPoints) newStats.totalPoints = (newStats.totalPoints || 0) + statUpdate.hubPoints;
+
       // Team bonuses
       if (statUpdate.gameWinBonus) newStats.gameWinBonus = (newStats.gameWinBonus || 0) + statUpdate.gameWinBonus;
 
-      // Calculate personal score
-      const personalScore =
-        (newStats.correctAnswers || 0) * 10 +    // +10 per correct answer
-        (newStats.dailyDoubleCorrect || 0) * 15 + // +15 per Daily Double correct
-        (newStats.finalCorrect || 0) * 20 +       // +20 for Final Jonpardy correct
-        (newStats.gameWinBonus || 0);             // +10 for team game win
+      // Personal score = accumulated points + game win bonus
+      const personalScore = (newStats.totalPoints || 0) + (newStats.gameWinBonus || 0);
 
       // Sync to hub
       if (statUpdate.hubPoints && window.GameNightScoring) {
@@ -395,13 +395,7 @@ useEffect(() => {
     setActiveQuestion(prev => ({ ...prev, wager }));
     setDailyDoubleWager('');
     setWagerError('');
-
-    // For Daily Double, show player selector if we have players
-    const teamPlayers = players.filter(p => p.teamIndex === currentTeamIndex);
-    if (teamPlayers.length > 0) {
-      setAwaitingPlayerSelect(true);
-      setSelectedPlayerId(null);
-    }
+    // Jonpardy is team-based - go straight to answering
   };
 
   // Handle player selection after buzz-in
@@ -420,17 +414,10 @@ const handleBuzzIn = useCallback((event) => {
         stopTyping();
         playSound('select');
         setCurrentTeamIndex(teamIndex);
-
-        // If we have players on this team, show player selector first
-        const teamPlayers = players.filter(p => p.teamIndex === teamIndex);
-        if (teamPlayers.length > 0) {
-          setAwaitingPlayerSelect(true);
-          setSelectedPlayerId(null);
-        } else {
-          setQuestionPhase('answering');
-        }
+        // Go straight to answering - Jonpardy is team-based (teams discuss together)
+        setQuestionPhase('answering');
     }
-  }, [questionPhase, numTeams, attemptedBy, stopTyping, players]);
+  }, [questionPhase, numTeams, attemptedBy, stopTyping]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleBuzzIn);
@@ -487,11 +474,7 @@ const handleBuzzIn = useCallback((event) => {
     if (isCorrect) {
       playSound('correct');
       team.score += points;
-
-      // Get the answering player's name for the message
-      const answeringPlayer = players.find(p => p.id === selectedPlayerId);
-      const playerName = answeringPlayer ? answeringPlayer.name : team.name;
-      setShowResult({ status: 'correct', message: `Correct! +$${points} for ${playerName}` });
+      setShowResult({ status: 'correct', message: `Correct! +$${points} for ${team.name}` });
 
       const newBoard = [...board];
       newBoard[activeQuestion.catIndex].questions[activeQuestion.qIndex].answered = true;
@@ -508,19 +491,29 @@ const handleBuzzIn = useCallback((event) => {
         }
       }
 
-      // Track individual player scoring
-      if (selectedPlayerId) {
+      // Award ALL players on the team - Jonpardy is collaborative!
+      // Points scale by question value: $200=2, $400=4, $600=6, $800=8, $1000=10
+      const teamLetter = hubTeamMap[currentTeamIndex]; // 'A' or 'B'
+      if (teamLetter) {
+        const teamPlayers = players.filter(p => p.team === teamLetter);
         if (activeQuestion.isDailyDouble) {
-          updatePlayerStats(selectedPlayerId, {
-            dailyDoubleCorrect: true,
-            hubPoints: 15,
-            description: 'Daily Double correct (+15)'
+          // Daily Double: +15 per player
+          teamPlayers.forEach(p => {
+            updatePlayerStats(p.id, {
+              dailyDoubleCorrect: true,
+              hubPoints: 15,
+              description: 'Daily Double correct (+15)'
+            });
           });
         } else {
-          updatePlayerStats(selectedPlayerId, {
-            correctAnswer: true,
-            hubPoints: 10,
-            description: 'Correct answer (+10)'
+          // Regular question: scale by dollar value ($200=2, $1000=10)
+          const individualPoints = dollarToHubPoints(activeQuestion.points);
+          teamPlayers.forEach(p => {
+            updatePlayerStats(p.id, {
+              correctAnswer: true,
+              hubPoints: individualPoints,
+              description: `Correct $${activeQuestion.points} (+${individualPoints})`
+            });
           });
         }
       }
@@ -529,7 +522,6 @@ const handleBuzzIn = useCallback((event) => {
         setActiveQuestion(null);
         setUserAnswer('');
         setShowResult(null);
-        setSelectedPlayerId(null);
         setGameState('playing');
       }, 3000);
     } else { // Incorrect Answer
@@ -845,7 +837,7 @@ const handleBuzzIn = useCallback((event) => {
               </p>
               
               <div className="h-16">
-                {questionPhase === 'buzzing' && !awaitingPlayerSelect &&
+                {questionPhase === 'buzzing' &&
                     <div className="flex flex-col items-center">
                         <div className="text-3xl text-yellow-400 animate-pulse">Buzz In!</div>
                         <div className="mt-2 text-2xl font-bold text-white">{buzzInTimer}</div>
@@ -853,39 +845,10 @@ const handleBuzzIn = useCallback((event) => {
                 }
               </div>
 
-              {/* Player Selection after buzz-in */}
-              {awaitingPlayerSelect && (
-                <div className="w-full">
-                  <h3 className="text-xl md:text-2xl font-bold text-green-400 mb-4">
-                    Who buzzed in for {teams[currentTeamIndex].name}?
-                  </h3>
-                  <div className="flex flex-wrap justify-center gap-3 mb-4">
-                    {players.filter(p => p.teamIndex === currentTeamIndex).map(player => (
-                      <button
-                        key={player.id}
-                        onClick={() => handleSelectPlayer(player.id)}
-                        className="px-4 py-3 rounded-lg font-semibold transition bg-white/20 text-white hover:bg-yellow-400 hover:text-black flex items-center gap-2"
-                      >
-                        <span className="text-xl">{player.avatar}</span>
-                        <span>{player.name}</span>
-                        {player.personalScore > 0 && (
-                          <span className="text-xs bg-black/30 px-1.5 py-0.5 rounded">
-                            {player.personalScore}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {questionPhase === 'answering' && !awaitingPlayerSelect && (
+              {questionPhase === 'answering' && (
                 <>
                   <h3 className="text-xl md:text-2xl font-bold text-green-400 mb-4">
-                    {selectedPlayerId
-                      ? `${players.find(p => p.id === selectedPlayerId)?.name}'s Turn`
-                      : `${teams[currentTeamIndex].name}'s Turn`
-                    }
+                    {teams[currentTeamIndex].name}'s Turn
                   </h3>
                   <form onSubmit={handleSubmitAnswer} className="w-full flex flex-col sm:flex-row gap-2">
                     <input type="text" value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} autoFocus placeholder="What is...?" className="flex-grow p-3 rounded-md bg-gray-800 text-white border-2 border-blue-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-lg"/>
