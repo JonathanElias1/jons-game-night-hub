@@ -829,7 +829,7 @@ function addHubTeamScore(team, points, gameName, description) {
 
 function addHubPlayerScore(playerId, points, gameName, description) {
   if (!window.GameNightScoring) return;
-  window.GameNightScoring.addPlayerScore(playerId, points, gameName, description);
+  window.GameNightScoring.addScore(playerId, points, gameName, description);
 }
 
 export default function App() {

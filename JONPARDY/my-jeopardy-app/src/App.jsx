@@ -19,7 +19,7 @@ function addHubTeamScore(team, points, gameName) {
 
 function addHubPlayerScore(playerId, points, gameName, description) {
   if (!window.GameNightScoring) return;
-  window.GameNightScoring.addPlayerScore(playerId, points, gameName, description);
+  window.GameNightScoring.addScore(playerId, points, gameName, description);
 }
 
 // Convert question dollar value to hub points (scaled: $200 = 2pts, $1000 = 10pts)

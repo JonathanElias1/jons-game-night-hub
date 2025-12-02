@@ -41,7 +41,7 @@ function addHubTeamScore(team, points, gameName, description) {
 
 function addHubPlayerScore(playerName, points, gameName, description) {
   if (!window.GameNightScoring) return;
-  window.GameNightScoring.addPlayerScore(playerName, points, gameName, description);
+  window.GameNightScoring.addScore(playerName, points, gameName, description);
 }
 
 export default function FamilyFeudApp() {
