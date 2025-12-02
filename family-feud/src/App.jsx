@@ -78,6 +78,7 @@ export default function FamilyFeudApp() {
   const [selectedPlayerA, setSelectedPlayerA] = useState(null); // Selected player from Team A
   const [selectedPlayerB, setSelectedPlayerB] = useState(null); // Selected player from Team B
   const [gameWinBonusAwarded, setGameWinBonusAwarded] = useState(false); // Track if game win bonus awarded
+  const [faceoffWinner, setFaceoffWinner] = useState(null); // Which team won faceoff (for pass/play choice)
 
   // Auto-rotation: track which player index for faceoffs and main play
   const [faceoffPlayerIndex, setFaceoffPlayerIndex] = useState(0); // Which player does faceoffs (increments each round)
@@ -394,6 +395,7 @@ export default function FamilyFeudApp() {
     setTimerActive(false);
     setStealAttempted(false);
     setStealResult(null);
+    setFaceoffWinner(null);
 
     // Auto-set faceoff players based on round number
     setPlayerToFaceoffPlayer("A");
@@ -414,15 +416,51 @@ export default function FamilyFeudApp() {
     addAction("Sudden Death begins!");
   }
   
-  function beginRound(team) {
-    if (!faceoffBuzz) return;
+  // Show pass/play choice after faceoff win
+  function showPassOrPlay(winningTeam) {
+    const losingTeam = winningTeam === "A" ? "B" : "A";
+    setFaceoffWinner(winningTeam);
+    setPhase("passOrPlay");
+    // Rotate losing team so their next player is ready for steal or next round
+    rotateToNextPlayer(losingTeam);
+    const winnerName = winningTeam === "A" ? teamAName : teamBName;
+    addAction(`${winnerName} won the faceoff! Play or Pass?`);
+  }
+
+  // Winner chooses to play
+  function choosePlay() {
+    if (!faceoffWinner) return;
+    const teamName = faceoffWinner === "A" ? teamAName : teamBName;
+    addAction(`${teamName} chooses to PLAY!`);
+    beginRoundWithTeam(faceoffWinner);
+  }
+
+  // Winner chooses to pass
+  function choosePass() {
+    if (!faceoffWinner) return;
+    const otherTeam = faceoffWinner === "A" ? "B" : "A";
+    const winnerName = faceoffWinner === "A" ? teamAName : teamBName;
+    const otherName = otherTeam === "A" ? teamAName : teamBName;
+    addAction(`${winnerName} chooses to PASS! ${otherName} must play.`);
+    beginRoundWithTeam(otherTeam);
+  }
+
+  // Start the round with a specific team
+  function beginRoundWithTeam(team) {
     setControlTeam(team);
     setPhase("round");
+    setFaceoffWinner(null);
     blip();
     const teamName = team === "A" ? teamAName : teamBName;
     addAction(`${teamName} takes control!`);
-    // Faceoff winner won the right to play - now rotate to next player for main round
+    // Rotate to next player for main round (faceoff player already answered)
     rotateToNextPlayer(team);
+  }
+
+  // Legacy function for compatibility
+  function beginRound(team) {
+    if (!faceoffBuzz) return;
+    showPassOrPlay(team);
   }
   
   function passFaceoff() {
@@ -595,6 +633,7 @@ export default function FamilyFeudApp() {
     setFmTargetHit(false);
     setStealAttempted(false);
     setStealResult(null);
+    setFaceoffWinner(null);
     setSelectedPlayerA(null);
     setSelectedPlayerB(null);
     setGameWinBonusAwarded(false);
@@ -984,15 +1023,46 @@ export default function FamilyFeudApp() {
             )}
 
             {(phase === "faceoff" || phase === "sudden") && (
-              <FaceoffControls 
-                phase={phase} 
-                faceoffBuzz={faceoffBuzz} 
-                faceoffTurn={faceoffTurn} 
-                beginRound={beginRound} 
-                passFaceoff={passFaceoff} 
-                startFaceoff={startFaceoff} 
-                startSudden={startSudden} 
+              <FaceoffControls
+                phase={phase}
+                faceoffBuzz={faceoffBuzz}
+                faceoffTurn={faceoffTurn}
+                beginRound={beginRound}
+                passFaceoff={passFaceoff}
+                startFaceoff={startFaceoff}
+                startSudden={startSudden}
               />
+            )}
+
+            {/* Pass or Play choice after faceoff win */}
+            {phase === "passOrPlay" && faceoffWinner && (
+              <div className="mb-6 p-6 bg-gradient-to-r from-yellow-500/30 to-orange-500/30 rounded-2xl border-2 border-yellow-400">
+                <div className="text-center mb-4">
+                  <div className="text-2xl font-bold text-yellow-300 mb-2">
+                    🏆 {faceoffWinner === "A" ? teamAName : teamBName} Won the Faceoff!
+                  </div>
+                  <div className="text-lg text-white">
+                    Do you want to PLAY or PASS?
+                  </div>
+                </div>
+                <div className="flex justify-center gap-4">
+                  <button
+                    onClick={choosePlay}
+                    className="px-8 py-4 bg-green-500 hover:bg-green-600 text-white font-bold text-xl rounded-xl shadow-lg transform hover:scale-105 transition"
+                  >
+                    ✅ PLAY
+                  </button>
+                  <button
+                    onClick={choosePass}
+                    className="px-8 py-4 bg-red-500 hover:bg-red-600 text-white font-bold text-xl rounded-xl shadow-lg transform hover:scale-105 transition"
+                  >
+                    ❌ PASS
+                  </button>
+                </div>
+                <div className="text-center mt-3 text-sm text-white/70">
+                  Play = Your team answers | Pass = Other team must answer
+                </div>
+              </div>
             )}
 
             {(phase === "round" || phase === "steal") && (
