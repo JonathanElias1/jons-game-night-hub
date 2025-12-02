@@ -13,7 +13,7 @@ export function GameOverScreen({ winner, teamA, teamB, teamAName, teamBName, pla
       <div className="text-center mb-6">
         <div className="text-5xl md:text-6xl font-black mb-4">GAME OVER!</div>
        <div className="text-3xl md:text-4xl font-bold mb-2">
-  {winner === "Tie" ? "It's a Tie!" : `🏆 ${winner === "Team A" ? teamAName : teamBName} Wins! 🏆`}
+  {winner === "Tie" ? "It's a Tie!" : `🏆 ${winner} Wins! 🏆`}
 </div>
       </div>
 
