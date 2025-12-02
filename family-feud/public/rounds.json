@@ -45,7 +45,7 @@
       "answers": [
         { "text": "Six Seven", "points": 65, "aliases": ["67", "sixty seven"] },
         { "text": "Fender Bender", "points": 20, "aliases": ["car accident", "fenderbender"] },
-        { "text": "LOL", "points": 15, "aliases": ["laugh out loud", "lmao", "lmfao", "rofl"] },
+        { "text": "LOL", "points": 15, "aliases": ["laugh out loud", "lmao", "lmfao", "rofl"] }
       ]
     },
     {
