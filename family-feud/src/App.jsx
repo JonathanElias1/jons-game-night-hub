@@ -79,6 +79,11 @@ export default function FamilyFeudApp() {
   const [selectedPlayerB, setSelectedPlayerB] = useState(null); // Selected player from Team B
   const [gameWinBonusAwarded, setGameWinBonusAwarded] = useState(false); // Track if game win bonus awarded
 
+  // Auto-rotation: track which player index for faceoffs and main play
+  const [faceoffPlayerIndex, setFaceoffPlayerIndex] = useState(0); // Which player does faceoffs (increments each round)
+  const [currentPlayerIndexA, setCurrentPlayerIndexA] = useState(0); // Whose turn during main play (Team A)
+  const [currentPlayerIndexB, setCurrentPlayerIndexB] = useState(0); // Whose turn during main play (Team B)
+
   const typewriterTimerRef = useRef(null);
   
   const { data, loaded } = useGameData();
@@ -180,9 +185,55 @@ export default function FamilyFeudApp() {
     }));
   };
 
-  // Get currently selected player for the active team
+  // Get players for a specific team
+  const getTeamPlayers = (team) => players.filter(p => p.team === team);
+
+  // Get current player based on auto-rotation index (or manual override if set)
   const getSelectedPlayer = (team) => {
-    return team === "A" ? selectedPlayerA : selectedPlayerB;
+    const manualSelection = team === "A" ? selectedPlayerA : selectedPlayerB;
+    if (manualSelection) return manualSelection;
+
+    // Auto-select based on current index
+    const teamPlayers = getTeamPlayers(team);
+    if (teamPlayers.length === 0) return null;
+    const index = team === "A" ? currentPlayerIndexA : currentPlayerIndexB;
+    return teamPlayers[index % teamPlayers.length]?.id || null;
+  };
+
+  // Get the faceoff player for a team (based on round number)
+  const getFaceoffPlayer = (team) => {
+    const teamPlayers = getTeamPlayers(team);
+    if (teamPlayers.length === 0) return null;
+    return teamPlayers[faceoffPlayerIndex % teamPlayers.length];
+  };
+
+  // Rotate to next player on a team (for main play)
+  const rotateToNextPlayer = (team) => {
+    const teamPlayers = getTeamPlayers(team);
+    if (teamPlayers.length <= 1) return;
+
+    if (team === "A") {
+      setCurrentPlayerIndexA(prev => (prev + 1) % teamPlayers.length);
+      setSelectedPlayerA(null); // Clear manual override
+    } else {
+      setCurrentPlayerIndexB(prev => (prev + 1) % teamPlayers.length);
+      setSelectedPlayerB(null); // Clear manual override
+    }
+  };
+
+  // Set current player to the faceoff player (when round starts)
+  const setPlayerToFaceoffPlayer = (team) => {
+    const teamPlayers = getTeamPlayers(team);
+    if (teamPlayers.length === 0) return;
+    const faceoffIdx = faceoffPlayerIndex % teamPlayers.length;
+
+    if (team === "A") {
+      setCurrentPlayerIndexA(faceoffIdx);
+      setSelectedPlayerA(null);
+    } else {
+      setCurrentPlayerIndexB(faceoffIdx);
+      setSelectedPlayerB(null);
+    }
   };
 
   const stopTyping = () => {
@@ -343,7 +394,10 @@ export default function FamilyFeudApp() {
     setTimerActive(false);
     setStealAttempted(false);
     setStealResult(null);
-    // Don't reset selected players between rounds - they persist
+
+    // Auto-set faceoff players based on round number
+    setPlayerToFaceoffPlayer("A");
+    setPlayerToFaceoffPlayer("B");
   }
 
   function startSudden() {
@@ -419,6 +473,11 @@ export default function FamilyFeudApp() {
         if (isTopAnswer && hubEnabled && faceoffBuzz) {
           addHubTeamScore(faceoffBuzz, 10, 'Family Feud', 'Top answer (+10)');
         }
+
+        // Auto-rotate to next player after correct answer during main play
+        if (phase === "round" && controlTeam) {
+          rotateToNextPlayer(controlTeam);
+        }
       } else {
         setBank((b) => Math.max(0, b - slot.points));
         addAction(`Hidden: "${slot.text}"`);
@@ -437,6 +496,9 @@ export default function FamilyFeudApp() {
         setPhase("steal");
         const stealTeamName = controlTeam === "A" ? teamBName : teamAName;
         addAction(`3 strikes! ${stealTeamName} can steal!`);
+      } else {
+        // After strike 1 or 2, rotate to next player on the same team
+        rotateToNextPlayer(controlTeam);
       }
       return ns;
     });
@@ -500,6 +562,8 @@ export default function FamilyFeudApp() {
     }
 
     setRoundIndex((i) => i + 1);
+    // Increment faceoff player index so next players do the faceoff
+    setFaceoffPlayerIndex((i) => i + 1);
     addAction(`Moving to Round ${roundIndex + 2}`);
     startFaceoff(true);  // Force reset even from steal phase
   }
@@ -533,6 +597,9 @@ export default function FamilyFeudApp() {
     setSelectedPlayerB(null);
     setGameWinBonusAwarded(false);
     setIsAwarding(false);
+    setFaceoffPlayerIndex(0);
+    setCurrentPlayerIndexA(0);
+    setCurrentPlayerIndexB(0);
     setActionHistory([]);
     setTimerActive(false);
     setHubEnabled(false);

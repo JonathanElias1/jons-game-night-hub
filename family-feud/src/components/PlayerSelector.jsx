@@ -15,36 +15,52 @@ export function PlayerSelector({
 
   if (teamPlayers.length === 0) return null;
 
+  // Find the currently selected player
+  const currentPlayer = teamPlayers.find(p => p.id === selectedPlayerId);
+
   return (
     <div className="mb-3 p-3 bg-white/10 rounded-xl">
-      <div className="text-xs uppercase tracking-widest opacity-70 mb-2">
-        Who is answering for {teamName}?
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {teamPlayers.map(player => (
-          <button
-            key={player.id}
-            onClick={() => onSelectPlayer(player.id)}
-            className={cls(
-              "px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2",
-              selectedPlayerId === player.id
-                ? "bg-yellow-400 text-black ring-2 ring-yellow-300"
-                : "bg-white/20 text-white hover:bg-white/30"
-            )}
-          >
-            <span className="text-lg">{player.avatar}</span>
-            <span>{player.name}</span>
-            {player.personalScore > 0 && (
-              <span className="text-xs bg-black/20 px-1.5 py-0.5 rounded">
-                {player.personalScore}
+      {/* Show current player prominently */}
+      {currentPlayer && (
+        <div className="mb-3 p-3 bg-gradient-to-r from-yellow-400/30 to-orange-400/30 rounded-lg border-2 border-yellow-400/50">
+          <div className="text-xs uppercase tracking-widest text-yellow-300 mb-1">
+            Now Answering for {teamName}
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{currentPlayer.avatar}</span>
+            <span className="text-xl font-bold text-white">{currentPlayer.name}</span>
+            {currentPlayer.personalScore > 0 && (
+              <span className="text-sm bg-black/30 px-2 py-1 rounded text-yellow-300">
+                {currentPlayer.personalScore} pts
               </span>
             )}
-          </button>
-        ))}
-      </div>
-      {!selectedPlayerId && (
-        <div className="text-yellow-300 text-sm mt-2 animate-pulse">
-          Select a player before answering!
+          </div>
+        </div>
+      )}
+
+      {/* Show other players for manual override (collapsed style) */}
+      {teamPlayers.length > 1 && (
+        <div>
+          <div className="text-xs uppercase tracking-widest opacity-50 mb-1">
+            Click to switch player (manual override)
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {teamPlayers.map(player => (
+              <button
+                key={player.id}
+                onClick={() => onSelectPlayer(player.id)}
+                className={cls(
+                  "px-2 py-1 rounded text-sm font-medium transition flex items-center gap-1",
+                  selectedPlayerId === player.id
+                    ? "bg-yellow-400/30 text-yellow-300 ring-1 ring-yellow-400"
+                    : "bg-white/10 text-white/70 hover:bg-white/20"
+                )}
+              >
+                <span>{player.avatar}</span>
+                <span>{player.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
