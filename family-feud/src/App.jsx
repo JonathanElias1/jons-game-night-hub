@@ -13,6 +13,7 @@ import { FastMoney } from "./components/FastMoney";
 import { ActionHistory } from "./components/ActionHistory";
 import { Timer } from "./components/Timer";
 import { AnswerInput } from "./components/AnswerInput";
+import { PlayerSelector } from "./components/PlayerSelector";
 import { useAudio } from "./hooks/useAudio";
 import { useThemeMusic } from "./hooks/useThemeMusic";
 import { useGameData } from "./hooks/useGameData";
@@ -74,6 +75,9 @@ export default function FamilyFeudApp() {
   const [fmTargetHit, setFmTargetHit] = useState(false);
   const [stealAttempted, setStealAttempted] = useState(false);
   const [stealResult, setStealResult] = useState(null); // 'success' or 'failed'
+  const [selectedPlayerA, setSelectedPlayerA] = useState(null); // Selected player from Team A
+  const [selectedPlayerB, setSelectedPlayerB] = useState(null); // Selected player from Team B
+  const [gameWinBonusAwarded, setGameWinBonusAwarded] = useState(false); // Track if game win bonus awarded
 
   const typewriterTimerRef = useRef(null);
   
@@ -131,6 +135,54 @@ export default function FamilyFeudApp() {
   const addAction = (message) => {
     const time = new Date().toLocaleTimeString();
     setActionHistory(prev => [...prev, { time, message }]);
+  };
+
+  // Update player stats and recalculate personal score
+  const updatePlayerStats = (playerId, statUpdate) => {
+    if (!playerId) return;
+    setPlayers(prev => prev.map(player => {
+      if (player.id !== playerId) return player;
+      const newStats = { ...player.stats };
+      // Apply stat updates
+      if (statUpdate.answersRevealed) newStats.answersRevealed += statUpdate.answersRevealed;
+      if (statUpdate.topAnswers) newStats.topAnswers += statUpdate.topAnswers;
+      if (statUpdate.faceoffWins) newStats.faceoffWins += statUpdate.faceoffWins;
+      if (statUpdate.stealsWon) newStats.stealsWon += statUpdate.stealsWon;
+      if (statUpdate.fastMoneyPoints) newStats.fastMoneyPoints += statUpdate.fastMoneyPoints;
+      // Team bonuses (cumulative)
+      if (statUpdate.roundWinBonus) newStats.roundWinBonus = (newStats.roundWinBonus || 0) + statUpdate.roundWinBonus;
+      if (statUpdate.fastMoneyBonus) newStats.fastMoneyBonus = (newStats.fastMoneyBonus || 0) + statUpdate.fastMoneyBonus;
+      if (statUpdate.gameWinBonus) newStats.gameWinBonus = (newStats.gameWinBonus || 0) + statUpdate.gameWinBonus;
+      // Calculate personal score: 10 per answer, +15 bonus for top answer, +20 for faceoff win, +25 for steal + team bonuses
+      const personalScore =
+        (newStats.answersRevealed * 10) +
+        (newStats.topAnswers * 15) +
+        (newStats.faceoffWins * 20) +
+        (newStats.stealsWon * 25) +
+        (newStats.roundWinBonus || 0) +      // +5 per round win
+        (newStats.fastMoneyBonus || 0) +     // +10 for FM win
+        (newStats.gameWinBonus || 0) +       // +20 for game win
+        (newStats.fastMoneyPoints || 0);
+      // Also send to hub scoring
+      if (hubEnabled && statUpdate.answersRevealed) {
+        addHubPlayerScore(player.name, 10, 'Family Feud', 'Correct answer');
+      }
+      if (hubEnabled && statUpdate.topAnswers) {
+        addHubPlayerScore(player.name, 15, 'Family Feud', 'Top answer bonus');
+      }
+      if (hubEnabled && statUpdate.faceoffWins) {
+        addHubPlayerScore(player.name, 20, 'Family Feud', 'Won faceoff');
+      }
+      if (hubEnabled && statUpdate.stealsWon) {
+        addHubPlayerScore(player.name, 25, 'Family Feud', 'Successful steal');
+      }
+      return { ...player, stats: newStats, personalScore };
+    }));
+  };
+
+  // Get currently selected player for the active team
+  const getSelectedPlayer = (team) => {
+    return team === "A" ? selectedPlayerA : selectedPlayerB;
   };
 
   const stopTyping = () => {
@@ -291,6 +343,7 @@ export default function FamilyFeudApp() {
     setTimerActive(false);
     setStealAttempted(false);
     setStealResult(null);
+    // Don't reset selected players between rounds - they persist
   }
 
   function startSudden() {
@@ -404,6 +457,12 @@ export default function FamilyFeudApp() {
       addHubTeamScore(team, 25, 'Family Feud', `Won round (+25)`);
     }
 
+    // Award round win bonus (+5) to all players on winning team
+    players.filter(p => p.team === team).forEach(p => {
+      updatePlayerStats(p.id, { roundWinBonus: 5 });
+    });
+    addAction(`+5 personal points to all ${awardedTeamName} players for round win!`);
+
     setBank(0);
     setTimeout(() => setIsAwarding(false), 300);
   }
@@ -470,6 +529,9 @@ export default function FamilyFeudApp() {
     setFmTargetHit(false);
     setStealAttempted(false);
     setStealResult(null);
+    setSelectedPlayerA(null);
+    setSelectedPlayerB(null);
+    setGameWinBonusAwarded(false);
     setIsAwarding(false);
     setActionHistory([]);
     setTimerActive(false);
@@ -531,14 +593,21 @@ export default function FamilyFeudApp() {
 
   // Fast Money target detection - award hub points when 200+ is hit
   useEffect(() => {
-    if (phase === 'fast' && fmCombined >= 200 && !fmTargetHit && hubEnabled) {
+    if (phase === 'fast' && fmCombined >= 200 && !fmTargetHit) {
       setFmTargetHit(true);
-      // Award +20 to the winning team (team with higher score, or A if tied)
+      // Award +20 hub points to the winning team (team with higher score, or A if tied)
       const winningTeam = teamA >= teamB ? 'A' : 'B';
-      addHubTeamScore(winningTeam, 20, 'Family Feud', 'Fast Money target hit (+20)');
-      addAction('Fast Money target hit! +20 hub points awarded');
+      if (hubEnabled) {
+        addHubTeamScore(winningTeam, 20, 'Family Feud', 'Fast Money target hit (+20)');
+      }
+      // Award +10 personal points to all players on winning team for Fast Money win
+      players.filter(p => p.team === winningTeam).forEach(p => {
+        updatePlayerStats(p.id, { fastMoneyBonus: 10 });
+      });
+      const winningTeamName = winningTeam === 'A' ? teamAName : teamBName;
+      addAction(`Fast Money target hit! +10 personal points to all ${winningTeamName} players!`);
     }
-  }, [phase, fmCombined, fmTargetHit, hubEnabled, teamA, teamB]);
+  }, [phase, fmCombined, fmTargetHit, hubEnabled, teamA, teamB, players, teamAName, teamBName]);
 
   const activeMult = phase === "sudden" ? suddenMultiplier : roundMultiplier;
   const multLabel = labelForMult(activeMult);
@@ -558,6 +627,18 @@ export default function FamilyFeudApp() {
   }, [phase, allAnswersRevealed, bank, controlTeam, isAwarding]);
 
   const winner = teamA > teamB ? teamAName : teamB > teamA ? teamBName : "Tie";
+
+  // Award game win bonus (+20 per player) when game ends
+  useEffect(() => {
+    if (phase === "gameover" && !gameWinBonusAwarded && winner !== "Tie") {
+      setGameWinBonusAwarded(true);
+      const winningTeamLetter = teamA > teamB ? "A" : "B";
+      players.filter(p => p.team === winningTeamLetter).forEach(p => {
+        updatePlayerStats(p.id, { gameWinBonus: 20 });
+      });
+      addAction(`+20 personal points to all ${winner} players for winning the game!`);
+    }
+  }, [phase, gameWinBonusAwarded, winner, teamA, teamB, players]);
 
   if (!gameSettings) {
     return <StartScreen onStart={(settings) => {
@@ -649,6 +730,24 @@ export default function FamilyFeudApp() {
               toggleReveal={toggleReveal}
             />
 
+            {/* Player Selector - shown during gameplay */}
+            {!allAnswersRevealed && ((phase === "round" && controlTeam) ||
+              (phase === "faceoff" && faceoffBuzz) ||
+              (phase === "steal" && controlTeam && !stealAttempted)) && (
+              <PlayerSelector
+                players={players}
+                currentTeam={phase === "steal" ? stealingTeam : (phase === "faceoff" ? faceoffTurn : controlTeam)}
+                selectedPlayerId={phase === "steal" ? getSelectedPlayer(stealingTeam) : (phase === "faceoff" ? getSelectedPlayer(faceoffTurn) : getSelectedPlayer(controlTeam))}
+                onSelectPlayer={(playerId) => {
+                  const playerTeam = players.find(p => p.id === playerId)?.team;
+                  if (playerTeam === "A") setSelectedPlayerA(playerId);
+                  else setSelectedPlayerB(playerId);
+                }}
+                teamAName={teamAName}
+                teamBName={teamBName}
+              />
+            )}
+
             {/* Answer Input - shown during gameplay, hidden when all answers revealed */}
             {!allAnswersRevealed && ((phase === "round" && controlTeam) ||
               (phase === "faceoff" && faceoffBuzz) ||
@@ -658,18 +757,47 @@ export default function FamilyFeudApp() {
                 revealed={revealed}
                 onReveal={(idx) => {
                   toggleReveal(idx);
+                  const isTopAnswer = idx === 0;
+
+                  // Track player stats for correct answers during regular rounds
+                  if (phase === "round" && controlTeam) {
+                    const currentPlayerId = getSelectedPlayer(controlTeam);
+                    if (currentPlayerId) {
+                      updatePlayerStats(currentPlayerId, {
+                        answersRevealed: 1,
+                        topAnswers: isTopAnswer ? 1 : 0
+                      });
+                      const playerName = players.find(p => p.id === currentPlayerId)?.name;
+                      if (playerName) {
+                        addAction(`📊 ${playerName} +${isTopAnswer ? 25 : 10} personal points`);
+                      }
+                    }
+                  }
+
                   // During faceoff - track answers and let both teams guess
                   if (phase === "faceoff" && faceoffTurn) {
                     // Reveal full question after any faceoff guess
                     revealFullQuestion();
 
                     const answerPoints = answers[idx]?.points || 0;
-                    const isTopAnswer = idx === 0;
+                    const currentPlayerId = getSelectedPlayer(faceoffTurn);
+
+                    // Track faceoff answer for the player
+                    if (currentPlayerId) {
+                      updatePlayerStats(currentPlayerId, {
+                        answersRevealed: 1,
+                        topAnswers: isTopAnswer ? 1 : 0
+                      });
+                    }
 
                     // If someone gets the #1 answer, they automatically win!
                     if (isTopAnswer) {
                       const winnerName = faceoffTurn === "A" ? teamAName : teamBName;
                       addAction(`🎯 ${winnerName} got the #1 answer and wins the faceoff!`);
+                      // Award faceoff win to player
+                      if (currentPlayerId) {
+                        updatePlayerStats(currentPlayerId, { faceoffWins: 1 });
+                      }
                       beginRound(faceoffTurn);
                       return;
                     }
@@ -684,9 +812,12 @@ export default function FamilyFeudApp() {
                         const teamBPoints = answers[otherTeamAnswer]?.points || 0;
                         if (teamAPoints >= teamBPoints) {
                           addAction(`${teamAName} wins faceoff with higher answer!`);
+                          if (currentPlayerId) updatePlayerStats(currentPlayerId, { faceoffWins: 1 });
                           beginRound("A");
                         } else {
                           addAction(`${teamBName} wins faceoff with higher answer!`);
+                          const otherPlayerId = getSelectedPlayer("B");
+                          if (otherPlayerId) updatePlayerStats(otherPlayerId, { faceoffWins: 1 });
                           beginRound("B");
                         }
                       } else {
@@ -704,9 +835,12 @@ export default function FamilyFeudApp() {
                         const teamAPoints = answers[otherTeamAnswer]?.points || 0;
                         if (teamBPoints > teamAPoints) {
                           addAction(`${teamBName} wins faceoff with higher answer!`);
+                          if (currentPlayerId) updatePlayerStats(currentPlayerId, { faceoffWins: 1 });
                           beginRound("B");
                         } else {
                           addAction(`${teamAName} wins faceoff with higher/equal answer!`);
+                          const otherPlayerId = getSelectedPlayer("A");
+                          if (otherPlayerId) updatePlayerStats(otherPlayerId, { faceoffWins: 1 });
                           beginRound("A");
                         }
                       } else {
@@ -718,6 +852,14 @@ export default function FamilyFeudApp() {
                   }
                   // During steal, if they get a correct answer, auto-succeed the steal
                   if (phase === "steal") {
+                    const currentPlayerId = getSelectedPlayer(stealingTeam);
+                    if (currentPlayerId) {
+                      updatePlayerStats(currentPlayerId, {
+                        answersRevealed: 1,
+                        stealsWon: 1,
+                        topAnswers: isTopAnswer ? 1 : 0
+                      });
+                    }
                     addAction(`Steal successful! Matched answer #${idx + 1}`);
                     resolveSteal(true);
                   }

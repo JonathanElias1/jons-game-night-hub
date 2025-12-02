@@ -810,12 +810,33 @@ isLocked || bonusSpinnerSpinning || bonusPrize
 </div>
 );
 }
+
+// --- Hub Scoring Integration ---
+function loadHubData() {
+  try {
+    const saved = localStorage.getItem('jonsGameNightData');
+    if (saved) return JSON.parse(saved);
+  } catch (e) {
+    console.error('Failed to load hub data:', e);
+  }
+  return null;
+}
+
+function addHubTeamScore(team, points, gameName, description) {
+  if (!window.GameNightScoring) return;
+  window.GameNightScoring.addTeamScore(team, points, gameName, description);
+}
+
 export default function App() {
 const [phase, setPhase] = useState("setup");
 const [roundWinnerIndex, setRoundWinnerIndex] = useState(null); // Add this line
 const [teamCount, setTeamCount] = useState(3);
 // default team names as Team 1/2/3 for scalability
 const [teamNames, setTeamNames] = useState(["Team 1", "Team 2", "Team 3"]);
+// Hub scoring integration
+const [hubEnabled, setHubEnabled] = useState(false);
+const [hubTeamMap, setHubTeamMap] = useState({}); // Maps WoF team index to hub team ('A' or 'B')
+const [gameWinBonusAwarded, setGameWinBonusAwarded] = useState(false);
 const [puzzles, setPuzzles] = useState(FALLBACK);
 const [bonusPuzzles, setBonusPuzzles] = useState([]);
 const [idx, setIdx] = useState(0);
@@ -1148,6 +1169,19 @@ setIsFullscreen(!!document.fullscreenElement);
 document.addEventListener("fullscreenchange", onFullscreenChange);
 return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
 }, []);
+
+// Hub scoring: Award game win bonus (+25) when game ends
+useEffect(() => {
+  if (phase === "done" && hubEnabled && !gameWinBonusAwarded && winners.length > 0) {
+    setGameWinBonusAwarded(true);
+    // Find the winning team index and award hub points
+    const winnerName = winners[0];
+    const winnerIndex = teams.findIndex(t => t.name === winnerName);
+    if (winnerIndex !== -1 && hubTeamMap[winnerIndex]) {
+      addHubTeamScore(hubTeamMap[winnerIndex], 25, 'Wheel of Fortune', 'Game won (+25)');
+    }
+  }
+}, [phase, hubEnabled, gameWinBonusAwarded, winners, teams, hubTeamMap]);
 
 // NEW: This effect conditionally resizes the wheel ONLY on mobile screens.
 useEffect(() => {
@@ -2095,6 +2129,10 @@ puzzlesSolved: ((prev.teamStats[solverName] || {}).puzzlesSolved || 0) + 1,
 },
 };
 });
+// Hub scoring: +15 to solving team
+if (hubEnabled && hubTeamMap[active]) {
+  addHubTeamScore(hubTeamMap[active], 15, 'Wheel of Fortune', 'Puzzle solved (+15)');
+}
 } catch (err) {
 // defensive - don't crash if teams/active not available for some reason
 setGameStats((prev) => ({ ...prev, puzzlesSolved: (prev.puzzlesSolved || 0) + 1 }));
@@ -2574,6 +2612,13 @@ setBonusWinnerName(teams[active]?.name || null);
 }
 try { sfx.play("solve"); } catch (e) {}
 setBonusResult("win");
+// Hub scoring: +20 for bonus round win
+if (hubEnabled) {
+  const hubTeam = winnerIndex !== -1 ? hubTeamMap[winnerIndex] : hubTeamMap[active];
+  if (hubTeam) {
+    addHubTeamScore(hubTeam, 20, 'Wheel of Fortune', 'Bonus round won (+20)');
+  }
+}
 } else {
 try { sfx.play("buzzer"); } catch (e) {}
 setBonusResult("lose");
@@ -2651,6 +2696,7 @@ setCurrentWedges([...WEDGES]);
 setBonusResult(null);
 setBonusWinnerName(null);
 landedOwnerRef.current = null;
+setGameWinBonusAwarded(false);
 
 // rebuild teams from normalized teamNames (pad/truncate to teamCount)
 const names = makeTeamNamesArray(teamCount, teamNames);
@@ -3682,9 +3728,27 @@ sfx.play("startGame");
 } catch (e) {
 console.warn("Failed to play startGame sound:", e);
 }
+
+// Check for hub data
+const hubData = loadHubData();
+let useHubTeams = false;
+let hubNames = [];
+if (hubData && hubData.players && hubData.players.length >= 2) {
+  const hubTeamNames = hubData.teamNames || { A: 'Team A', B: 'Team B' };
+  hubNames = [hubTeamNames.A, hubTeamNames.B];
+  useHubTeams = true;
+  console.log('Wheel of Fortune: Hub scoring enabled with teams', hubTeamNames.A, 'and', hubTeamNames.B);
+}
+
 // Compute final team count & rounds deterministically from temp values
 const parsedTeams = parseIntSafe(tempTeamCount);
-const finalTeamCount = Number.isFinite(parsedTeams) ? Math.min(MAX_TEAMS, Math.max(2, parsedTeams)) : Math.min(MAX_TEAMS, Math.max(2, teamCount));
+let finalTeamCount = Number.isFinite(parsedTeams) ? Math.min(MAX_TEAMS, Math.max(2, parsedTeams)) : Math.min(MAX_TEAMS, Math.max(2, teamCount));
+
+// Override with hub teams if available
+if (useHubTeams) {
+  finalTeamCount = 2;
+}
+
 const parsedRounds = parseIntSafe(tempRoundsCount);
 const maxRounds = Math.max(1, (puzzles && puzzles.length) || FALLBACK.length);
 const finalRounds = Number.isFinite(parsedRounds) ? Math.min(Math.max(1, parsedRounds), maxRounds) : Math.min(Math.max(1, roundsCount), maxRounds);
@@ -3694,7 +3758,18 @@ setTempTeamCount(String(finalTeamCount));
 setRoundsCount(finalRounds);
 setTempRoundsCount(String(finalRounds));
 // Ensure teamNames array is the right length and trimmed
-const names = makeTeamNamesArray(finalTeamCount, teamNames);
+const names = useHubTeams ? hubNames : makeTeamNamesArray(finalTeamCount, teamNames);
+
+// Set up hub integration
+if (useHubTeams) {
+  setHubEnabled(true);
+  setHubTeamMap({ 0: 'A', 1: 'B' }); // Map WoF team 0 to hub team A, team 1 to hub team B
+} else {
+  setHubEnabled(false);
+  setHubTeamMap({});
+}
+setGameWinBonusAwarded(false);
+
 // Now initialize teams and everything else
 setTeams(names.map((name) => ({ name, total: 0, round: 0, prizes: [], holding: [] })));
 setTeamNames(names);

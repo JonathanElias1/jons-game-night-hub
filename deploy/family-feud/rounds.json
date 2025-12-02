@@ -17,7 +17,7 @@
       ]
     },
     {
-      "question": "Which race does Jon get most confused for?",
+      "question": "Which race does Jon get confused for?",
       "multiplier": 1,
       "answers": [
         { "text": "Russian", "points": 40, "aliases": ["soviet", "russia"] },
@@ -31,10 +31,10 @@
       ]
     },
     {
-      "question": "If Adults Trick Or Treated, What Might They Request Instead Of Candy?",
+      "question": "If adults trick or treated, what might they request instead of candy?",
       "multiplier": 3,
       "answers": [
-        { "text": "Sex", "points": 30, "aliases": ["boobs", "ass", "hookup", "intimacy"] },
+        { "text": "Sex", "points": 30, "aliases": ["boobs", "ass", "hookup", "intimacy","sexual intercourse", "intercourse"] },
         { "text": "Money", "points": 21, "aliases": ["cash", "dollars", "bucks", "coins", "currency"] },
         { "text": "Drugs", "points": 17, "aliases": ["weed", "marijuana", "pills", "edibles", "pot"] },
         { "text": "Alcohol", "points": 16, "aliases": ["beer", "wine", "liquor", "booze", "drinks", "shots", "vodka", "whiskey"] },
@@ -43,8 +43,8 @@
       ]
     },
     {
-      "question": "Name something you hate when people say out loud?",
-      "multiplier": 2,
+      "question": "Name something Jon hates when people say out loud?",
+      "multiplier": 1,
       "answers": [
         { "text": "Six Seven", "points": 50, "aliases": ["67", "sixty seven"] },
         { "text": "Fender Bender", "points": 20, "aliases": ["car accident", "fenderbender"] },
@@ -64,8 +64,8 @@
         { "text": "Drinking", "points": 10, "aliases": ["drunk", "wasted", "partying", "bar", "club"] },
         { "text": "Eating", "points": 7, "aliases": ["dinner", "lunch", "meal", "breakfast", "food"] },
         { "text": "Bathroom", "points": 5, "aliases": ["toilet", "restroom", "peeing", "pooping", "shower", "showering"] },
-        { "text": "Jumping a Car", "points": 4, "aliases": ["car trouble", "dead battery", "car problems", "broken down"] },
-        { "text": "Involved with Hospital Operations", "points": 2, "aliases": ["hospital", "medical", "surgery", "sick", "doctor", "emergency", "er"] }
+        { "text": "Car Issues", "points": 4, "aliases": ["car trouble", "dead battery", "car problems", "broken down", "Jumping a car"] },
+        { "text": "Involved with Hospital Operations", "points": 2, "aliases": ["hospital", "medical", "surgery", "sick", "doctor", "emergency", "er", "dentist"] }
       ]
     }
   ],
@@ -99,10 +99,10 @@
       "prompt": "Name something you bring to a birthday party?",
       "answers": [
         { "text": "A gift for Jon", "points": 70, "aliases": ["gift", "present", "presents", "birthday gift", "birthday present"] },
-        { "text": "Napkins", "points": 10, "aliases": ["paper towels", "tissues", "serviettes"] },
+        { "text": "Food", "points": 10, "aliases": ["pizza", "cake", "snacks", "chips", "candy", "cookies", "cupcakes", "appetizers"] },       
         { "text": "Drugs", "points": 9, "aliases": ["weed", "marijuana", "pot", "pills", "edibles","blow","cocaine"] },
-        { "text": "Food", "points": 5, "aliases": ["pizza", "cake", "snacks", "chips", "candy", "cookies", "cupcakes", "appetizers"] },
-        { "text": "Drinks", "points": 4, "aliases": ["soda", "beer", "wine", "beverages", "alcohol", "juice", "water", "pop", "booze"] },
+        { "text": "Drinks", "points": 5, "aliases": ["soda", "beer", "wine", "beverages", "alcohol", "juice", "water", "pop", "booze"] },
+        { "text": "Napkins", "points": 4, "aliases": ["paper towels", "tissues", "serviettes"] },
         { "text": "Candles", "points": 3, "aliases": ["birthday candles"] },
         { "text": "Plates/Cups", "points": 2, "aliases": ["dishes", "utensils", "silverware", "forks", "spoons", "paper plates", "plasticware", "cups"] },
         { "text": "Games", "points": 1, "aliases": ["board games", "video games", "party games", "card games"] }
@@ -147,7 +147,7 @@
         { "text": "Durian", "points": 25, "aliases": ["durian fruit", "stinky fruit"] },
         { "text": "Watermelon", "points": 20, "aliases": ["melon", "water melon"] },
         { "text": "Chicken Fried Rice", "points": 12, "aliases": ["fried rice", "rice"] },
-        { "text": "Chicken Wings", "points": 8, "aliases": ["wings", "buffalo wings", "hot wings"] }
+        { "text": "Chicken Wings", "points": 8, "aliases": ["wings", "bbq wings", "hot wings"] }
       ]
     }
   ]

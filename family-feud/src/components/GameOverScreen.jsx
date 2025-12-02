@@ -88,12 +88,6 @@ export function GameOverScreen({ winner, teamA, teamB, teamAName, teamBName, pla
         >
           Play Fast Money
         </button>
-        <button
-          onClick={restart}
-          className="px-6 py-3 rounded-xl bg-white text-black font-bold text-lg hover:opacity-90 transition"
-        >
-          New Game
-        </button>
       </div>
     </section>
   );
