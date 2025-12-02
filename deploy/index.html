@@ -180,6 +180,24 @@
     .leader-team { font-size: 0.8rem; color: #94a3b8; }
     .leader-score { font-size: 1.5rem; font-weight: 900; color: #fbbf24; }
 
+    /* Host Button */
+    .host-btn {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      border: 2px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.5);
+      font-size: 1.2rem;
+      cursor: pointer;
+      z-index: 100;
+      transition: all 0.2s;
+    }
+    .host-btn:hover { background: rgba(255,255,255,0.2); color: white; }
+
     /* Actions */
     .actions { display: flex; gap: 15px; flex-wrap: wrap; }
     .action-btn {
@@ -287,6 +305,9 @@
   </style>
 </head>
 <body>
+  <!-- Host Answer Key Button -->
+  <button class="host-btn" onclick="window.location.href='HOST-ANSWER-KEY.html'" title="Host Answer Key">&#128273;</button>
+
   <div class="container">
     <!-- Header -->
     <div class="header">
