@@ -111,40 +111,38 @@ const doubleJONpardyData = {
 
 const tripleJONpardyData = {
     categories: [
-      { name: "CATEGORY 1", questions: [
-          { points: 600, question: "Placeholder question 1", answer: "Answer 1" },
-          { points: 1200, question: "Placeholder question 2", answer: "Answer 2" },
-          { points: 1800, question: "Placeholder question 3", answer: "Answer 3" },
-          { points: 2400, question: "Placeholder question 4", answer: "Answer 4" },
-          { points: 3000, question: "Placeholder question 5", answer: "Answer 5" },
+      { name: "STAR WARS", questions: [
+          { points: 100, question: "The original name for this green character in The Empire Strikes Back before George Lucas chickened out was this?", answer: "Minch", aliases: ["minch yoda", "yoda minch"] },
+          { points: 200, question: "What is the name of the creature living in the trash compactor of the Death Star in A New Home?", answer: "Dianoga", aliases: ["dianoga", "dianooga", "trash monster", "garbage squid"] },
+          { points: 300, question: "According to C-3PO, the odds of successfully navigating an asteroid field are __________ to 1.", answer: "3720", aliases: ["3,720", "3720 to 1", "3720 to one"] },
+          { points: 400, question: "This upbeat, swinging style, played by the Bith alien band, Figrin D'an and the Modal Nodes, in the Mos Eisley Cantina in Episode IV: A New Hope played this music genre", answer: "Jizz", aliases: ["jatz", "cantina music"] },
+          { points: 500, question: "To keep costs down and fans away, Return of the Jedi was shot under this fake horror-movie title with the tagline 'Horror Beyond Imagination.'", answer: "Blue Harvest", aliases: ["blueharvest", "blue harvest horror"] },
       ]},
-      { name: "CATEGORY 2", questions: [
-          { points: 600, question: "Placeholder question 1", answer: "Answer 1" },
-          { points: 1200, question: "Placeholder question 2", answer: "Answer 2" },
-          { points: 1800, question: "Placeholder question 3", answer: "Answer 3" },
-          { points: 2400, question: "Placeholder question 4", answer: "Answer 4" },
-          { points: 3000, question: "Placeholder question 5", answer: "Answer 5" },
+      { name: "PSYCHOLOGY", questions: [
+          { points: 100, question: "In Mary Ainsworth's Strange Situation, this specific attachment style is characterized by minimal distress at separation and active avoidance of the caregiver upon reunion.", answer: "Anxious-avoidant attachment", aliases: ["avoidant", "avoidant attachment", "anxious avoidant", "insecure avoidant"] },
+          { points: 200, question: "In Mischel's original delay of gratification research at Stanford, this common preschool treat was famously used as the main reward in the 'one now vs two later' condition.", answer: "Marshmallow", aliases: ["marshmellows", "marshmallow test", "marshmallows"] },
+          { points: 300, question: "This specific cognitive bias explains why people with low ability in a domain overestimate their competence, while those with high ability sometimes underestimate theirs.", answer: "Dunning–Kruger effect", aliases: ["dunning kruger", "dunning-kruger", "dunning kruger effect", "dk effect"] },
+          { points: 400, question: "This phenomenon, shown in Rensink's flicker paradigm, is the difficulty detecting large changes between alternating images separated by a brief blank screen.", answer: "change blindness", aliases: ["changeblindness", "inattentional blindness"] },
+          { points: 500, question: "This disorder, often following right parietal damage, leads patients to ignore or fail to respond to stimuli on the opposite side of space, such as only shaving half their face.", answer: "hemispatial neglect", aliases: ["neglect", "unilateral neglect", "spatial neglect", "hemineglect", "hemi-neglect"] },
       ]},
-      { name: "CATEGORY 3", questions: [
-          { points: 600, question: "Placeholder question 1", answer: "Answer 1" },
-          { points: 1200, question: "Placeholder question 2", answer: "Answer 2" },
-          { points: 1800, question: "Placeholder question 3", answer: "Answer 3" },
-          { points: 2400, question: "Placeholder question 4", answer: "Answer 4" },
-          { points: 3000, question: "Placeholder question 5", answer: "Answer 5" },
+      { name: "ABCU", questions: [
+          { points: 100, question: "This iconic classic ABCU movie started it all and features slam dunks as our main character carries the Timberwolves to the promised land.", answer: "Air Bud", aliases: ["airbud", "air-bud"] },
+          { points: 200, question: "This classic christmas movie features the classic puppy cast rescuing crying unadopted kids.", answer: "The Search for Santa Paws", aliases: ["search for santa paws", "santa paws", "santapaws"] },
+          { points: 300, question: "This classic film is highly regarded as the most successful volleyball film of all time.", answer: "Air Bud Spikes Back", aliases: ["spikes back", "air bud volleyball", "airbud spikes back"] },
+          { points: 400, question: "This classic superhero movie features Zendaya", answer: "Super Buddies", aliases: ["superbuddies", "super buddies movie"] },
+          { points: 500, question: "In this classic ABCU film the iconic quote 'What's hip hop happening' is said by B-DAWG.", answer: "Space Buddies", aliases: ["spacebuddies", "space buddies movie"] },
       ]},
-      { name: "CATEGORY 4", questions: [
-          { points: 600, question: "Placeholder question 1", answer: "Answer 1" },
-          { points: 1200, question: "Placeholder question 2", answer: "Answer 2" },
-          { points: 1800, question: "Placeholder question 3", answer: "Answer 3" },
-          { points: 2400, question: "Placeholder question 4", answer: "Answer 4" },
-          { points: 3000, question: "Placeholder question 5", answer: "Answer 5" },
+      { name: "PHOENIX SUNS", questions: [
+          { points: 100, question: "In 2010 in the Western Conference Semifinals against dirty San Antonio, this mvp dominated leading to an easy sweep despite having a completely swollen shut right eye.", answer: "Steve Nash", aliases: ["nash", "steven nash"] },
+          { points: 200, question: "In Game 6 of the 1993 Western Conference Semifinals at the Alamodome, this league MVP hit the series-clinching jumper over David Robinson with the score tied 100–100, eliminating San Antonio 4–2.", answer: "Charles Barkley", aliases: ["barkley", "sir charles", "chuck"] },
+          { points: 300, question: "On January 17, 2022, this Suns star posted his single-game high against San Antonio with 48 points in a win over the Spurs.", answer: "Devin Booker", aliases: ["booker", "book", "d book", "dbook"] },
+          { points: 400, question: "On November 24, 2025, the Suns beat the Spurs 111–102 as this player scored 25 and his teammate Devin Booker dropped 24 points.", answer: "Dillon Brooks", aliases: ["brooks", "dillon", "d brooks"] },
+          { points: 500, question: "On April 6, 1994, this Suns point guard dished a franchise-record 25 assists in a win over the Spurs.", answer: "Kevin Johnson", aliases: ["kj", "k johnson"] },
       ]},
-      { name: "CATEGORY 5", questions: [
-          { points: 600, question: "Placeholder question 1", answer: "Answer 1" },
-          { points: 1200, question: "Placeholder question 2", answer: "Answer 2" },
-          { points: 1800, question: "Placeholder question 3", answer: "Answer 3" },
-          { points: 2400, question: "Placeholder question 4", answer: "Answer 4" },
-          { points: 3000, question: "Placeholder question 5", answer: "Answer 5" },
+      { name: "BIG PERSONALITIES", questions: [
+          { points: 100, question: "This movie featuring Gary Oldman in the role of a lifetime also showcases this famous actor known for his work on Dexter and Game of Thrones.", answer: "Peter Dinklage", aliases: ["dinklage", "dinkalge", "tyrion"] },
+          { points: 200, question: "This English actor with spondyloepiphyseal dysplasia congenital starred in Willow and played multiple roles in the Harry Potter films, including Professor Flitwick.", answer: "Warwick Davis", aliases: ["davis", "warrick davis", "wicket"] },
+          { points: 300, question: "Best known as Mini-Me in the Austin Powers films, this American actor was 2 ft 8 in tall and had cartilage–hair hypoplasia.", answer: "Verne Troyer", aliases: ["troyer", "vern troyer", "mini me"] },
       ]},
     ],
   };
@@ -153,7 +151,7 @@ const finalJONpardyData = {
     category: "JON",
     question: "Pronounced like a pirate mistakenly by ASU at his graduation, what is Jon's middle name?",
     answer: "Yair",
-    aliases: ["yar", "yarr", "yaer", "yaire"]
+    aliases: ["yaer", "yaire"]
 };
 
 const BUZZER_KEYS = { 'q': 0, 'p': 1, 'z': 2, 'm': 3 };
