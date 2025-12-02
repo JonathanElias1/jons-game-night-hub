@@ -119,6 +119,7 @@ export default function App() {
   const [numTeams, setNumTeams] = useState(2);
   const [hubTeamMap, setHubTeamMap] = useState({}); // Maps Jonpardy team index to hub team ('A' or 'B')
   const [hubEnabled, setHubEnabled] = useState(false);
+  const [gameWinBonusAwarded, setGameWinBonusAwarded] = useState(false);
   const [currentTeamIndex, setCurrentTeamIndex] = useState(0);
   const [questionChooserIndex, setQuestionChooserIndex] = useState(0);
   const [activeQuestion, setActiveQuestion] = useState(null);
@@ -494,6 +495,23 @@ const handleBuzzIn = useCallback((event) => {
     }
   }, [board, gameState]);
 
+  // Award game win bonus (+25) when game ends
+  useEffect(() => {
+    if (gameState === 'gameOver' && hubEnabled && !gameWinBonusAwarded) {
+      const maxScore = Math.max(...teams.map(t => t.score));
+      const winners = teams.filter(t => t.score === maxScore);
+      // Only award if there's a single winner (not a tie)
+      if (winners.length === 1) {
+        const winnerIndex = teams.findIndex(t => t.score === maxScore);
+        if (winnerIndex !== -1 && hubTeamMap[winnerIndex]) {
+          setGameWinBonusAwarded(true);
+          addHubTeamScore(hubTeamMap[winnerIndex], 25, 'Jonpardy');
+          console.log('Jonpardy: Awarded +25 game win bonus to', winners[0].name);
+        }
+      }
+    }
+  }, [gameState, hubEnabled, gameWinBonusAwarded, teams, hubTeamMap]);
+
   const handleFinalWagers = (e) => { e.preventDefault(); setFinalJONpardyStep('answer'); };
   const handleFinalAnswers = (e) => {
     e.preventDefault();
@@ -525,6 +543,7 @@ const handleBuzzIn = useCallback((event) => {
     setFinalWagers({});
     setFinalAnswers({});
     setAttemptedBy([]);
+    setGameWinBonusAwarded(false);
   };
   
   const getWinner = () => {
