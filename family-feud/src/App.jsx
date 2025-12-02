@@ -421,6 +421,8 @@ export default function FamilyFeudApp() {
     blip();
     const teamName = team === "A" ? teamAName : teamBName;
     addAction(`${teamName} takes control!`);
+    // Faceoff winner won the right to play - now rotate to next player for main round
+    rotateToNextPlayer(team);
   }
   
   function passFaceoff() {
