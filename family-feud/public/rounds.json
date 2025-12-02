@@ -46,9 +46,8 @@
       "question": "Name something Jon hates when people say out loud?",
       "multiplier": 1,
       "answers": [
-        { "text": "Six Seven", "points": 50, "aliases": ["67", "sixty seven"] },
+        { "text": "Six Seven", "points": 65, "aliases": ["67", "sixty seven"] },
         { "text": "Fender Bender", "points": 20, "aliases": ["car accident", "fenderbender"] },
-        { "text": "Moist", "points": 15, "aliases": ["wet", "damp"] },
         { "text": "LOL", "points": 10, "aliases": ["laugh out loud", "lmao", "lmfao", "rofl"] },
         { "text": "Kerfuffle", "points": 3, "aliases": ["kerfufle", "kerfufflee", "kerfuffulle", "kerffufle"] },
         { "text": "Marmalade", "points": 2, "aliases": ["jam", "jelly", "preserve"] }

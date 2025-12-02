@@ -178,6 +178,11 @@
     return loadData().teamNames || { A: 'Team A', B: 'Team B' };
   }
 
+  // Dispatch event to notify UI of score changes
+  function notifyScoreChange() {
+    window.dispatchEvent(new CustomEvent('gameNightScoreChange'));
+  }
+
   // Add score to a player
   function addScore(playerName, points, gameName, actionLabel) {
     const data = loadData();
@@ -200,6 +205,9 @@
       gameName,
       label: actionLabel || `${points > 0 ? '+' : ''}${points} pts`
     });
+
+    // Notify UI to update
+    notifyScoreChange();
 
     return data;
   }
@@ -228,6 +236,9 @@
       gameName,
       label: actionLabel || `${points > 0 ? '+' : ''}${points} pts (Team)`
     });
+
+    // Notify UI to update
+    notifyScoreChange();
 
     return data;
   }
@@ -586,6 +597,9 @@
       updateTeamSelection();
       updateLastAction();
     }
+
+    // Listen for score changes from the game and update UI
+    window.addEventListener('gameNightScoreChange', updateUI);
 
     updateUI();
   }
