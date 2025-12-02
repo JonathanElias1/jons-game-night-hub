@@ -25,6 +25,8 @@ export function FastMoney({
   const [timeLeft, setTimeLeft] = useState(0);
   const [pointsRevealed, setPointsRevealed] = useState(Array(5).fill(false)); // Track which points are revealed
   const [revealPhase, setRevealPhase] = useState(false); // True when both players are done and we're revealing
+  const [p1TotalRevealed, setP1TotalRevealed] = useState(false); // Host clicks to reveal P1 total
+  const [p2TotalRevealed, setP2TotalRevealed] = useState(false); // Host clicks to reveal P2 total
   const timerRef = useRef(null);
   const inputRefs1 = useRef([]);
   const inputRefs2 = useRef([]);
@@ -44,7 +46,7 @@ export function FastMoney({
   }, [timerRunning, timeLeft]);
 
   const startTimer = () => {
-    const duration = player === 1 ? 30 : 35;
+    const duration = player === 1 ? 65 : 70; // 1:05 for P1, 1:10 for P2
     setTimeLeft(duration);
     setTimerRunning(true);
     blip();
@@ -87,6 +89,8 @@ export function FastMoney({
     setTimeLeft(0);
     setPointsRevealed(Array(5).fill(false));
     setRevealPhase(false);
+    setP1TotalRevealed(false);
+    setP2TotalRevealed(false);
     clearTimeout(timerRef.current);
   };
 
@@ -211,7 +215,7 @@ export function FastMoney({
               onClick={startTimer}
               className="px-3 py-2 rounded-xl bg-yellow-400 text-black hover:bg-yellow-300 transition font-bold"
             >
-              ▶ Start ({player === 1 ? "30s" : "35s"})
+              ▶ Start ({player === 1 ? "1:05" : "1:10"})
             </button>
           )}
           {timerRunning && !revealPhase && (
@@ -339,28 +343,26 @@ export function FastMoney({
                     />
                   )}
                 </td>
-                {/* Player 1 Points - Hidden until reveal phase */}
+                {/* Player 1 Points - Hidden until reveal phase for suspense */}
                 <td className="py-2 pr-2">
                   {pointsRevealed[i] ? (
                     <div className="w-16 px-2 py-1 rounded bg-blue-500/50 text-white font-bold text-center text-lg">
                       {fmPoints1[i]}
                     </div>
-                  ) : revealPhase ? (
+                  ) : (
                     <div className="w-16 px-2 py-1 rounded bg-blue-500/20 text-blue-300 font-semibold text-center">
                       ???
                     </div>
-                  ) : (
-                    <input
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={fmPoints1[i]}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/[^\d]/g, "");
-                        setFmPoints1((arr) => arr.map((x, j) => (j === i ? Number(v || 0) : x)));
-                      }}
-                      className="w-16 px-2 py-1 rounded bg-blue-500/30 text-white font-semibold text-center"
-                    />
                   )}
+                  {/* Hidden input for auto-matching - not visible */}
+                  <input
+                    type="hidden"
+                    value={fmPoints1[i]}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/[^\d]/g, "");
+                      setFmPoints1((arr) => arr.map((x, j) => (j === i ? Number(v || 0) : x)));
+                    }}
+                  />
                 </td>
                 {/* Player 2 Answer */}
                 <td className="py-2 pr-2">
@@ -386,7 +388,7 @@ export function FastMoney({
                     )}
                   </div>
                 </td>
-                {/* Player 2 Points - Hidden until reveal phase */}
+                {/* Player 2 Points - Hidden until reveal phase for suspense */}
                 <td className="py-2 pr-2">
                   {pointsRevealed[i] ? (
                     <div className={cls(
@@ -395,26 +397,23 @@ export function FastMoney({
                     )}>
                       {duplicates[i] ? "0" : fmPoints2[i]}
                     </div>
-                  ) : revealPhase ? (
-                    <div className="w-16 px-2 py-1 rounded bg-green-500/20 text-green-300 font-semibold text-center">
-                      ???
-                    </div>
                   ) : (
-                    <input
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={fmPoints2[i]}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/[^\d]/g, "");
-                        setFmPoints2((arr) => arr.map((x, j) => (j === i ? Number(v || 0) : x)));
-                      }}
-                      disabled={duplicates[i]}
-                      className={cls(
-                        "w-16 px-2 py-1 rounded font-semibold text-center",
-                        duplicates[i] ? "bg-red-500/30 text-red-300" : "bg-green-500/30 text-white"
-                      )}
-                    />
+                    <div className={cls(
+                      "w-16 px-2 py-1 rounded font-semibold text-center",
+                      duplicates[i] ? "bg-red-500/20 text-red-300" : "bg-green-500/20 text-green-300"
+                    )}>
+                      {duplicates[i] ? "DUP" : "???"}
+                    </div>
                   )}
+                  {/* Hidden input for auto-matching - not visible */}
+                  <input
+                    type="hidden"
+                    value={fmPoints2[i]}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/[^\d]/g, "");
+                      setFmPoints2((arr) => arr.map((x, j) => (j === i ? Number(v || 0) : x)));
+                    }}
+                  />
                 </td>
                 <td className="py-2 pr-2">
                   <button
@@ -433,12 +432,34 @@ export function FastMoney({
               <td />
               <td className="py-3 font-black">Totals</td>
               <td />
-              <td className="py-3 text-2xl font-black text-blue-300">
-                {pointsRevealed.every(r => r) ? fmTotal1 : "???"}
+              <td className="py-3">
+                {p1TotalRevealed ? (
+                  <div className="text-2xl font-black text-blue-300">{fmTotal1}</div>
+                ) : pointsRevealed.every(r => r) ? (
+                  <button
+                    onClick={() => { setP1TotalRevealed(true); blip(); }}
+                    className="px-3 py-1 rounded-lg bg-blue-500 hover:bg-blue-400 text-white font-bold animate-pulse"
+                  >
+                    Reveal P1
+                  </button>
+                ) : (
+                  <div className="text-xl font-bold text-blue-300/50">???</div>
+                )}
               </td>
               <td />
-              <td className="py-3 text-2xl font-black text-green-300">
-                {pointsRevealed.every(r => r) ? fmTotal2 : "???"}
+              <td className="py-3">
+                {p2TotalRevealed ? (
+                  <div className="text-2xl font-black text-green-300">{fmTotal2}</div>
+                ) : p1TotalRevealed ? (
+                  <button
+                    onClick={() => { setP2TotalRevealed(true); blip(); }}
+                    className="px-3 py-1 rounded-lg bg-green-500 hover:bg-green-400 text-white font-bold animate-pulse"
+                  >
+                    Reveal P2
+                  </button>
+                ) : (
+                  <div className="text-xl font-bold text-green-300/50">???</div>
+                )}
               </td>
               <td />
             </tr>
@@ -449,28 +470,32 @@ export function FastMoney({
       {/* Combined Score Display */}
       <div className={cls(
         "mt-4 p-4 rounded-xl text-center",
-        pointsRevealed.every(r => r) && targetHit ? "bg-yellow-500/30" : "bg-white/10"
+        p1TotalRevealed && p2TotalRevealed && targetHit ? "bg-yellow-500/30" : "bg-white/10"
       )}>
         <div className="text-sm uppercase tracking-widest opacity-80">Combined Total</div>
         <div className={cls(
           "text-5xl font-black mt-1",
-          pointsRevealed.every(r => r) && targetHit ? "text-yellow-300" : "text-white"
+          p1TotalRevealed && p2TotalRevealed && targetHit ? "text-yellow-300" : "text-white"
         )}>
-          {pointsRevealed.every(r => r) ? combined : "???"}
+          {p1TotalRevealed && p2TotalRevealed ? combined : "???"}
         </div>
-        {pointsRevealed.every(r => r) && targetHit && (
+        {p1TotalRevealed && p2TotalRevealed && targetHit && (
           <div className="text-yellow-300 font-bold mt-2 text-xl">
             🎉 TARGET HIT! 200+ POINTS! 🎉
           </div>
         )}
-        {pointsRevealed.every(r => r) && !targetHit && combined > 0 && (
+        {p1TotalRevealed && p2TotalRevealed && !targetHit && combined > 0 && (
           <div className="text-white/70 text-sm mt-1">
-            {200 - combined} points to win
+            {200 - combined} points short
           </div>
         )}
-        {!pointsRevealed.every(r => r) && revealPhase && (
+        {!p2TotalRevealed && revealPhase && (
           <div className="text-white/70 text-sm mt-1">
-            Reveal all points to see the total!
+            {!pointsRevealed.every(r => r)
+              ? "Reveal all individual points first!"
+              : !p1TotalRevealed
+                ? "Click 'Reveal P1' to see Player 1's total!"
+                : "Click 'Reveal P2' to see Player 2's total!"}
           </div>
         )}
       </div>

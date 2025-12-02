@@ -98,9 +98,9 @@
       "prompt": "Name something you bring to a birthday party?",
       "answers": [
         { "text": "A gift for Jon", "points": 70, "aliases": ["gift", "present", "presents", "birthday gift", "birthday present"] },
-        { "text": "Food", "points": 10, "aliases": ["pizza", "cake", "snacks", "chips", "candy", "cookies", "cupcakes", "appetizers"] },       
-        { "text": "Drugs", "points": 9, "aliases": ["weed", "marijuana", "pot", "pills", "edibles","blow","cocaine"] },
-        { "text": "Drinks", "points": 5, "aliases": ["soda", "beer", "wine", "beverages", "alcohol", "juice", "water", "pop", "booze"] },
+        { "text": "Food", "points": 30, "aliases": ["pizza", "cake", "snacks", "chips", "candy", "cookies", "cupcakes", "appetizers"] },       
+        { "text": "Drugs", "points": 40, "aliases": ["weed", "marijuana", "pot", "pills", "edibles","blow","cocaine"] },
+        { "text": "Drinks", "points": 39, "aliases": ["soda", "beer", "wine", "beverages", "alcohol", "juice", "water", "pop", "booze"] },
         { "text": "Napkins", "points": 4, "aliases": ["paper towels", "tissues", "serviettes"] },
         { "text": "Candles", "points": 3, "aliases": ["birthday candles"] },
         { "text": "Plates/Cups", "points": 2, "aliases": ["dishes", "utensils", "silverware", "forks", "spoons", "paper plates", "plasticware", "cups"] },
@@ -112,18 +112,18 @@
       "answers": [
         { "text": "Hi this is Jon", "points": 40, "aliases": ["hello its jon", "hi this is jon", "hello jon"] },
         { "text": "You should listen to me", "points": 25, "aliases": ["listen to me", "you should listen"] },
-        { "text": "I'm always hard", "points": 20, "aliases": ["always hard", "im hard", "hard","I'm the hardest"] },
-        { "text": "Hey Jon Fooders", "points": 8, "aliases": ["jon fooders", "fooders", "hey fooders"] },
-        { "text": "I love Israel", "points": 10, "aliases": ["love israel", "israel"] }
+        { "text": "I'm always hard", "points": 49, "aliases": ["always hard", "im hard", "hard","I'm the hardest"] },
+        { "text": "Hey Jon Fooders", "points": 50, "aliases": ["jon fooders", "fooders", "hey fooders"] },
+        { "text": "I love Israel", "points": 60, "aliases": ["love israel", "israel"] }
 
       ]
     },
     {
       "prompt": "Name something Jon would bring to a desert island",
       "answers": [
-        { "text": "Cody", "points": 35, "aliases": ["cody ko", "his friend cody"] },
-        { "text": "Dogs", "points": 25, "aliases": ["dog", "pets", "his dogs", "puppy"] },
-        { "text": "Camera", "points": 20, "aliases": ["video camera", "filming equipment", "phone"] },
+        { "text": "Cody", "points": 80, "aliases": ["cody", "his girlfriend"] },
+        { "text": "Dogs", "points": 50, "aliases": ["dog", "pets", "his dogs", "puppy"] },
+        { "text": "Camera", "points": 40, "aliases": ["video camera", "filming equipment", "phone"] },
         { "text": "Food", "points": 12, "aliases": ["snacks", "meals", "chicken", "meat"] },
         { "text": "Water", "points": 8, "aliases": ["drinks", "hydration", "beverages"] }
       ]
@@ -131,21 +131,21 @@
     {
       "prompt": "Name something Jon is known for",
       "answers": [
-        { "text": "FGL/Best friend/best person", "points": 35, "aliases": ["fgl", "best friend", "friend", "friendship", "best person"] },
-        { "text": "JON-E Worldwide/Filming", "points": 25, "aliases": ["jon e worldwide", "jone worldwide", "filming", "videos", "youtube"] },
-        { "text": "JON FOOD", "points": 20, "aliases": ["jonfood", "food reviews", "eating", "food channel"] },
-        { "text": "Cooking/Meat Night", "points": 12, "aliases": ["cooking", "meat night", "grilling", "bbq", "chef"] },
-        { "text": "Acting/Art The Clown", "points": 8, "aliases": ["acting", "art the clown", "terrifier", "movies", "horror"] },
+        { "text": "FGL/Best friend/best person", "points": 60, "aliases": ["fgl", "best friend", "friend", "friendship", "best person"] },
+        { "text": "JON-E Worldwide/Filming", "points": 55, "aliases": ["jon e worldwide", "jone worldwide", "filming", "videos", "youtube"] },
+        { "text": "JON FOOD", "points": 50, "aliases": ["jonfood", "food reviews", "eating", "food channel"] },
+        { "text": "Cooking/Meat Night", "points": 40, "aliases": ["cooking", "meat night", "grilling", "bbq", "chef"] },
+        { "text": "Acting/Art The Clown", "points": 10, "aliases": ["acting", "art the clown", "terrifier", "movies", "horror"] },
         { "text": "Sports", "points": 7, "aliases": ["basketball", "football", "athletics", "athlete"] }
       ]
     },
     {
       "prompt": "Name Jon's favorite food",
       "answers": [
-        { "text": "Chicken", "points": 35, "aliases": ["fried chicken", "poultry", "bird"] },
-        { "text": "Durian", "points": 25, "aliases": ["durian fruit", "stinky fruit"] },
-        { "text": "Watermelon", "points": 20, "aliases": ["melon", "water melon"] },
-        { "text": "Chicken Fried Rice", "points": 12, "aliases": ["fried rice", "rice"] },
+        { "text": "Chicken", "points": 60, "aliases": ["fried chicken", "poultry", "bird"] },
+        { "text": "Durian", "points": 49, "aliases": ["durian fruit", "stinky fruit"] },
+        { "text": "Watermelon", "points": 48, "aliases": ["melon", "water melon"] },
+        { "text": "Chicken Fried Rice", "points": 40, "aliases": ["fried rice", "rice"] },
         { "text": "Chicken Wings", "points": 8, "aliases": ["wings", "bbq wings", "hot wings"] }
       ]
     }
