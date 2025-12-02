@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { isAnswerMatch, normalize } from './utils/answerMatching';
 
 // --- Hub Scoring Integration ---
 function getHubData() {
@@ -31,39 +32,39 @@ function dollarToHubPoints(dollars) {
 const JONpardyData = {
   categories: [
     { name: "Culinary", questions: [
-        { points: 200, question: "JON FOOD's first video featured this delectable red fruit.", answer: "Tomato" },
-        { points: 400, question: "According to Jon, this is the worst form of chicken.", answer: "Shredded" },
-        { points: 600, question: "Jon is known for these famous ____ Nights.", answer: "Meat" },
-        { points: 800, question: "Baking for his first time, Jon decided to master this food for Cody who had the key to his heart.", answer: "Key Lime Pie" },
-        { points: 1000, question: "JON tried and loved this controversial food in a Southeast Asian Country. 1 word!", answer: "Durian" },
+        { points: 200, question: "JON FOOD's first video featured this delectable red fruit.", answer: "Tomato", aliases: ["tomatoes", "tomatoe", "a tomato"] },
+        { points: 400, question: "According to Jon, this is the worst form of chicken.", answer: "Shredded", aliases: ["shredded chicken", "shreaded", "shredded meat"] },
+        { points: 600, question: "Jon is known for these famous ____ Nights.", answer: "Meat", aliases: ["meat night", "meatnight"] },
+        { points: 800, question: "Baking for his first time, Jon decided to master this food for Cody who had the key to his heart.", answer: "Key Lime Pie", aliases: ["keylime pie", "key lime", "keylime", "lime pie"] },
+        { points: 1000, question: "JON tried and loved this controversial food in a Southeast Asian Country. 1 word!", answer: "Durian", aliases: ["durion", "dorian", "durien"] },
     ]},
     { name: "Geography", questions: [
-        { points: 200, question: "Jon made a detailed itinerary for this Southeast Asian country.", answer: "Thailand" }, 
-        { points: 400, question: "A small country known for its feud with its neighbors.", answer: "Israel" },
-        { points: 600, question: "When Jon visited this European country, known for being the worlds largest wine producer, everybody thought he was a native.", answer: "Italy" },
-        { points: 800, question: "This 'Wolverine State' features a city where dreams are made, _______ city.", answer: "Minden" },
-        { points: 1000, question: "Jon's documentary premiered in this major U.S. borough.", answer: "Manhattan" },
+        { points: 200, question: "Jon made a detailed itinerary for this Southeast Asian country.", answer: "Thailand", aliases: ["tailand", "thai land", "thai"] },
+        { points: 400, question: "A small country known for its feud with its neighbors.", answer: "Israel", aliases: ["isreal", "izrael", "the holy land"] },
+        { points: 600, question: "When Jon visited this European country, known for being the worlds largest wine producer, everybody thought he was a native.", answer: "Italy", aliases: ["italia", "italian"] },
+        { points: 800, question: "This 'Wolverine State' features a city where dreams are made, _______ city.", answer: "Minden", aliases: ["minden city", "minden michigan"] },
+        { points: 1000, question: "Jon's documentary premiered in this major U.S. borough.", answer: "Manhattan", aliases: ["manhatten", "new york", "nyc"] },
     ]},
     { name: "Television", questions: [
-        { points: 200, question: "This classic 1 word show which Jon describes as the most entertaining, involves a serial killer who kills bad guys.", answer: "Dexter" },
-        { points: 400, question: "This popular 2017 tv show on Netflix featuring the profiling of serial killers was on a roll for its first 2 seasons until David Lynch forgot about it.", answer: "Mindhunter" },
-        { points: 600, question: "In a 'Stark' contrast to Breaking Bad this popular tv show featuring dragons, magic, and rape ended on a bad note", answer: "Game of Thrones" },
-        { points: 800, question: "This old comedy show with a very unique theme song features a man who doesn't know how to open doors.", answer: "Seinfeld" },
-        { points: 1000, question: "Basic people love saying they LOVE this tv show on dating apps", answer: "The Office" },
+        { points: 200, question: "This classic 1 word show which Jon describes as the most entertaining, involves a serial killer who kills bad guys.", answer: "Dexter", aliases: ["dextor", "dxter"] },
+        { points: 400, question: "This popular 2017 tv show on Netflix featuring the profiling of serial killers was on a roll for its first 2 seasons until David Lynch forgot about it.", answer: "Mindhunter", aliases: ["mind hunter", "mindhunters"] },
+        { points: 600, question: "In a 'Stark' contrast to Breaking Bad this popular tv show featuring dragons, magic, and rape ended on a bad note", answer: "Game of Thrones", aliases: ["got", "gameofthrones", "game of throne"] },
+        { points: 800, question: "This old comedy show with a very unique theme song features a man who doesn't know how to open doors.", answer: "Seinfeld", aliases: ["seinfield", "sienfeld", "signfeld"] },
+        { points: 1000, question: "Basic people love saying they LOVE this tv show on dating apps", answer: "The Office", aliases: ["office", "theoffice"] },
     ]},
     { name: "JONNISMS", questions: [
-        { points: 200, question: "This popular Jon saying about abuse became notorious through an organization called Crysalis.", answer: "No abuse is okay" },
-        { points: 400, question: "Jon says this when calling pals to verify his identity for security purposes.", answer: "Hi this is Jon" },
-        { points: 600, question: "Instead of sending prayers, Jon frequently sends this to pals.", answer: "Thoughts" },
-        { points: 800, question: "A popular YouTube channel called JonFood has an amazing host who says this at the start of almost every Jon Food video.", answer: "Hey Jon Fooders" },
-        { points: 1000, question: "After Jon met Cody, who loves knitting, he started saying this to show his love.", answer: "I love knitters" },
+        { points: 200, question: "This popular Jon saying about abuse became notorious through an organization called Crysalis.", answer: "No abuse is okay", aliases: ["no abuse is ok", "abuse is not okay", "no abuse"] },
+        { points: 400, question: "Jon says this when calling pals to verify his identity for security purposes.", answer: "Hi this is Jon", aliases: ["hi its jon", "hello this is jon", "this is jon"] },
+        { points: 600, question: "Instead of sending prayers, Jon frequently sends this to pals.", answer: "Thoughts", aliases: ["thought", "thots", "thinking of you"] },
+        { points: 800, question: "A popular YouTube channel called JonFood has an amazing host who says this at the start of almost every Jon Food video.", answer: "Hey Jon Fooders", aliases: ["hey jonfooders", "hi jon fooders", "jon fooders"] },
+        { points: 1000, question: "After Jon met Cody, who loves knitting, he started saying this to show his love.", answer: "I love knitters", aliases: ["love knitters", "i love knitter", "iloveknitters"] },
     ]},
     { name: "MOVIES", questions: [
-        { points: 200, question: "This popular movie features Leonardo Di Caprio taking quaaludes in a pool.", answer: "Wolf of Wall Street" },
-        { points: 400, question: "This movie featuring actors in blueface is the highest-grossing film of all time (unadjusted for inflation).", answer: "Avatar" },
-        { points: 600, question: "This movie has Jon's favorite movie plot. It features a man with memory loss trying to hunt clues to solve a mystery. Made by the same director who made Interstellar.", answer: "Memento" },
-        { points: 800, question: "This Office Comedy movie features a slow motion printer battle.", answer: "Office Space" },
-        { points: 1000, question: "In 'The Hobbit', this is the name of the funny looking guy, He's also known as the dwarf who wrote the Book of Mazarbul found by the Fellowship in Moria.", answer: "Ori" },
+        { points: 200, question: "This popular movie features Leonardo Di Caprio taking quaaludes in a pool.", answer: "Wolf of Wall Street", aliases: ["the wolf of wall street", "wolfofwallstreet", "wolf on wall street"] },
+        { points: 400, question: "This movie featuring actors in blueface is the highest-grossing film of all time (unadjusted for inflation).", answer: "Avatar", aliases: ["avitar", "avatr"] },
+        { points: 600, question: "This movie has Jon's favorite movie plot. It features a man with memory loss trying to hunt clues to solve a mystery. Made by the same director who made Interstellar.", answer: "Memento", aliases: ["momento", "mamento"] },
+        { points: 800, question: "This Office Comedy movie features a slow motion printer battle.", answer: "Office Space", aliases: ["officespace", "the office space"] },
+        { points: 1000, question: "In 'The Hobbit', this is the name of the funny looking guy, He's also known as the dwarf who wrote the Book of Mazarbul found by the Fellowship in Moria.", answer: "Ori", aliases: ["oree", "orie"] },
     ]},
   ],
 };
@@ -71,39 +72,39 @@ const JONpardyData = {
 const doubleJONpardyData = {
     categories: [
       { name: "HARD MATH", questions: [
-          { points: 400, question: "This famous English mathematician is often credited as the inventor of calculus and also gave his name to three laws of motion.", answer: "Isaac Newton" },
-          { points: 800, question: "In algebra class, this formula gives the solutions to ax² + bx + c = 0 and is often sung as 'x equals negative b, plus or minus the square root of b squared minus 4ac, all over 2a.", answer: "quadratic formula" },
-          { points: 1200, question: "This integration technique comes from the product rule for derivatives and is summarized by the formula “∫u dv = uv − ∫v du.", answer: "integration by parts" },
-          { points: 1600, question: "In right triangle trigonometry, this function is remembered as 'opposite over hypotenuse' in the SOHCAHTOA mnemonic.", answer: "sine" },
-          { points: 2000, question: "A right triangle has legs of length 5 and 12. Using the Pythagorean theorem you learned in school, this is the length of the hypotenuse.", answer: "13" },
+          { points: 400, question: "This famous English mathematician is often credited as the inventor of calculus and also gave his name to three laws of motion.", answer: "Isaac Newton", aliases: ["newton", "sir isaac newton", "issac newton"] },
+          { points: 800, question: "In algebra class, this formula gives the solutions to ax² + bx + c = 0 and is often sung as 'x equals negative b, plus or minus the square root of b squared minus 4ac, all over 2a.", answer: "quadratic formula", aliases: ["the quadratic formula", "quadradic formula", "quadratic equation"] },
+          { points: 1200, question: "This integration technique comes from the product rule for derivatives and is summarized by the formula: integral of u dv equals uv minus integral of v du.", answer: "integration by parts", aliases: ["by parts", "intergration by parts"] },
+          { points: 1600, question: "In right triangle trigonometry, this function is remembered as 'opposite over hypotenuse' in the SOHCAHTOA mnemonic.", answer: "sine", aliases: ["sin", "syne"] },
+          { points: 2000, question: "A right triangle has legs of length 5 and 12. Using the Pythagorean theorem you learned in school, this is the length of the hypotenuse.", answer: "13", aliases: ["thirteen"] },
       ]},
       { name: "MAKEUP", questions: [
-          { points: 400, question: "This speedy step that takes about 1 minute—just a swipe or two to wake up the eyes.", answer: "Mascara" },
-          { points: 800, question: "Taking about 2 minutes, this step evens out the skin tone before anything else goes on.", answer: "Foundation" },
-          { points: 1200, question: "At roughly 3 minutes, this step adds shape back into the cheeks using powders, sticks, or creams.", answer: "Contouring" },
-          { points: 1600, question: "This colorful ritual requires multiple shades, three brushes minimum, and the blending dedication of someone buffing a rare gemstone. One wrong swipe and you start the whole lid over.", answer: "eyeshadow" },
-          { points: 2000, question: "Often saved for last, this step can take the longest—one slip outside the lines and you're redoing half your face.", answer: "Lipstick" },
+          { points: 400, question: "This speedy step that takes about 1 minute—just a swipe or two to wake up the eyes.", answer: "Mascara", aliases: ["mascarra", "eye mascara"] },
+          { points: 800, question: "Taking about 2 minutes, this step evens out the skin tone before anything else goes on.", answer: "Foundation", aliases: ["foundaton", "makeup foundation"] },
+          { points: 1200, question: "At roughly 3 minutes, this step adds shape back into the cheeks using powders, sticks, or creams.", answer: "Contouring", aliases: ["contour", "contoring", "countouring"] },
+          { points: 1600, question: "This colorful ritual requires multiple shades, three brushes minimum, and the blending dedication of someone buffing a rare gemstone. One wrong swipe and you start the whole lid over.", answer: "eyeshadow", aliases: ["eye shadow", "eye-shadow", "eyeshadows"] },
+          { points: 2000, question: "Often saved for last, this step can take the longest—one slip outside the lines and you're redoing half your face.", answer: "Lipstick", aliases: ["lip stick", "lipstik", "lips"] },
       ]},
       { name: "BOARD GAMES", questions: [
-          { points: 400, question: "This board game features an old man with a monacle as its logo.", answer: "Monopoly" },
-          { points: 800, question: "This board game involves using dice to gather resources to build roads, settlements, and cities. You can also buy development cards.", answer: "Catan" },
-          { points: 1200, question: "This 4 x 4 grid board game involves players conecting letters to make words.", answer: "Boggle" },
-          { points: 1600, question: "Scorned from PTSD in past experiences from an english teacher who made fun of him for being bad at this game, Jon overcame the abuse beat her and has never lost this game since as a result.", answer: "Scrabble" },
-          { points: 2000, question: "The goal of this Hasbro published 1963 game is to be the last one standing after activating traps", answer: "Mousetrap" },
+          { points: 400, question: "This board game features an old man with a monacle as its logo.", answer: "Monopoly", aliases: ["monopoli", "monoply"] },
+          { points: 800, question: "This board game involves using dice to gather resources to build roads, settlements, and cities. You can also buy development cards.", answer: "Catan", aliases: ["settlers of catan", "cataan", "settlers"] },
+          { points: 1200, question: "This 4 x 4 grid board game involves players conecting letters to make words.", answer: "Boggle", aliases: ["bogle", "boogle"] },
+          { points: 1600, question: "Scorned from PTSD in past experiences from an english teacher who made fun of him for being bad at this game, Jon overcame the abuse beat her and has never lost this game since as a result.", answer: "Scrabble", aliases: ["scrable", "scrabel"] },
+          { points: 2000, question: "The goal of this Hasbro published 1963 game is to be the last one standing after activating traps", answer: "Mousetrap", aliases: ["mouse trap", "mouse-trap"] },
       ]},
       { name: "DIABETES", questions: [
-        { points: 400, question: "This organ, located behind the stomach, produces the hormone insulin.", answer: "pancreas" },
-        { points: 800, question: "This hormone helps move glucose from the bloodstream into the body's cells for energy.", answer: "insulin" },
-        { points: 1200, question: "In this type of diabetes, the body’s immune system destroys the insulin-producing cells in the pancreas.", answer: "Type 1" },
-        { points: 1600, question: "This blood test, often reported as a percentage, shows average blood sugar levels over the past two to three months.", answer: "A1C" },
-        { points: 2000, question: "This serious complication of diabetes involves very high blood sugar and a buildup of acids called ketones, and can be life-threatening if untreated.", answer: "ketoacidosis" },
+        { points: 400, question: "This organ, located behind the stomach, produces the hormone insulin.", answer: "pancreas", aliases: ["the pancreas", "pancrias", "pancrease"] },
+        { points: 800, question: "This hormone helps move glucose from the bloodstream into the body's cells for energy.", answer: "insulin", aliases: ["insuline", "insolin"] },
+        { points: 1200, question: "In this type of diabetes, the body's immune system destroys the insulin-producing cells in the pancreas.", answer: "Type 1", aliases: ["type 1 diabetes", "type one", "t1d", "type1"] },
+        { points: 1600, question: "This blood test, often reported as a percentage, shows average blood sugar levels over the past two to three months.", answer: "A1C", aliases: ["a1c test", "hba1c", "hemoglobin a1c"] },
+        { points: 2000, question: "This serious complication of diabetes involves very high blood sugar and a buildup of acids called ketones, and can be life-threatening if untreated.", answer: "ketoacidosis", aliases: ["diabetic ketoacidosis", "dka", "keto acidosis"] },
     ]},
       { name: "VIDEO GAMES", questions: [
-          { points: 400, question: "This shitty simulation franchise features Orange Juice, B-Fresh, BO$$ Key Yacht$, Michael B Jordan, and Ronnie.", answer: "NBA 2K" }, 
-          { points: 800, question: "This walking simulator stars Stanley.", answer: "The Stanley Parable" },
-          { points: 1200, question: "This virtual reality rhythm game lets you slash the tunes away.", answer: "Beat Saber" },
-          { points: 1600, question: "This game has you shouting stuff at dragons. Fus Ro Dah", answer: "Skyrim" },
-          { points: 2000, question: "This action adventure video game franchise follows Kratos.", answer: "God of War" },
+          { points: 400, question: "This shitty simulation franchise features Orange Juice, B-Fresh, BO$$ Key Yacht$, Michael B Jordan, and Ronnie.", answer: "NBA 2K", aliases: ["nba2k", "2k", "nba 2k24", "nba 2k25"] },
+          { points: 800, question: "This walking simulator stars Stanley.", answer: "The Stanley Parable", aliases: ["stanley parable", "stanleyparable"] },
+          { points: 1200, question: "This virtual reality rhythm game lets you slash the tunes away.", answer: "Beat Saber", aliases: ["beatsaber", "beat sabre"] },
+          { points: 1600, question: "This game has you shouting stuff at dragons. Fus Ro Dah", answer: "Skyrim", aliases: ["elder scrolls skyrim", "the elder scrolls skyrim", "skryim"] },
+          { points: 2000, question: "This action adventure video game franchise follows Kratos.", answer: "God of War", aliases: ["godofwar", "god of war ragnarok"] },
       ]},
     ],
   };
@@ -151,7 +152,8 @@ const tripleJONpardyData = {
 const finalJONpardyData = {
     category: "JON",
     question: "Pronounced like a pirate mistakenly by ASU at his graduation, what is Jon's middle name?",
-    answer: "Yair"
+    answer: "Yair",
+    aliases: ["yar", "yarr", "yaer", "yaire"]
 };
 
 const BUZZER_KEYS = { 'q': 0, 'p': 1, 'z': 2, 'm': 3 };
@@ -507,7 +509,9 @@ const handleBuzzIn = useCallback((event) => {
     e.preventDefault();
     if (!userAnswer.trim()) return;
 
-    const isCorrect = userAnswer.trim().toLowerCase() === activeQuestion.answer.toLowerCase();
+    // Use fuzzy matching with aliases support
+    const isCorrect = isAnswerMatch(userAnswer, activeQuestion.answer) ||
+                      (activeQuestion.aliases && activeQuestion.aliases.some(alias => isAnswerMatch(userAnswer, alias)));
     const points = activeQuestion.wager ?? activeQuestion.points;
     const newTeams = [...teams];
     const team = newTeams[currentTeamIndex];
@@ -675,9 +679,11 @@ const handleBuzzIn = useCallback((event) => {
     stopFinalJONpardyMusic();
     const newTeams = teams.map((team, i) => {
       if (team.score <= 0) return team;
-      const answer = (finalAnswers[i] || "").trim().toLowerCase();
+      const answer = (finalAnswers[i] || "").trim();
       const wager = finalWagers[i] || 0;
-      const isCorrect = answer === finalJONpardyData.answer.toLowerCase();
+      // Use fuzzy matching with aliases for Final JONpardy
+      const isCorrect = isAnswerMatch(answer, finalJONpardyData.answer) ||
+                        (finalJONpardyData.aliases && finalJONpardyData.aliases.some(alias => isAnswerMatch(answer, alias)));
 
       // Auto-score Final Jonpardy to hub (+25 for correct)
       if (isCorrect && hubEnabled && hubTeamMap[i]) {
