@@ -18,9 +18,14 @@ function addHubTeamScore(team, points, gameName) {
   window.GameNightScoring.addTeamScore(team, points, gameName, `+${points} pts`);
 }
 
-function addHubPlayerScore(playerId, points, gameName, description) {
+function addHubPlayerScore(playerName, points, gameName, description) {
   if (!window.GameNightScoring) return;
-  window.GameNightScoring.addScore(playerId, points, gameName, description);
+  // Validate playerName before sending to hub (hub uses name, not ID)
+  if (!playerName || playerName === 'undefined') {
+    console.warn('JONpardy: Invalid playerName, skipping hub score update');
+    return;
+  }
+  window.GameNightScoring.addScore(playerName, points, gameName, description);
 }
 
 // Convert question dollar value to hub points (scaled: $200 = 2pts, $1000 = 10pts)
@@ -157,7 +162,7 @@ const finalJONpardyData = {
 const BUZZER_KEYS = { 'q': 0, 'p': 1, 'z': 2, 'm': 3 };
 
 export default function App() {
-  // Build: 2025-12-02-v3 - ensures fresh cache
+  // Build: 2025-12-02-v5 - fixed hub scoring (use player name not ID)
   const [gameState, setGameState] = useState('setup');
   const [currentRound, setCurrentRound] = useState('JONpardy');
   const [board, setBoard] = useState([]);
@@ -200,7 +205,7 @@ export default function App() {
 
   // Update individual player stats and calculate personal score
   // JONpardy is team-based - all players on the team earn points together
-  const updatePlayerStats = useCallback((playerId, statUpdate) => {
+  const updatePlayerStats = useCallback((playerId, playerName, statUpdate) => {
     setPlayers(prev => prev.map(p => {
       if (p.id !== playerId) return p;
       const newStats = { ...p.stats };
@@ -219,9 +224,9 @@ export default function App() {
       // Personal score = accumulated points + game win bonus
       const personalScore = (newStats.totalPoints || 0) + (newStats.gameWinBonus || 0);
 
-      // Sync to hub
+      // Sync to hub using player NAME (hub uses name for lookups)
       if (statUpdate.hubPoints && window.GameNightScoring) {
-        addHubPlayerScore(playerId, statUpdate.hubPoints, 'JONpardy', statUpdate.description || '+points');
+        addHubPlayerScore(playerName, statUpdate.hubPoints, 'JONpardy', statUpdate.description || '+points');
       }
 
       return { ...p, stats: newStats, personalScore };
@@ -309,7 +314,11 @@ useEffect(() => {
         musicGain.connect(audioContext.current.destination);
         osc.start(now);
         lfo.start(now);
-        finalJONpardyMusic.current = { osc, lfo };
+        // Auto-stop after 30 seconds (typical Final Jeopardy think time)
+        const autoStopTimeout = setTimeout(() => {
+          stopFinalJONpardyMusic();
+        }, 30000);
+        finalJONpardyMusic.current = { osc, lfo, musicGain, autoStopTimeout };
         return;
     }
     oscillator.start(now);
@@ -318,9 +327,20 @@ useEffect(() => {
   
   const stopFinalJONpardyMusic = () => {
     if (finalJONpardyMusic.current) {
-        const now = audioContext.current.currentTime;
-        finalJONpardyMusic.current.osc.stop(now);
-        finalJONpardyMusic.current.lfo.stop(now);
+        // Clear auto-stop timeout if it exists
+        if (finalJONpardyMusic.current.autoStopTimeout) {
+          clearTimeout(finalJONpardyMusic.current.autoStopTimeout);
+        }
+        try {
+          const now = audioContext.current.currentTime;
+          finalJONpardyMusic.current.osc.stop(now);
+          finalJONpardyMusic.current.lfo.stop(now);
+          if (finalJONpardyMusic.current.musicGain) {
+            finalJONpardyMusic.current.musicGain.disconnect();
+          }
+        } catch (e) {
+          // Oscillators may already be stopped
+        }
         finalJONpardyMusic.current = null;
     }
   };
@@ -378,9 +398,10 @@ useEffect(() => {
       setNumTeams(2);
 
       // Load players with individual tracking
-      const loadedPlayers = hubData.players.map(p => ({
-        id: p.id,
-        name: p.name,
+      const loadedPlayers = hubData.players.map((p, index) => ({
+        // Ensure player has a valid ID - use hub ID or generate fallback
+        id: p.id || `player_${index}_${Date.now()}`,
+        name: p.name || `Player ${index + 1}`,
         team: p.team, // 'A' or 'B'
         teamIndex: p.team === 'A' ? 0 : 1,
         avatar: p.avatar || '🎮',
@@ -392,6 +413,7 @@ useEffect(() => {
           gameWinBonus: 0
         }
       }));
+      console.log('JONpardy: Loaded players', loadedPlayers.map(p => ({ id: p.id, name: p.name, team: p.team })));
       setPlayers(loadedPlayers);
     } else {
       const initialTeams = Array.from({ length: numTeams }, (_, i) => ({ name: `Team ${i + 1}`, score: 0 }));
@@ -569,7 +591,7 @@ const handleBuzzIn = useCallback((event) => {
         if (activeQuestion.isDailyDouble) {
           // Daily Double: +15 per player
           teamPlayers.forEach(p => {
-            updatePlayerStats(p.id, {
+            updatePlayerStats(p.id, p.name, {
               dailyDoubleCorrect: true,
               hubPoints: 15,
               description: 'Daily Double correct (+15)'
@@ -579,7 +601,7 @@ const handleBuzzIn = useCallback((event) => {
           // Regular question: scale by dollar value ($200=2, $1000=10)
           const individualPoints = dollarToHubPoints(activeQuestion.points);
           teamPlayers.forEach(p => {
-            updatePlayerStats(p.id, {
+            updatePlayerStats(p.id, p.name, {
               correctAnswer: true,
               hubPoints: individualPoints,
               description: `Correct $${activeQuestion.points} (+${individualPoints})`
@@ -670,6 +692,13 @@ const handleBuzzIn = useCallback((event) => {
     }
   }, [board, gameState]);
 
+  // Stop Final JONpardy music when leaving that game state
+  useEffect(() => {
+    if (gameState !== 'finalJONpardy') {
+      stopFinalJONpardyMusic();
+    }
+  }, [gameState]);
+
   // Award game win bonus (+25 team, +10 per player) when game ends
   useEffect(() => {
     if (gameState === 'gameOver' && hubEnabled && !gameWinBonusAwarded) {
@@ -685,7 +714,7 @@ const handleBuzzIn = useCallback((event) => {
           // Award individual game win bonus (+10) to all winning team players
           const winningTeam = hubTeamMap[winnerIndex]; // 'A' or 'B'
           players.filter(p => p.team === winningTeam).forEach(p => {
-            updatePlayerStats(p.id, {
+            updatePlayerStats(p.id, p.name, {
               gameWinBonus: 10,
               hubPoints: 10,
               description: 'Game win bonus (+10)'
@@ -716,7 +745,7 @@ const handleBuzzIn = useCallback((event) => {
         // Award individual Final JONpardy correct (+20) to all players on this team
         const teamLetter = hubTeamMap[i]; // 'A' or 'B'
         players.filter(p => p.team === teamLetter).forEach(p => {
-          updatePlayerStats(p.id, {
+          updatePlayerStats(p.id, p.name, {
             finalCorrect: true,
             hubPoints: 20,
             description: 'Final JONpardy correct (+20)'

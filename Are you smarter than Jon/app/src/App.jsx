@@ -32,7 +32,7 @@ const QUESTIONS = [
   answerIndex: 0,
   hint: "Ignore the start time (just like Kaz). Use addition."
 },
-  { id: "q17", grade: 1, subject: "Culinary Arts", q: "Besides refusing to eat any animal he can have fun with, which food does Jon refuse to eat? ", choices: ["Pulled Pork", "Mushrooms", "Octopus", "Shredded Chicken"], answerIndex: 3, hint: "He hates the stringy, 'pulled' texture." },
+  { id: "q17", grade: 1, subject: "Culinary Arts", q: "Besides refusing to eat any animal he can have fun with, which food does Jon refuse to eat? ", choices: ["Pulled Pork", "Mushrooms", "Tomatoes", "Shredded Chicken"], answerIndex: 3, hint: "He hates the stringy, 'pulled' texture." },
   {
   id: "q18",
   grade: 1,
@@ -158,12 +158,13 @@ function getTopScorer() {
   const hubData = getHubData();
   if (!hubData || !hubData.players) return null;
 
-  // Get scores from GameNightScoring
+  // Get scores from hub data - player.total contains accumulated points
   let topPlayer = null;
   let topScore = -1;
 
   hubData.players.forEach(player => {
-    const score = window.GameNightScoring?.getPlayerScore?.(player.name) || 0;
+    // Use player.total from hub data (accumulated across all games)
+    const score = player.total || 0;
     if (score > topScore) {
       topScore = score;
       topPlayer = { name: player.name, score, team: player.team };
@@ -176,7 +177,7 @@ function getTopScorer() {
 
   hubData.players.forEach(player => {
     if (topPlayer && player.name === topPlayer.name) return;
-    const score = window.GameNightScoring?.getPlayerScore?.(player.name) || 0;
+    const score = player.total || 0;
     if (score > runnerUpScore) {
       runnerUpScore = score;
       runnerUp = { name: player.name, score, team: player.team };
