@@ -181,7 +181,7 @@ export default function FamilyFeudApp() {
         (newStats.answersRevealed * 6) +     // +6 per answer (was 10)
         (newStats.topAnswers * 10) +         // +10 for top answer (was 15)
         (newStats.faceoffWins * 12) +        // +12 for faceoff win (was 20)
-        (newStats.stealsWon * 15) +          // +15 for steal (was 25)
+        (newStats.stealsWon * 5) +           // +5 for submitting steal answer (team effort, small bonus)
         (newStats.roundWinBonus || 0) +      // +5 per round win
         (newStats.fastMoneyBonus || 0) +     // +10 for FM win
         (newStats.gameWinBonus || 0) +       // +15 for game win
@@ -197,8 +197,9 @@ export default function FamilyFeudApp() {
         addHubPlayerScore(player.name, 12, 'Jon Feud', 'Won faceoff (+12)');
       }
       if (hubEnabled && statUpdate.stealsWon) {
-        // Steal is collaborative - bonus goes to whole team
-        addHubTeamScore(player.team, 15, 'Jon Feud', 'Successful steal (+15)');
+        // Steal is collaborative - submitter gets small individual bonus
+        // Team already gets 25 for winning the round via award()
+        addHubPlayerScore(player.name, 5, 'Jon Feud', 'Submitted steal answer (+5)');
       }
       return { ...player, stats: newStats, personalScore };
     }));
@@ -560,11 +561,8 @@ export default function FamilyFeudApp() {
         const isTopAnswer = i === 0;
         addAction(`Revealed: "${slot.text}" for ${slot.points} points${isTopAnswer ? " (TOP ANSWER!)" : ""}`);
 
-        // Hub scoring: Team bonus for #1 answer ONLY during steal (the only collaborative moment in Family Feud)
-        // During faceoff and regular rounds, players answer individually - no team bonus
-        if (isTopAnswer && hubEnabled && phase === "steal") {
-          addHubTeamScore(stealingTeam, 10, 'Jon Feud', 'Top answer on steal (+10)');
-        }
+        // Note: No individual top answer bonus during steal - it's a team effort
+        // Team gets 25 for winning the round via award(), submitter gets 5 via stealsWon
 
         // Auto-rotate to next player after correct answer during main play
         if (phase === "round" && controlTeam) {
@@ -1048,13 +1046,13 @@ export default function FamilyFeudApp() {
                     }
                   }
                   // During steal, if they get a correct answer, auto-succeed the steal
+                  // Steal is a TEAM effort - everyone collaborates. Only give submitter a small bonus.
                   if (phase === "steal") {
                     const currentPlayerId = getSelectedPlayer(stealingTeam);
                     if (currentPlayerId) {
+                      // Only give stealsWon - no answersRevealed or topAnswers since it's a team effort
                       updatePlayerStats(currentPlayerId, {
-                        answersRevealed: 1,
-                        stealsWon: 1,
-                        topAnswers: isTopAnswer ? 1 : 0
+                        stealsWon: 1
                       });
                     }
                     addAction(`Steal successful! Matched answer #${idx + 1}`);
