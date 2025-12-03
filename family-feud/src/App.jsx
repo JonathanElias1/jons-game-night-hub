@@ -847,11 +847,34 @@ export default function FamilyFeudApp() {
               </div>
             </div>
 
-            <QuestionDisplay 
-              displayedQuestion={displayedQuestion} 
-              phase={phase} 
-              faceoffBuzz={faceoffBuzz} 
-              faceoffTurn={faceoffTurn} 
+            {/* Faceoff Players Banner - show who's competing */}
+            {phase === "faceoff" && !faceoffBuzz && (
+              <div className="my-4 p-4 bg-gradient-to-r from-blue-600/40 via-purple-600/40 to-red-600/40 rounded-xl border-2 border-yellow-400/50">
+                <div className="text-center text-yellow-300 text-sm font-bold uppercase tracking-wider mb-2">
+                  🔔 Faceoff 🔔
+                </div>
+                <div className="flex justify-center items-center gap-4 text-lg font-bold">
+                  <div className="text-blue-300">
+                    <span className="text-white/60 text-sm">{teamAName}:</span>{' '}
+                    {getFaceoffPlayer('A')?.name || '?'}
+                  </div>
+                  <div className="text-yellow-400 text-2xl">VS</div>
+                  <div className="text-red-300">
+                    <span className="text-white/60 text-sm">{teamBName}:</span>{' '}
+                    {getFaceoffPlayer('B')?.name || '?'}
+                  </div>
+                </div>
+                <div className="text-center text-white/50 text-xs mt-2">
+                  Press Q ({teamAName}) or P ({teamBName}) to buzz in!
+                </div>
+              </div>
+            )}
+
+            <QuestionDisplay
+              displayedQuestion={displayedQuestion}
+              phase={phase}
+              faceoffBuzz={faceoffBuzz}
+              faceoffTurn={faceoffTurn}
             />
 
             <AnswersBoard

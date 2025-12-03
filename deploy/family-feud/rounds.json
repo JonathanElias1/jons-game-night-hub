@@ -17,8 +17,8 @@
       "question": "Which race does Jon get confused for?",
       "multiplier": 1,
       "answers": [
-        { "text": "Russian", "points": 40, "aliases": ["soviet", "russia"] },
-        { "text": "Ukranian", "points": 18, "aliases": ["ukraine", "ukrainian"] },
+        { "text": "Russian/Ukranian", "points": 40, "aliases": ["soviet", "russia","ukraine", "ukrainian"] },
+        { "text": "Italian", "points": 18, "aliases": ["italy","italys"] },
         { "text": "Mexican", "points": 15, "aliases": ["Mexico"] },
         { "text": "Spanish", "points": 13, "aliases": ["hispanic", "spanish"] },
         { "text": "Greek", "points": 12, "aliases": ["Greece", "Roman"] },
@@ -56,7 +56,7 @@
         { "text": "Busy", "points": 22, "aliases": ["occupied", "preoccupied", "distracted"] },
         { "text": "Working", "points": 15, "aliases": ["at work", "job", "work", "meeting"] },
         { "text": "Drinking", "points": 10, "aliases": ["drunk", "wasted", "partying", "bar", "club"] },
-        { "text": "Eating", "points": 7, "aliases": ["dinner", "lunch", "meal", "breakfast", "food"] },
+        { "text": "Sleeping", "points": 7, "aliases": ["sleep", "sleepy", "sleeeping"] },
         { "text": "Bathroom", "points": 5, "aliases": ["toilet", "restroom", "peeing", "pooping", "shower", "showering"] },
         { "text": "Car Issues", "points": 4, "aliases": ["car trouble", "dead battery", "car problems", "broken down", "Jumping a car"] },
         { "text": "Involved with Hospital Operations", "points": 2, "aliases": ["hospital", "medical", "surgery", "sick", "doctor", "emergency", "er", "dentist"] }
@@ -110,7 +110,6 @@
         { "text": "I'm always hard", "points": 49, "aliases": ["always hard", "im hard", "hard","I'm the hardest"] },
         { "text": "Hey Jon Fooders", "points": 50, "aliases": ["jon fooders", "fooders", "hey fooders"] },
         { "text": "I love Israel", "points": 60, "aliases": ["love israel", "israel"] }
-
       ]
     },
     {
@@ -131,7 +130,7 @@
         { "text": "JON FOOD", "points": 50, "aliases": ["jonfood", "food reviews", "eating", "food channel"] },
         { "text": "Cooking/Meat Night", "points": 40, "aliases": ["cooking", "meat night", "grilling", "bbq", "chef"] },
         { "text": "Acting/Art The Clown", "points": 10, "aliases": ["acting", "art the clown", "terrifier", "movies", "horror"] },
-        { "text": "Sports", "points": 7, "aliases": ["basketball", "football", "athletics", "athlete"] }
+        { "text": "Saving Lives/Sports", "points": 7, "aliases": ["basketball", "football", "athletics", "athlete"] }
       ]
     },
     {
