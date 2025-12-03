@@ -180,7 +180,8 @@ export default function FamilyFeudApp() {
         addHubPlayerScore(player.name, 12, 'Jon Feud', 'Won faceoff (+12)');
       }
       if (hubEnabled && statUpdate.stealsWon) {
-        addHubPlayerScore(player.name, 15, 'Jon Feud', 'Successful steal (+15)');
+        // Steal is collaborative - bonus goes to whole team
+        addHubTeamScore(player.team, 15, 'Jon Feud', 'Successful steal (+15)');
       }
       return { ...player, stats: newStats, personalScore };
     }));
