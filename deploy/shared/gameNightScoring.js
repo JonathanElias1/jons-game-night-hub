@@ -65,7 +65,12 @@
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const data = JSON.parse(saved);
+        // Ensure teamScores exists for backwards compatibility
+        if (!data.teamScores) {
+          data.teamScores = { A: {}, B: {} };
+        }
+        return data;
       }
     } catch (e) {
       console.error('Failed to load game night data:', e);
@@ -73,6 +78,7 @@
     return {
       players: [],
       teamNames: { A: 'Team A', B: 'Team B' },
+      teamScores: { A: {}, B: {} }, // Track actual game scores per team per game
       gamesPlayed: [],
       currentGame: null
     };
@@ -243,6 +249,27 @@
     return data;
   }
 
+  // Set team's actual game score (not individual bonuses - the real game score)
+  function setTeamGameScore(team, score, gameName) {
+    const data = loadData();
+    if (!data.teamScores) data.teamScores = { A: {}, B: {} };
+    if (!data.teamScores[team]) data.teamScores[team] = {};
+    data.teamScores[team][gameName] = score;
+    saveData(data);
+    notifyScoreChange();
+    return data;
+  }
+
+  // Get team game scores (actual game scores, not individual bonuses)
+  function getTeamGameScores(gameName) {
+    const data = loadData();
+    if (!data.teamScores) return { A: 0, B: 0 };
+    return {
+      A: (data.teamScores.A && data.teamScores.A[gameName]) || 0,
+      B: (data.teamScores.B && data.teamScores.B[gameName]) || 0
+    };
+  }
+
   // Mark game as played
   function markGamePlayed(gameName) {
     const data = loadData();
@@ -253,11 +280,22 @@
     saveData(data);
   }
 
-  // Get team totals
+  // Get team totals (actual game scores across all games)
   function getTeamTotals() {
     const data = loadData();
-    const teamA = data.players.filter(p => p.team === 'A').reduce((sum, p) => sum + (p.total || 0), 0);
-    const teamB = data.players.filter(p => p.team === 'B').reduce((sum, p) => sum + (p.total || 0), 0);
+    let teamA = 0;
+    let teamB = 0;
+
+    // Sum actual team game scores across all games
+    if (data.teamScores) {
+      if (data.teamScores.A) {
+        teamA = Object.values(data.teamScores.A).reduce((sum, score) => sum + (score || 0), 0);
+      }
+      if (data.teamScores.B) {
+        teamB = Object.values(data.teamScores.B).reduce((sum, score) => sum + (score || 0), 0);
+      }
+    }
+
     return { teamA, teamB };
   }
 
@@ -613,6 +651,8 @@
     getTeamNames,
     addScore,
     addTeamScore,
+    setTeamGameScore,    // Set actual team game score
+    getTeamGameScores,   // Get team game scores for a specific game
     markGamePlayed,
     getTeamTotals,
     getLeaderboard,

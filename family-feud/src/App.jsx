@@ -44,6 +44,12 @@ function addHubPlayerScore(playerName, points, gameName, description) {
   window.GameNightScoring.addScore(playerName, points, gameName, description);
 }
 
+// Sync actual team game scores to hub (the real Family Feud scores, not bonuses)
+function syncTeamGameScore(team, score) {
+  if (!window.GameNightScoring) return;
+  window.GameNightScoring.setTeamGameScore(team, score, 'Jon Feud');
+}
+
 export default function FamilyFeudApp() {
   const [gameSettings, setGameSettings] = useState(null);
   const [autoStarted, setAutoStarted] = useState(false);
@@ -137,6 +143,14 @@ export default function FamilyFeudApp() {
       }
     }
   }, [autoStarted, gameSettings, loaded, data.rounds.length]);
+
+  // Sync actual team game scores to hub whenever they change
+  useEffect(() => {
+    if (hubEnabled) {
+      syncTeamGameScore('A', teamA);
+      syncTeamGameScore('B', teamB);
+    }
+  }, [teamA, teamB, hubEnabled]);
 
   const addAction = (message) => {
     const time = new Date().toLocaleTimeString();
