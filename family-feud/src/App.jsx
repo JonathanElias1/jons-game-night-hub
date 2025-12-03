@@ -71,6 +71,7 @@ export default function FamilyFeudApp() {
   const [faceoffAnswerB, setFaceoffAnswerB] = useState(null); // Index of answer Team B got
   const [faceoffMissedA, setFaceoffMissedA] = useState(false); // Team A gave wrong answer
   const [faceoffMissedB, setFaceoffMissedB] = useState(false); // Team B gave wrong answer
+  const [faceoffAcknowledged, setFaceoffAcknowledged] = useState(false); // Banner has been clicked
   const [fmPoints1, setFmPoints1] = useState(Array(5).fill(0));
   const [fmPoints2, setFmPoints2] = useState(Array(5).fill(0));
   const [fmShown, setFmShown] = useState(Array(5).fill(false));
@@ -286,33 +287,42 @@ export default function FamilyFeudApp() {
     return base;
   }, [phase, currentRound, suddenItem]);
 
-  // Typewriter effect - only starts when round begins (after Pass/Play choice)
+  // Typewriter effect - only starts after faceoff is acknowledged or during round play
   useEffect(() => {
     stopTyping();
     const text = currentRound?.question;
 
-    // Only start typewriter during actual round play, not during faceoff or passOrPlay
-    if (text && phase === "round") {
-      setDisplayedQuestion('');
-      typewriterTimerRef.current = setInterval(() => {
-        setDisplayedQuestion(currentText => {
-          if (currentText.length < text.length) {
-            return text.substring(0, currentText.length + 1);
-          } else {
-            stopTyping();
-            return text;
-          }
-        });
-      }, 100);
-    } else if (phase === "faceoff" || phase === "passOrPlay") {
-      // During faceoff, show the question immediately (no typewriter)
+    // During faceoff, only show question after banner is acknowledged
+    if (phase === "faceoff") {
+      if (faceoffAcknowledged && text) {
+        // Start typewriter after acknowledgment
+        setDisplayedQuestion('');
+        typewriterTimerRef.current = setInterval(() => {
+          setDisplayedQuestion(currentText => {
+            if (currentText.length < text.length) {
+              return text.substring(0, currentText.length + 1);
+            } else {
+              stopTyping();
+              return text;
+            }
+          });
+        }, 100);
+      } else {
+        // Banner not acknowledged yet - don't show question
+        setDisplayedQuestion('');
+      }
+    } else if (phase === "round") {
+      // During round, show full question (typewriter already happened in faceoff)
+      setDisplayedQuestion(text || '');
+    } else if (phase === "passOrPlay") {
+      // Show question during pass/play choice
       setDisplayedQuestion(text || '');
     } else {
       setDisplayedQuestion('');
     }
 
     return () => stopTyping();
-  }, [currentRound, phase]);
+  }, [currentRound, phase, faceoffAcknowledged]);
 
   useEffect(() => {
     if (faceoffBuzz) {
@@ -412,6 +422,7 @@ export default function FamilyFeudApp() {
     setFaceoffAnswerB(null);
     setFaceoffMissedA(false);
     setFaceoffMissedB(false);
+    setFaceoffAcknowledged(false);
     setRevealed(Array(8).fill(false));
     setStrikes(0);
     setBank(0);
@@ -654,6 +665,7 @@ export default function FamilyFeudApp() {
     setFaceoffAnswerB(null);
     setFaceoffMissedA(false);
     setFaceoffMissedB(false);
+    setFaceoffAcknowledged(false);
     setFmPoints1(Array(5).fill(0));
     setFmPoints2(Array(5).fill(0));
     setFmShown(Array(5).fill(false));
@@ -851,25 +863,28 @@ export default function FamilyFeudApp() {
               </div>
             </div>
 
-            {/* Faceoff Players Banner - show who's competing (stays visible during entire faceoff) */}
-            {phase === "faceoff" && (
-              <div className="my-4 p-4 bg-gradient-to-r from-blue-600/40 via-purple-600/40 to-red-600/40 rounded-xl border-2 border-yellow-400/50">
-                <div className="text-center text-yellow-300 text-sm font-bold uppercase tracking-wider mb-2">
-                  🔔 Faceoff 🔔
+            {/* Faceoff Players Banner - click to acknowledge and start */}
+            {phase === "faceoff" && !faceoffAcknowledged && (
+              <div
+                className="my-4 p-6 bg-gradient-to-r from-blue-600/40 via-purple-600/40 to-red-600/40 rounded-xl border-2 border-yellow-400 cursor-pointer hover:border-yellow-300 hover:scale-[1.02] transition-all"
+                onClick={() => setFaceoffAcknowledged(true)}
+              >
+                <div className="text-center text-yellow-300 text-lg font-bold uppercase tracking-wider mb-3">
+                  🔔 Round {roundIndex + 1} Faceoff 🔔
                 </div>
-                <div className="flex justify-center items-center gap-4 text-lg font-bold">
+                <div className="flex justify-center items-center gap-6 text-xl font-bold mb-4">
                   <div className="text-blue-300">
-                    <span className="text-white/60 text-sm">{teamAName}:</span>{' '}
+                    <span className="text-white/60 text-sm block">{teamAName}</span>
                     {getFaceoffPlayer('A')?.name || '?'}
                   </div>
-                  <div className="text-yellow-400 text-2xl">VS</div>
+                  <div className="text-yellow-400 text-3xl">VS</div>
                   <div className="text-red-300">
-                    <span className="text-white/60 text-sm">{teamBName}:</span>{' '}
+                    <span className="text-white/60 text-sm block">{teamBName}</span>
                     {getFaceoffPlayer('B')?.name || '?'}
                   </div>
                 </div>
-                <div className="text-center text-white/50 text-xs mt-2">
-                  Press Q ({teamAName}) or P ({teamBName}) to buzz in!
+                <div className="text-center text-yellow-400 text-sm font-bold animate-pulse">
+                  👆 Click to Start Faceoff 👆
                 </div>
               </div>
             )}
