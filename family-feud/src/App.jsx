@@ -510,22 +510,10 @@ export default function FamilyFeudApp() {
         const isTopAnswer = i === 0;
         addAction(`Revealed: "${slot.text}" for ${slot.points} points${isTopAnswer ? " (TOP ANSWER!)" : ""}`);
 
-        // Hub scoring: +10 to team that revealed the #1 answer
-        // - "round" phase: use controlTeam (team currently playing)
-        // - "faceoff"/"sudden" phase: use faceoffTurn (team currently answering)
-        // - "steal" phase: use stealingTeam (team trying to steal, opposite of controlTeam)
-        if (isTopAnswer && hubEnabled) {
-          let scoringTeam;
-          if (phase === "round") {
-            scoringTeam = controlTeam;
-          } else if (phase === "steal") {
-            scoringTeam = stealingTeam;
-          } else {
-            scoringTeam = faceoffTurn; // faceoff or sudden
-          }
-          if (scoringTeam) {
-            addHubTeamScore(scoringTeam, 10, 'Jon Feud', 'Top answer (+10)');
-          }
+        // Hub scoring: Team bonus for #1 answer ONLY during steal (the only collaborative moment in Family Feud)
+        // During faceoff and regular rounds, players answer individually - no team bonus
+        if (isTopAnswer && hubEnabled && phase === "steal") {
+          addHubTeamScore(stealingTeam, 10, 'Jon Feud', 'Top answer on steal (+10)');
         }
 
         // Auto-rotate to next player after correct answer during main play
