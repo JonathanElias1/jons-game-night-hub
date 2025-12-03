@@ -511,10 +511,18 @@ export default function FamilyFeudApp() {
         addAction(`Revealed: "${slot.text}" for ${slot.points} points${isTopAnswer ? " (TOP ANSWER!)" : ""}`);
 
         // Hub scoring: +10 to team that revealed the #1 answer
-        // - During "round" phase: use controlTeam (team currently playing)
-        // - During "faceoff" phase: use faceoffTurn (team currently answering, NOT who buzzed first)
+        // - "round" phase: use controlTeam (team currently playing)
+        // - "faceoff"/"sudden" phase: use faceoffTurn (team currently answering)
+        // - "steal" phase: use stealingTeam (team trying to steal, opposite of controlTeam)
         if (isTopAnswer && hubEnabled) {
-          const scoringTeam = phase === "round" ? controlTeam : faceoffTurn;
+          let scoringTeam;
+          if (phase === "round") {
+            scoringTeam = controlTeam;
+          } else if (phase === "steal") {
+            scoringTeam = stealingTeam;
+          } else {
+            scoringTeam = faceoffTurn; // faceoff or sudden
+          }
           if (scoringTeam) {
             addHubTeamScore(scoringTeam, 10, 'Jon Feud', 'Top answer (+10)');
           }
