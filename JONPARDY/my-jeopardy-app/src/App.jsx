@@ -113,7 +113,7 @@ const tripleJONpardyData = {
     categories: [
       { name: "STAR WARS", questions: [
           { points: 100, question: "The original name for this green character in The Empire Strikes Back before George Lucas chickened out was this?", answer: "Minch", aliases: ["minch yoda", "yoda minch"] },
-          { points: 200, question: "What is the name of the creature living in the trash compactor of the Death Star in A New Home?", answer: "Dianoga", aliases: ["dianoga", "dianooga", "trash monster", "garbage squid"] },
+          { points: 200, question: "What is the name of the creature living in the trash compactor of the Death Star in A New Hope?", answer: "Dianoga", aliases: ["dianoga", "dianooga", "trash monster", "garbage squid"] },
           { points: 300, question: "According to C-3PO, the odds of successfully navigating an asteroid field are __________ to 1.", answer: "3720", aliases: ["3,720", "3720 to 1", "3720 to one"] },
           { points: 400, question: "This upbeat, swinging style, played by the Bith alien band, Figrin D'an and the Modal Nodes, in the Mos Eisley Cantina in Episode IV: A New Hope played this music genre", answer: "Jizz", aliases: ["jatz", "cantina music"] },
           { points: 500, question: "To keep costs down and fans away, Return of the Jedi was shot under this fake horror-movie title with the tagline 'Horror Beyond Imagination.'", answer: "Blue Harvest", aliases: ["blueharvest", "blue harvest horror"] },
@@ -429,9 +429,14 @@ useEffect(() => {
     e.preventDefault();
     const wager = parseInt(dailyDoubleWager);
     const teamScore = teams[currentTeamIndex].score;
-    const maxWager = Math.max(teamScore, currentRound === 'JONpardy' ? 1000 : currentRound === 'doubleJONpardy' ? 2000 : 3000);
-    if (isNaN(wager) || wager < 5 || wager > maxWager) {
-      setWagerError(`Wager must be between $5 and $${maxWager}.`);
+    const highestClueValue = currentRound === 'JONpardy' ? 1000 : currentRound === 'doubleJONpardy' ? 2000 : 3000;
+    // In real Jeopardy: max wager is the greater of your score or highest clue value
+    // But you can't wager more than you have if your score is positive
+    const maxWager = teamScore > 0 ? Math.max(teamScore, highestClueValue) : highestClueValue;
+    const minWager = 5;
+
+    if (isNaN(wager) || wager < minWager || wager > maxWager) {
+      setWagerError(`Wager must be between $${minWager} and $${maxWager}.`);
       return;
     }
     setActiveQuestion(prev => ({ ...prev, wager }));
@@ -826,7 +831,7 @@ const handleBuzzIn = useCallback((event) => {
                         <div key={index} className="flex items-center justify-between gap-4 mb-2">
                             <label className="text-xl">{team.name}:</label>
                             <input type="number" min="0" max={team.score} required
-                                onChange={(e) => setFinalWagers(prev => ({ ...prev, [index]: parseInt(e.target.value) || 0 }))}
+                                onChange={(e) => setFinalWagers(prev => ({ ...prev, [index]: Math.max(0, Math.min(team.score, parseInt(e.target.value) || 0)) }))}
                                 className="w-40 p-2 rounded bg-gray-800 border-blue-600 border-2" />
                         </div>
                     ))}
@@ -946,7 +951,7 @@ const handleBuzzIn = useCallback((event) => {
                 <h2 className="text-6xl font-bold mb-4">Daily Double!</h2>
                 <p className="text-xl mb-4">{teams[currentTeamIndex].name}, enter your wager.</p>
                 <form onSubmit={handleDailyDoubleWager} className="flex flex-col gap-2">
-                    <input type="number" value={dailyDoubleWager} autoFocus
+                    <input type="number" value={dailyDoubleWager} autoFocus min="5"
                         onChange={(e) => setDailyDoubleWager(e.target.value)}
                         className="p-3 text-center text-xl rounded bg-blue-900 text-white"/>
                     {wagerError && <p className="text-red-700 font-bold">{wagerError}</p>}
