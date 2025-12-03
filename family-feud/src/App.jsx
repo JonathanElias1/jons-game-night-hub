@@ -343,16 +343,18 @@ export default function FamilyFeudApp() {
       const k = e.key.toLowerCase();
 
       if ((phase === "faceoff" || phase === "sudden") && !faceoffBuzz) {
-        if (k === "q") {
-          e.preventDefault(); // Prevent 'q' from being typed into the input
+        // Team A buzzer: Q, Z, 1, or Left Arrow (for arcade buttons)
+        if (k === "q" || k === "z" || k === "1" || k === "arrowleft") {
+          e.preventDefault();
           setFaceoffBuzz("A");
           setFaceoffTurn("A");
           buzzA();
           addAction(`${teamAName} buzzed in!`);
           return;
         }
-        if (k === "p") {
-          e.preventDefault(); // Prevent 'p' from being typed into the input
+        // Team B buzzer: P, M, 2, or Right Arrow (for arcade buttons)
+        if (k === "p" || k === "m" || k === "2" || k === "arrowright") {
+          e.preventDefault();
           setFaceoffBuzz("B");
           setFaceoffTurn("B");
           buzzB();
