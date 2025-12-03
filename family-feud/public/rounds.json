@@ -45,7 +45,10 @@
       "answers": [
         { "text": "Six Seven", "points": 65, "aliases": ["67", "sixty seven"] },
         { "text": "Fender Bender", "points": 20, "aliases": ["car accident", "fenderbender"] },
-        { "text": "LOL", "points": 15, "aliases": ["laugh out loud", "lmao", "lmfao", "rofl"] }
+        { "text": "LOL", "points": 15, "aliases": ["laugh out loud", "lmao", "lmfao", "rofl"] },
+        { "text": "Lets Touch Base", "points": 3, "aliases": ["Touch Base", "Let's Touch Base"] },
+        { "text": "Hows the Weather", "points": 2, "aliases": ["Weather"] },
+        { "text": "I disagree", "points": 2, "aliases": ["disagreement", "youre wrong", "wrong"] }
       ]
     },
     {

@@ -286,12 +286,13 @@ export default function FamilyFeudApp() {
     return base;
   }, [phase, currentRound, suddenItem]);
 
-  // Typewriter effect
+  // Typewriter effect - only starts when round begins (after Pass/Play choice)
   useEffect(() => {
     stopTyping();
     const text = currentRound?.question;
 
-    if (text) {
+    // Only start typewriter during actual round play, not during faceoff or passOrPlay
+    if (text && phase === "round") {
       setDisplayedQuestion('');
       typewriterTimerRef.current = setInterval(() => {
         setDisplayedQuestion(currentText => {
@@ -303,12 +304,15 @@ export default function FamilyFeudApp() {
           }
         });
       }, 100);
+    } else if (phase === "faceoff" || phase === "passOrPlay") {
+      // During faceoff, show the question immediately (no typewriter)
+      setDisplayedQuestion(text || '');
     } else {
       setDisplayedQuestion('');
     }
 
     return () => stopTyping();
-  }, [currentRound]);
+  }, [currentRound, phase]);
 
   useEffect(() => {
     if (faceoffBuzz) {
@@ -847,8 +851,8 @@ export default function FamilyFeudApp() {
               </div>
             </div>
 
-            {/* Faceoff Players Banner - show who's competing */}
-            {phase === "faceoff" && !faceoffBuzz && (
+            {/* Faceoff Players Banner - show who's competing (stays visible during entire faceoff) */}
+            {phase === "faceoff" && (
               <div className="my-4 p-4 bg-gradient-to-r from-blue-600/40 via-purple-600/40 to-red-600/40 rounded-xl border-2 border-yellow-400/50">
                 <div className="text-center text-yellow-300 text-sm font-bold uppercase tracking-wider mb-2">
                   🔔 Faceoff 🔔
