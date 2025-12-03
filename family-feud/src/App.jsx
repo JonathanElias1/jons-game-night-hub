@@ -455,10 +455,8 @@ export default function FamilyFeudApp() {
     const losingTeam = winningTeam === "A" ? "B" : "A";
     setFaceoffWinner(winningTeam);
     setPhase("passOrPlay");
-    // BOTH faceoff players answered, so rotate BOTH teams
-    // This way whichever team plays, their next player starts
-    rotateToNextPlayer(winningTeam);
-    rotateToNextPlayer(losingTeam);
+    // DON'T rotate here - we'll rotate when the round actually starts
+    // This avoids timing issues with React state batching
     const winnerName = winningTeam === "A" ? teamAName : teamBName;
     addAction(`${winnerName} won the faceoff! Play or Pass?`);
   }
@@ -483,13 +481,31 @@ export default function FamilyFeudApp() {
 
   // Start the round with a specific team
   function beginRoundWithTeam(team) {
+    // Rotate BOTH teams past their faceoff players now that the round is starting
+    // This ensures the faceoff player doesn't guess first - the next player does
+    const teamAPlayers = getTeamPlayers("A");
+    const teamBPlayers = getTeamPlayers("B");
+
+    // Rotate Team A to next player after faceoff player
+    if (teamAPlayers.length > 1) {
+      const faceoffIdxA = faceoffPlayerIndex % teamAPlayers.length;
+      setCurrentPlayerIndexA((faceoffIdxA + 1) % teamAPlayers.length);
+      setSelectedPlayerA(null);
+    }
+
+    // Rotate Team B to next player after faceoff player
+    if (teamBPlayers.length > 1) {
+      const faceoffIdxB = faceoffPlayerIndex % teamBPlayers.length;
+      setCurrentPlayerIndexB((faceoffIdxB + 1) % teamBPlayers.length);
+      setSelectedPlayerB(null);
+    }
+
     setControlTeam(team);
     setPhase("round");
     setFaceoffWinner(null);
     blip();
     const teamName = team === "A" ? teamAName : teamBName;
     addAction(`${teamName} takes control!`);
-    // No rotation here - both teams already rotated after faceoff in showPassOrPlay
   }
 
   // Legacy function for compatibility
