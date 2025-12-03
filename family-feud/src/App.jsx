@@ -510,9 +510,14 @@ export default function FamilyFeudApp() {
         const isTopAnswer = i === 0;
         addAction(`Revealed: "${slot.text}" for ${slot.points} points${isTopAnswer ? " (TOP ANSWER!)" : ""}`);
 
-        // Hub scoring: +10 to team that buzzed if they revealed the #1 answer
-        if (isTopAnswer && hubEnabled && faceoffBuzz) {
-          addHubTeamScore(faceoffBuzz, 10, 'Jon Feud', 'Top answer (+10)');
+        // Hub scoring: +10 to team that revealed the #1 answer
+        // - During "round" phase: use controlTeam (team currently playing)
+        // - During "faceoff" phase: use faceoffTurn (team currently answering, NOT who buzzed first)
+        if (isTopAnswer && hubEnabled) {
+          const scoringTeam = phase === "round" ? controlTeam : faceoffTurn;
+          if (scoringTeam) {
+            addHubTeamScore(scoringTeam, 10, 'Jon Feud', 'Top answer (+10)');
+          }
         }
 
         // Auto-rotate to next player after correct answer during main play
