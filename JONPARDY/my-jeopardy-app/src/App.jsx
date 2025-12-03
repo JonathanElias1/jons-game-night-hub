@@ -159,7 +159,17 @@ const finalJONpardyData = {
     aliases: ["yaer", "yaire"]
 };
 
-const BUZZER_KEYS = { 'q': 0, 'p': 1, 'z': 2, 'm': 3 };
+// Buzzer keys - multiple options for arcade buttons
+// Team 1: Q, Z, 1, Left Arrow
+// Team 2: P, M, 2, Right Arrow
+// Team 3: Z (if not team 1), 3
+// Team 4: M (if not team 2), 4
+const BUZZER_KEYS = {
+  'q': 0, '1': 0, 'z': 0, 'arrowleft': 0,
+  'p': 1, '2': 1, 'm': 1, 'arrowright': 1,
+  '3': 2,
+  '4': 3
+};
 
 export default function App() {
   // Build: 2025-12-02-v5 - fixed hub scoring (use player name not ID)
