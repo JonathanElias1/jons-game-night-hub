@@ -481,7 +481,14 @@ if (shouldHideHeader) return null;
 return (
 <div className="fixed top-2 left-2 right-2 z-[100] flex items-center justify-between gap-2 pointer-events-auto">
 <div className="flex items-center gap-2">
-{/* Back to setup button removed - game auto-starts now */}
+<button
+onClick={backToSetup}
+className="px-3 py-2 rounded-lg bg-gradient-to-r from-white/10 to-white/5 border border-white/10 text-sm font-semibold flex items-center gap-2 hover:scale-[1.03] hover:bg-white/20 transition custom-hover"
+title="Back to Setup"
+>
+<span>⬅️</span>
+<span className="hidden sm:inline">Back to Setup</span>
+</button>
 </div>
 <div className="flex items-center gap-2 justify-end">
 <button
@@ -1038,9 +1045,10 @@ useEffect(() => {
   };
 }, [sfx]);
 
-// Auto-start game when loaded (no setup screen)
+// Auto-start disabled - show setup screen instead
 useEffect(() => {
-  if (autoStarted || phase !== "setup" || !sfx.loaded || !imagesLoaded) return;
+  // Setup screen is now shown - user must click Start Game
+  return;
 
   // Check for hub data
   const hubData = loadHubData();
