@@ -43,7 +43,7 @@ const WEDGES = [
 const VOWELS = new Set(["A", "E", "I", "O", "U", "J"]);
 const LETTERS = "ABCDEFGHIKLMNOPQRSTUVWXYZ".split("");
 const ZOOM_WHEEL_PX = BASE_WHEEL_PX * 1.5;
-const BONUS_PRIZES = ["PIN", "STICKER", "T-SHIRT", "MAGNET", "KEYCHAIN"];
+const BONUS_PRIZES = ["HUG", "JONPLIMENT", "T-SHIRT", "EMAIL", "SHOUTOUT"];
 const SOLVE_REVEAL_INTERVAL = 650;
 function useImagePreloader() {
 const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -93,8 +93,10 @@ return imagesLoaded;
 // Simple HTML5 Audio based sound system (like Family Feud)
 function useSfx() {
   const audioRef = useRef({});
+  const pathsRef = useRef({});
   const themeRef = useRef(null);
   const [volume, setVolume] = useState(0.9);
+  const volumeRef = useRef(0.9);
   const [themeOn, setThemeOn] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -118,16 +120,17 @@ function useSfx() {
 
   // Pre-load all audio files
   useEffect(() => {
+    pathsRef.current = FILES;
     for (const [key, src] of Object.entries(FILES)) {
       const audio = new Audio(src);
       audio.preload = "auto";
-      audio.volume = volume;
+      audio.volume = volumeRef.current;
       audioRef.current[key] = audio;
     }
     // Theme music (looping)
     themeRef.current = new Audio(FILES.themeLoop);
     themeRef.current.loop = true;
-    themeRef.current.volume = volume;
+    themeRef.current.volume = volumeRef.current;
     themeRef.current.preload = "auto";
 
     setLoaded(true);
@@ -135,19 +138,26 @@ function useSfx() {
 
   // Update volume on all audio elements
   useEffect(() => {
+    volumeRef.current = volume;
     Object.values(audioRef.current).forEach(audio => {
       if (audio) audio.volume = volume;
     });
     if (themeRef.current) themeRef.current.volume = volume;
   }, [volume]);
 
-  // Play a sound
+  // Play a sound - creates a new Audio element for overlapping sounds
   const play = (key) => {
-    const audio = audioRef.current[key];
-    if (audio) {
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
+    const src = pathsRef.current[key];
+    if (!src) {
+      console.warn(`Sound not found: ${key}`);
+      return;
     }
+    // Create a fresh audio element for each play to allow overlapping
+    const audio = new Audio(src);
+    audio.volume = volumeRef.current;
+    audio.play().catch((e) => {
+      console.warn(`Failed to play sound ${key}:`, e.message);
+    });
   };
 
   // Stop a sound
@@ -3044,10 +3054,10 @@ key={`${prizeLabel}-${count}`}
 className={cls(
 "px-1 sm:px-2 py-0.5 sm:py-1 text-[9px] sm:text-xs font-bold rounded-md",
 prizeLabel === "T-SHIRT" ? "bg-purple-600" :
-prizeLabel === "PIN" ? "bg-red-600" :
-prizeLabel === "STICKER" ? "bg-blue-600" :
-prizeLabel === "MAGNET" ? "bg-gray-600" :
-prizeLabel === "KEYCHAIN" ? "bg-orange-600" : "bg-green-600"
+prizeLabel === "HUG" ? "bg-red-600" :
+prizeLabel === "JONPLIMENT" ? "bg-blue-600" :
+prizeLabel === "EMAIL" ? "bg-gray-600" :
+prizeLabel === "SHOUTOUT" ? "bg-orange-600" : "bg-green-600"
 )}
 >
 {prizeLabel}{count > 1 ? ` x${count}` : ""}
@@ -3876,10 +3886,10 @@ return (
 {Object.entries(prizeCounts).map(([prize, cnt]) => (
 <span key={`${prize}-${cnt}`} className={cls("px-2 py-1 text-xs font-bold rounded-md",
 prize === "T-SHIRT" ? "bg-purple-600" :
-prize === "PIN" ? "bg-red-600" :
-prize === "STICKER" ? "bg-blue-600" :
-prize === "MAGNET" ? "bg-gray-600" :
-prize === "KEYCHAIN" ? "bg-orange-600" : "bg-green-600"
+prize === "HUG" ? "bg-red-600" :
+prize === "JONPLIMENT" ? "bg-blue-600" :
+prize === "EMAIL" ? "bg-gray-600" :
+prize === "SHOUTOUT" ? "bg-orange-600" : "bg-green-600"
 )}>
 {prize}{cnt > 1 ? ` x${cnt}` : ""}
 </span>
