@@ -98,21 +98,22 @@ function useSfx() {
   const [themeOn, setThemeOn] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  // Sound file paths
+  // Sound file paths - use BASE_URL for correct path in subdirectory deployment
+  const base = import.meta.env.BASE_URL || "./";
   const FILES = {
-    spin: "/sounds/wof-spin.mp3",
-    ding: "/sounds/wof-correct.mp3",
-    buzzer: "/sounds/wof-buzzer.mp3",
-    themeLoop: "/sounds/wheel-theme.mp3",
-    bankrupt: "/sounds/wof-bankrupt.mp3",
-    solve: "/sounds/wof-solve.mp3",
-    wild: "/sounds/wof-wild.mp3",
-    cashDing: "/sounds/wof-ding.mp3",
-    cashDing2: "/sounds/cash-ding.mp3",
-    tshirt: "/sounds/tshirt-sound.mp3",
-    wrongLetter: "/sounds/wrong-letter.mp3",
-    chargeUp: "/sounds/charge-up.mp3",
-    startGame: "/sounds/start-game.mp3",
+    spin: `${base}sounds/wof-spin.mp3`,
+    ding: `${base}sounds/wof-correct.mp3`,
+    buzzer: `${base}sounds/wof-buzzer.mp3`,
+    themeLoop: `${base}sounds/wheel-theme.mp3`,
+    bankrupt: `${base}sounds/wof-bankrupt.mp3`,
+    solve: `${base}sounds/wof-solve.mp3`,
+    wild: `${base}sounds/wof-wild.mp3`,
+    cashDing: `${base}sounds/wof-ding.mp3`,
+    cashDing2: `${base}sounds/cash-ding.mp3`,
+    tshirt: `${base}sounds/tshirt-sound.mp3`,
+    wrongLetter: `${base}sounds/wrong-letter.mp3`,
+    chargeUp: `${base}sounds/charge-up.mp3`,
+    startGame: `${base}sounds/start-game.mp3`,
   };
 
   // Pre-load all audio files
@@ -124,7 +125,7 @@ function useSfx() {
       audioRef.current[key] = audio;
     }
     // Theme music (looping)
-    themeRef.current = new Audio("/sounds/wheel-theme.mp3");
+    themeRef.current = new Audio(FILES.themeLoop);
     themeRef.current.loop = true;
     themeRef.current.volume = volume;
     themeRef.current.preload = "auto";
