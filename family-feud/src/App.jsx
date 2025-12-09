@@ -410,6 +410,29 @@ export default function FamilyFeudApp() {
     return () => window.removeEventListener("keydown", onKey);
   }, [gameSettings, phase, faceoffBuzz, faceoffAcknowledged, faceoffTurn, bank, controlTeam, strikes, isAwarding, teamAName, teamBName]);
 
+  // Gamepad connection event listeners - helps browser recognize gamepads after page navigation
+  useEffect(() => {
+    const onConnect = (e) => {
+      console.log('Family Feud: Gamepad connected!', e.gamepad.id, 'index:', e.gamepad.index);
+    };
+    const onDisconnect = (e) => {
+      console.log('Family Feud: Gamepad disconnected', e.gamepad.id);
+    };
+    window.addEventListener('gamepadconnected', onConnect);
+    window.addEventListener('gamepaddisconnected', onDisconnect);
+
+    // Check for already-connected gamepads on mount
+    const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+    for (const gp of gamepads) {
+      if (gp) console.log('Family Feud: Found existing gamepad:', gp.id, 'index:', gp.index);
+    }
+
+    return () => {
+      window.removeEventListener('gamepadconnected', onConnect);
+      window.removeEventListener('gamepaddisconnected', onDisconnect);
+    };
+  }, []);
+
   // Gamepad polling for arcade buttons (faceoff buzzing)
   useEffect(() => {
     if (!gameSettings) return;
