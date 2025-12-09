@@ -95,7 +95,8 @@ export default function FamilyFeudApp() {
   const [currentPlayerIndexB, setCurrentPlayerIndexB] = useState(0); // Whose turn during main play (Team B)
 
   const typewriterTimerRef = useRef(null);
-  
+  const gamepadPrevButtonsRef = useRef({}); // Track gamepad button states for edge detection
+
   const { data, loaded } = useGameData();
   const { ding, buzz, blip, buzzA, buzzB, volume, setVolume, duplicateBuzz } = useAudio();
   const theme = useThemeMusic();
@@ -407,6 +408,59 @@ export default function FamilyFeudApp() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [gameSettings, phase, faceoffBuzz, faceoffTurn, bank, controlTeam, strikes, isAwarding, teamAName, teamBName]);
+
+  // Gamepad polling for arcade buttons (faceoff buzzing)
+  useEffect(() => {
+    if (!gameSettings) return;
+
+    let animationId;
+    const pollGamepads = () => {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+
+      for (const gamepad of gamepads) {
+        if (!gamepad) continue;
+
+        const gpId = gamepad.index;
+        if (!gamepadPrevButtonsRef.current[gpId]) {
+          gamepadPrevButtonsRef.current[gpId] = {};
+        }
+
+        // Button 0 = Team A, Button 1 = Team B
+        gamepad.buttons.forEach((button, btnIndex) => {
+          const wasPressed = gamepadPrevButtonsRef.current[gpId][btnIndex];
+          const isPressed = button.pressed;
+
+          // Only trigger on button press (not hold)
+          if (isPressed && !wasPressed) {
+            // Faceoff buzzing - Team A (button 0) or Team B (button 1)
+            if ((phase === "faceoff" || phase === "sudden") && !faceoffBuzz) {
+              if (btnIndex === 0) {
+                setFaceoffBuzz("A");
+                setFaceoffTurn("A");
+                buzzA();
+                addAction(`${teamAName} buzzed in!`);
+              } else if (btnIndex === 1) {
+                setFaceoffBuzz("B");
+                setFaceoffTurn("B");
+                buzzB();
+                addAction(`${teamBName} buzzed in!`);
+              }
+            }
+          }
+
+          gamepadPrevButtonsRef.current[gpId][btnIndex] = isPressed;
+        });
+      }
+
+      animationId = requestAnimationFrame(pollGamepads);
+    };
+
+    animationId = requestAnimationFrame(pollGamepads);
+
+    return () => {
+      if (animationId) cancelAnimationFrame(animationId);
+    };
+  }, [gameSettings, phase, faceoffBuzz, teamAName, teamBName, buzzA, buzzB, addAction]);
 
   function startTimer() {
     if (phase === "faceoff" || phase === "sudden") {
