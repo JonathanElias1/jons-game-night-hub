@@ -159,13 +159,17 @@ function useSfx() {
     }
   };
 
-  // Loop a sound (for charge-up)
-  const loop = (key) => {
+  // Loop a sound (for charge-up) - returns Promise for await compatibility
+  const loop = async (key) => {
     const audio = audioRef.current[key];
     if (audio) {
       audio.loop = true;
       audio.currentTime = 0;
-      audio.play().catch(() => {});
+      try {
+        await audio.play();
+      } catch (e) {
+        // Ignore play errors
+      }
     }
   };
 
@@ -193,14 +197,21 @@ function useSfx() {
     }
   };
 
-  // Unlock (no-op for HTML5 Audio, but keep API compatible)
-  const unlock = () => {
-    // Try to play and immediately pause to unlock audio on iOS
-    Object.values(audioRef.current).forEach(audio => {
+  // Unlock audio - returns Promise for await compatibility
+  const unlock = async () => {
+    // Try to play and immediately pause to unlock audio on iOS/Safari
+    const promises = Object.values(audioRef.current).map(async (audio) => {
       if (audio) {
-        audio.play().then(() => audio.pause()).catch(() => {});
+        try {
+          await audio.play();
+          audio.pause();
+          audio.currentTime = 0;
+        } catch (e) {
+          // Ignore - some browsers block this
+        }
       }
     });
+    await Promise.all(promises);
   };
 
   return {
