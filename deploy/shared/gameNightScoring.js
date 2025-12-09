@@ -531,7 +531,7 @@
         <div class="gns-player ${selectedPlayers.includes(p.name) ? 'selected' : ''}" data-name="${p.name}">
           <div class="gns-player-team team-${p.team.toLowerCase()}"></div>
           <span class="gns-player-name">${p.name}</span>
-          <span class="gns-player-score">${p.scores[gameName] || 0}</span>
+          <span class="gns-player-score">${p.total || 0}</span>
         </div>
       `).join('');
 
