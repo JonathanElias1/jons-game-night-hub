@@ -425,21 +425,21 @@ export default function FamilyFeudApp() {
           gamepadPrevButtonsRef.current[gpId] = {};
         }
 
-        // Button 0 = Team A, Button 1 = Team B
+        // EG STARTS encoder: Button 10 = left stick (Red), Button 11 = right stick (Blue)
         gamepad.buttons.forEach((button, btnIndex) => {
           const wasPressed = gamepadPrevButtonsRef.current[gpId][btnIndex];
           const isPressed = button.pressed;
 
           // Only trigger on button press (not hold)
           if (isPressed && !wasPressed) {
-            // Faceoff buzzing - Team A (button 0) or Team B (button 1)
+            // Faceoff buzzing - Red button (10) = Team A, Blue button (11) = Team B
             if ((phase === "faceoff" || phase === "sudden") && !faceoffBuzz) {
-              if (btnIndex === 0) {
+              if (btnIndex === 10 || btnIndex === 0) {
                 setFaceoffBuzz("A");
                 setFaceoffTurn("A");
                 buzzA();
                 addAction(`${teamAName} buzzed in!`);
-              } else if (btnIndex === 1) {
+              } else if (btnIndex === 11 || btnIndex === 1) {
                 setFaceoffBuzz("B");
                 setFaceoffTurn("B");
                 buzzB();

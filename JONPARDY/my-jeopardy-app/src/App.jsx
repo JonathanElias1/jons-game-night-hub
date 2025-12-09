@@ -172,12 +172,12 @@ const BUZZER_KEYS = {
 };
 
 // Gamepad button mapping for arcade USB encoders
-// Button 0 = Team 1, Button 1 = Team 2, etc.
+// EG STARTS encoder maps to stick clicks: 10=left stick (red), 11=right stick (blue)
 const GAMEPAD_BUTTONS = {
-  0: 0,  // First arcade button -> Team 1
-  1: 1,  // Second arcade button -> Team 2
-  2: 2,  // Third button -> Team 3
-  3: 3,  // Fourth button -> Team 4
+  10: 0,  // Left stick click (Red) -> Team 1
+  11: 1,  // Right stick click (Blue) -> Team 2
+  0: 0,   // Fallback standard buttons
+  1: 1,
 };
 
 export default function App() {

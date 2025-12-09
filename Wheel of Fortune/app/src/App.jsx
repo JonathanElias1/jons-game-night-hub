@@ -1914,8 +1914,10 @@ button.removeEventListener('touchcancel', handleTouchEnd);
 }, [canSpin, startCharge, endCharge]);
 
 // Gamepad polling for arcade buttons - hold to charge, release to spin
+// EG STARTS encoder uses buttons 10 (left stick) and 11 (right stick)
 useEffect(() => {
 let animationId;
+const ARCADE_BUTTONS = [10, 11, 0, 1]; // Check stick clicks first, then standard buttons
 const pollGamepads = () => {
   const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
   for (const gamepad of gamepads) {
@@ -1924,8 +1926,9 @@ const pollGamepads = () => {
     if (!gamepadPrevButtonsRef.current[gpId]) {
       gamepadPrevButtonsRef.current[gpId] = {};
     }
-    // Check any button (0-3 typically) for spin
-    for (let btnIndex = 0; btnIndex < Math.min(gamepad.buttons.length, 4); btnIndex++) {
+    // Check arcade buttons (stick clicks 10/11 and standard 0/1)
+    for (const btnIndex of ARCADE_BUTTONS) {
+      if (btnIndex >= gamepad.buttons.length) continue;
       const wasPressed = gamepadPrevButtonsRef.current[gpId][btnIndex];
       const isPressed = gamepad.buttons[btnIndex].pressed;
       // Button just pressed - start charging
