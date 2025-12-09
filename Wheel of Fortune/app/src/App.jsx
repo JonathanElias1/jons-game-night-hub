@@ -3912,8 +3912,14 @@ prize === "SHOUTOUT" ? "bg-orange-600" : "bg-green-600"
 }
 // CODE TO REPLACE WITH
 if (phase === "setup") {
+// Check for hub data to determine if we show individual players
+const hubData = loadHubData();
+const hasHubPlayers = hubData && hubData.players && hubData.players.length >= 1;
+const hubPlayerNames = hasHubPlayers ? hubData.players.map(p => p.name || 'Player') : [];
+
 // helper used inside render to interpret tempTeamCount for live rendering
 const liveCount = (() => {
+if (hasHubPlayers) return hubPlayerNames.length;
 const n = parseIntSafe(tempTeamCount);
 return Number.isFinite(n) ? Math.max(2, Math.min(MAX_TEAMS, n)) : Math.max(2, Math.min(MAX_TEAMS, teamCount));
 })();
@@ -3933,24 +3939,23 @@ sfx.play("startGame");
 console.warn("Failed to play startGame sound:", e);
 }
 
-// Check for hub data
+// Check for hub data - each player becomes their own "team" for individual scoring
 const hubData = loadHubData();
-let useHubTeams = false;
-let hubNames = [];
-if (hubData && hubData.players && hubData.players.length >= 2) {
-  const hubTeamNames = hubData.teamNames || { A: 'Team A', B: 'Team B' };
-  hubNames = [hubTeamNames.A, hubTeamNames.B];
-  useHubTeams = true;
-  console.log('Wheel of Fortune: Hub scoring enabled with teams', hubTeamNames.A, 'and', hubTeamNames.B);
+let useHubPlayers = false;
+let playerNames = [];
+if (hubData && hubData.players && hubData.players.length >= 1) {
+  playerNames = hubData.players.map(p => p.name || 'Player');
+  useHubPlayers = true;
+  console.log('Wheel of Fortune: Individual scoring enabled for players:', playerNames.join(', '));
 }
 
 // Compute final team count & rounds deterministically from temp values
 const parsedTeams = parseIntSafe(tempTeamCount);
 let finalTeamCount = Number.isFinite(parsedTeams) ? Math.min(MAX_TEAMS, Math.max(2, parsedTeams)) : Math.min(MAX_TEAMS, Math.max(2, teamCount));
 
-// Override with hub teams if available
-if (useHubTeams) {
-  finalTeamCount = 2;
+// Override with hub players if available - each player is their own team
+if (useHubPlayers) {
+  finalTeamCount = hubData.players.length;
 }
 
 const parsedRounds = parseIntSafe(tempRoundsCount);
@@ -3962,19 +3967,24 @@ setTempTeamCount(String(finalTeamCount));
 setRoundsCount(finalRounds);
 setTempRoundsCount(String(finalRounds));
 // Ensure teamNames array is the right length and trimmed
-const names = useHubTeams ? hubNames : makeTeamNamesArray(finalTeamCount, teamNames);
+const names = useHubPlayers ? playerNames : makeTeamNamesArray(finalTeamCount, teamNames);
 
-// Set up hub integration
-if (useHubTeams) {
+// Set up hub integration - each player is their own team
+if (useHubPlayers) {
   setHubEnabled(true);
-  setHubTeamMap({ 0: 'A', 1: 'B' }); // Map WoF team 0 to hub team A, team 1 to hub team B
+  // Map each team index to the player's original hub team ('A' or 'B')
+  const teamMap = {};
+  hubData.players.forEach((p, index) => {
+    teamMap[index] = p.team; // 'A' or 'B'
+  });
+  setHubTeamMap(teamMap);
 
-  // Load players with individual tracking
-  const loadedPlayers = hubData.players.map(p => ({
+  // Load players - each player is their own team (teamIndex = their index)
+  const loadedPlayers = hubData.players.map((p, index) => ({
     id: p.id,
     name: p.name,
-    team: p.team, // 'A' or 'B'
-    teamIndex: p.team === 'A' ? 0 : 1,
+    team: p.team, // 'A' or 'B' (original hub team for score syncing)
+    teamIndex: index, // Each player is their own team
     avatar: p.avatar || '🎮',
     personalScore: 0,
     stats: {
@@ -3986,7 +3996,12 @@ if (useHubTeams) {
     }
   }));
   setPlayers(loadedPlayers);
-  setActivePlayerIndex({ 0: 0, 1: 0 }); // Start with first player on each team
+  // Initialize active player index for each "team" (each player)
+  const activeIndexes = {};
+  hubData.players.forEach((_, index) => {
+    activeIndexes[index] = 0; // Each team has only 1 player (themselves)
+  });
+  setActivePlayerIndex(activeIndexes);
 } else {
   setHubEnabled(false);
   setHubTeamMap({});
@@ -4074,7 +4089,19 @@ style={{ fontFamily: "'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, '
 <h2 className="text-3xl font-bold text-center text-white mb-8">Game Setup</h2>
 <div className="space-y-6">
 
-{/* MODIFIED: Number of Teams - Stacks on mobile */}
+{/* Show hub players info when connected */}
+{hasHubPlayers ? (
+<div className="bg-green-600/30 border border-green-500 rounded-lg p-4">
+<p className="text-green-400 font-bold mb-2">✓ Game Night Hub Connected!</p>
+<p className="text-sm text-gray-300 mb-2">Players competing individually:</p>
+<div className="flex flex-wrap gap-2">
+{hubPlayerNames.map((name, i) => (
+<span key={i} className="px-3 py-1 bg-white/20 rounded-full text-sm font-semibold">{name}</span>
+))}
+</div>
+</div>
+) : (
+/* Number of Teams - only shown when no hub */
 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-4">
 <label className="text-lg sm:text-xl uppercase tracking-wider font-bold text-white/90 text-left sm:text-center" htmlFor="team-count-input">Number of Teams</label>
 <input
@@ -4083,13 +4110,15 @@ onFocus={(e) => e.target.select()}
 type="text"
 inputMode="numeric"
 pattern="[0-9]*"
-maxLength={3}// allows up to 3 digits — change/remove if desired
+maxLength={3}
 value={tempTeamCount}
 onChange={(e) => setTempTeamCount(e.target.value.replace(/\D/g, ""))}
 onBlur={() => applyTempTeamCount()}
 className="w-full sm:w-20 px-4 py-3 rounded-lg bg-black/30 text-white text-center font-bold text-xl border border-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"/>
 </div>
-{/* MODIFIED: Number of Rounds - Stacks on mobile */}
+)}
+
+{/* Number of Rounds - always shown */}
 <div>
 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-4 mb-2">
 <label className="text-lg sm:text-xl uppercase tracking-wider font-bold text-white/90 text-left sm:text-center" htmlFor="rounds-count-input">Number of Main Rounds</label>
@@ -4109,7 +4138,8 @@ className="w-full sm:w-20 px-4 py-3 rounded-lg bg-black/30 text-white text-cente
 <p className="text-sm sm:text-lg text-white/70 italic text-left sm:text-right">Bonus round is a single extra round.</p>
 </div>
 
-{/* Team Names */}
+{/* Team Names - only shown when no hub */}
+{!hasHubPlayers && (
 <div>
 <label className="text-xl uppercase tracking-wider font-bold text-white/90 mb-3 block text-left sm:text-center">Team Names</label>
 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-2">
@@ -4130,6 +4160,7 @@ onFocus={(e) => e.target.select()}
 </div>
 <p className="text-base sm:text-xl text-white/70 mt-3 text-left sm:text-right">Max name length: {TEAM_NAME_MAX} characters.</p>
 </div>
+)}
 
 <div className="pt-4">
 <button
