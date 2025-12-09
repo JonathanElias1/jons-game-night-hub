@@ -171,6 +171,15 @@ const BUZZER_KEYS = {
   '4': 3
 };
 
+// Gamepad button mapping for arcade USB encoders
+// Button 0 = Team 1, Button 1 = Team 2, etc.
+const GAMEPAD_BUTTONS = {
+  0: 0,  // First arcade button -> Team 1
+  1: 1,  // Second arcade button -> Team 2
+  2: 2,  // Third button -> Team 3
+  3: 3,  // Fourth button -> Team 4
+};
+
 export default function App() {
   // Build: 2025-12-02-v5 - fixed hub scoring (use player name not ID)
   const [gameState, setGameState] = useState('setup');
@@ -205,6 +214,7 @@ export default function App() {
   const finalJONpardyMusic = useRef(null);
   const buzzInInterval = useRef(null);
   const typewriterTimerRef = useRef(null);
+  const gamepadPrevButtonsRef = useRef({});  // Track previous button states for edge detection
 
   const stopTyping = useCallback(() => {
     if (typewriterTimerRef.current) {
@@ -498,12 +508,67 @@ const handleBuzzIn = useCallback((event) => {
     }
   }, [questionPhase, numTeams, attemptedBy, stopTyping]);
 
+  // Gamepad buzz-in handler (for arcade USB encoders)
+  const handleGamepadBuzzIn = useCallback((buttonIndex) => {
+    if (questionPhase !== 'buzzing' && questionPhase !== 'reading') return;
+    if (!GAMEPAD_BUTTONS.hasOwnProperty(buttonIndex)) return;
+
+    const teamIndex = GAMEPAD_BUTTONS[buttonIndex];
+    if (teamIndex < numTeams && !attemptedBy.includes(teamIndex)) {
+        stopTyping();
+        playSound('select');
+        setCurrentTeamIndex(teamIndex);
+        setQuestionPhase('answering');
+    }
+  }, [questionPhase, numTeams, attemptedBy, stopTyping]);
+
   useEffect(() => {
     window.addEventListener('keydown', handleBuzzIn);
     return () => {
         window.removeEventListener('keydown', handleBuzzIn);
     };
   }, [handleBuzzIn]);
+
+  // Gamepad polling for arcade buttons
+  useEffect(() => {
+    let animationId;
+
+    const pollGamepads = () => {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+
+      for (const gamepad of gamepads) {
+        if (!gamepad) continue;
+
+        const gpId = gamepad.index;
+        if (!gamepadPrevButtonsRef.current[gpId]) {
+          gamepadPrevButtonsRef.current[gpId] = {};
+        }
+
+        gamepad.buttons.forEach((button, btnIndex) => {
+          const wasPressed = gamepadPrevButtonsRef.current[gpId][btnIndex];
+          const isPressed = button.pressed;
+
+          // Trigger only on button press (not hold)
+          if (isPressed && !wasPressed) {
+            handleGamepadBuzzIn(btnIndex);
+          }
+
+          gamepadPrevButtonsRef.current[gpId][btnIndex] = isPressed;
+        });
+      }
+
+      animationId = requestAnimationFrame(pollGamepads);
+    };
+
+    // Start polling
+    animationId = requestAnimationFrame(pollGamepads);
+
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, [handleGamepadBuzzIn]);
 
   useEffect(() => {
     if (questionPhase === 'buzzing') {
