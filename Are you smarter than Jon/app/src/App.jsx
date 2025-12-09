@@ -27,10 +27,10 @@ const QUESTIONS = [
   { id: "q1", grade: 1, subject: "Language Arts", q: "What is the verb in the sentence \"Jon saved my life\"?", choices: ["my", "save", "saved", "life"], answerIndex: 2, hint: "Verbs are action words. Which word tells what Jon did?" },
   { id: "q2",   grade: 1,
   subject: "Math",
-  q: "The event starts at 12:27 PM. Kaz texts 'almost ready' at 12:18 PM. She takes 56 minutes to get ready and 13 minutes to drive to the event. What time will Kaz actually arrive? (assume she follows the math)",
+  q: "The event starts at 12:27 PM. They text 'almost ready' at 12:18 PM. They take 56 minutes to get ready and 13 minutes to drive to the event. What time will they actually arrive?",
   choices: ["1:27 PM", "12:59 PM", "1:11 PM", "12:27 PM"],
   answerIndex: 0,
-  hint: "Ignore the start time (just like Kaz). Use addition."
+  hint: "Ignore the start time. Use addition."
 },
   { id: "q17", grade: 1, subject: "Culinary Arts", q: "Besides refusing to eat any animal he can have fun with, which food does Jon refuse to eat? ", choices: ["Pulled Pork", "Mushrooms", "Tomatoes", "Shredded Chicken"], answerIndex: 3, hint: "He hates the stringy, 'pulled' texture." },
   {
@@ -338,6 +338,31 @@ export default function JonSmarterGame() {
 
  // ——— Audio helpers (Web Audio API) ———
 const audioCtxRef = useRef(null);
+
+// Initialize and unlock AudioContext on first user interaction
+useEffect(() => {
+  const unlockAudio = () => {
+    if (!audioCtxRef.current) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) audioCtxRef.current = new Ctx();
+    }
+    if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+      audioCtxRef.current.resume();
+    }
+    document.removeEventListener('click', unlockAudio);
+    document.removeEventListener('touchstart', unlockAudio);
+    document.removeEventListener('keydown', unlockAudio);
+  };
+  document.addEventListener('click', unlockAudio, { once: true });
+  document.addEventListener('touchstart', unlockAudio, { once: true });
+  document.addEventListener('keydown', unlockAudio, { once: true });
+  return () => {
+    document.removeEventListener('click', unlockAudio);
+    document.removeEventListener('touchstart', unlockAudio);
+    document.removeEventListener('keydown', unlockAudio);
+  };
+}, []);
+
 function getAudioCtx() {
   if (!audioCtxRef.current) {
     const Ctx = window.AudioContext || window.webkitAudioContext;

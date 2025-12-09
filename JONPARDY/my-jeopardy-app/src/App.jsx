@@ -216,6 +216,29 @@ export default function App() {
   const typewriterTimerRef = useRef(null);
   const gamepadPrevButtonsRef = useRef({});  // Track previous button states for edge detection
 
+  // Initialize and unlock AudioContext on first user interaction
+  useEffect(() => {
+    const unlockAudio = () => {
+      if (!audioContext.current) {
+        audioContext.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioContext.current.state === 'suspended') {
+        audioContext.current.resume();
+      }
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+    };
+    document.addEventListener('click', unlockAudio, { once: true });
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+    document.addEventListener('keydown', unlockAudio, { once: true });
+    return () => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+    };
+  }, []);
+
   const stopTyping = useCallback(() => {
     if (typewriterTimerRef.current) {
         clearInterval(typewriterTimerRef.current);
