@@ -360,7 +360,8 @@ export default function FamilyFeudApp() {
 
       const k = e.key.toLowerCase();
 
-      if ((phase === "faceoff" || phase === "sudden") && !faceoffBuzz) {
+      // Only allow buzzing after faceoff banner is acknowledged (question revealed)
+      if ((phase === "faceoff" || phase === "sudden") && !faceoffBuzz && faceoffAcknowledged) {
         // Team A buzzer: Q, Z, 1, or Left Arrow (for arcade buttons)
         if (k === "q" || k === "z" || k === "1" || k === "arrowleft") {
           e.preventDefault();
@@ -407,7 +408,7 @@ export default function FamilyFeudApp() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [gameSettings, phase, faceoffBuzz, faceoffTurn, bank, controlTeam, strikes, isAwarding, teamAName, teamBName]);
+  }, [gameSettings, phase, faceoffBuzz, faceoffAcknowledged, faceoffTurn, bank, controlTeam, strikes, isAwarding, teamAName, teamBName]);
 
   // Gamepad polling for arcade buttons (faceoff buzzing)
   useEffect(() => {
@@ -433,7 +434,8 @@ export default function FamilyFeudApp() {
           // Only trigger on button press (not hold)
           if (isPressed && !wasPressed) {
             // Faceoff buzzing - Red button (10) = Team A, Blue button (11) = Team B
-            if ((phase === "faceoff" || phase === "sudden") && !faceoffBuzz) {
+            // Only allow after banner is acknowledged (question revealed)
+            if ((phase === "faceoff" || phase === "sudden") && !faceoffBuzz && faceoffAcknowledged) {
               if (btnIndex === 10 || btnIndex === 0) {
                 setFaceoffBuzz("A");
                 setFaceoffTurn("A");
@@ -460,7 +462,7 @@ export default function FamilyFeudApp() {
     return () => {
       if (animationId) cancelAnimationFrame(animationId);
     };
-  }, [gameSettings, phase, faceoffBuzz, teamAName, teamBName, buzzA, buzzB, addAction]);
+  }, [gameSettings, phase, faceoffBuzz, faceoffAcknowledged, teamAName, teamBName, buzzA, buzzB, addAction]);
 
   function startTimer() {
     if (phase === "faceoff" || phase === "sudden") {
