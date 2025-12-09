@@ -732,9 +732,14 @@ function addHubTeamScore(team, points, gameName, description) {
   window.GameNightScoring.addTeamScore(team, points, gameName, description);
 }
 
-function addHubPlayerScore(playerId, points, gameName, description) {
+// Hub uses player NAME to match, not ID
+function addHubPlayerScore(playerName, points, gameName, description) {
   if (!window.GameNightScoring) return;
-  window.GameNightScoring.addScore(playerId, points, gameName, description);
+  if (!playerName) {
+    console.warn('WoF: Cannot add hub score - no player name');
+    return;
+  }
+  window.GameNightScoring.addScore(playerName, points, gameName, description);
 }
 
 export default function App() {
@@ -949,34 +954,37 @@ const setActivePlayerForTeam = useCallback((teamIdx, playerIdx) => {
 
 // Update individual player stats and calculate personal score
 const updatePlayerStats = useCallback((playerId, statUpdate) => {
-  setPlayers(prev => prev.map(p => {
-    if (p.id !== playerId) return p;
-    const newStats = { ...p.stats };
+  setPlayers(prev => {
+    const updatedPlayers = prev.map(p => {
+      if (p.id !== playerId) return p;
+      const newStats = { ...p.stats };
 
-    // Individual actions
-    if (statUpdate.correctConsonant) newStats.correctConsonants = (newStats.correctConsonants || 0) + 1;
-    if (statUpdate.correctVowel) newStats.correctVowels = (newStats.correctVowels || 0) + 1;
-    if (statUpdate.puzzleSolve) newStats.puzzleSolves = (newStats.puzzleSolves || 0) + 1;
-    if (statUpdate.bonusSolve) newStats.bonusSolves = (newStats.bonusSolves || 0) + 1;
+      // Individual actions
+      if (statUpdate.correctConsonant) newStats.correctConsonants = (newStats.correctConsonants || 0) + 1;
+      if (statUpdate.correctVowel) newStats.correctVowels = (newStats.correctVowels || 0) + 1;
+      if (statUpdate.puzzleSolve) newStats.puzzleSolves = (newStats.puzzleSolves || 0) + 1;
+      if (statUpdate.bonusSolve) newStats.bonusSolves = (newStats.bonusSolves || 0) + 1;
 
-    // Team bonuses
-    if (statUpdate.gameWinBonus) newStats.gameWinBonus = (newStats.gameWinBonus || 0) + statUpdate.gameWinBonus;
+      // Team bonuses
+      if (statUpdate.gameWinBonus) newStats.gameWinBonus = (newStats.gameWinBonus || 0) + statUpdate.gameWinBonus;
 
-    // Calculate personal score
-    const personalScore =
-      (newStats.correctConsonants || 0) * 5 +    // +5 per correct consonant
-      (newStats.correctVowels || 0) * 3 +        // +3 per correct vowel
-      (newStats.puzzleSolves || 0) * 15 +        // +15 per puzzle solve
-      (newStats.bonusSolves || 0) * 20 +         // +20 for bonus round solve
-      (newStats.gameWinBonus || 0);              // +10 for team game win
+      // Calculate personal score
+      const personalScore =
+        (newStats.correctConsonants || 0) * 5 +    // +5 per correct consonant
+        (newStats.correctVowels || 0) * 3 +        // +3 per correct vowel
+        (newStats.puzzleSolves || 0) * 15 +        // +15 per puzzle solve
+        (newStats.bonusSolves || 0) * 20 +         // +20 for bonus round solve
+        (newStats.gameWinBonus || 0);              // +10 for team game win
 
-    // Sync to hub
-    if (statUpdate.hubPoints && window.GameNightScoring) {
-      addHubPlayerScore(playerId, statUpdate.hubPoints, 'Wheel of Fortune', statUpdate.description || '+points');
-    }
+      // Sync to hub using player NAME (not ID) - hub matches by name
+      if (statUpdate.hubPoints && window.GameNightScoring) {
+        addHubPlayerScore(p.name, statUpdate.hubPoints, 'Wheel of Fortune', statUpdate.description || '+points');
+      }
 
-    return { ...p, stats: newStats, personalScore };
-  }));
+      return { ...p, stats: newStats, personalScore };
+    });
+    return updatedPlayers;
+  });
 }, []);
 
 // Remove the gameStats initialization from the useEffect and create a separate function
@@ -1247,24 +1255,23 @@ document.addEventListener("fullscreenchange", onFullscreenChange);
 return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
 }, []);
 
-// Hub scoring: Award game win bonus (+25 team, +10 per player) when game ends
+// Hub scoring: Award game win bonus to winner when game ends
+// Since WoF is individual scoring, the winner gets 25 points directly
 useEffect(() => {
   if (phase === "done" && hubEnabled && !gameWinBonusAwarded && winners.length > 0) {
     setGameWinBonusAwarded(true);
-    // Find the winning team index and award hub points
+    // Winner name is the player's name (since each player is their own "team")
     const winnerName = winners[0];
-    const winnerIndex = teams.findIndex(t => t.name === winnerName);
-    if (winnerIndex !== -1 && hubTeamMap[winnerIndex]) {
-      addHubTeamScore(hubTeamMap[winnerIndex], 25, 'Wheel of Fortune', 'Game won (+25)');
+    // Award 25 points directly to the winning player
+    addHubPlayerScore(winnerName, 25, 'Wheel of Fortune', 'Game won (+25)');
 
-      // Award individual game win bonus (+10) to all winning team players
-      const winningTeam = hubTeamMap[winnerIndex]; // 'A' or 'B'
-      players.filter(p => p.team === winningTeam).forEach(p => {
-        updatePlayerStats(p.id, {
-          gameWinBonus: 10,
-          hubPoints: 10,
-          description: 'Game win bonus (+10)'
-        });
+    // Also update their local stats
+    const winnerPlayer = players.find(p => p.name === winnerName);
+    if (winnerPlayer) {
+      updatePlayerStats(winnerPlayer.id, {
+        gameWinBonus: 25,
+        description: 'Game win bonus (+25)'
+        // Note: hubPoints not set here since we already called addHubPlayerScore above
       });
     }
   }
@@ -2274,14 +2281,10 @@ puzzlesSolved: ((prev.teamStats[solverName] || {}).puzzlesSolved || 0) + 1,
 },
 };
 });
-// Hub scoring: +15 to solving team
-if (hubEnabled && hubTeamMap[active]) {
-  addHubTeamScore(hubTeamMap[active], 15, 'Wheel of Fortune', 'Puzzle solved (+15)');
-}
-
 // Track individual player scoring for puzzle solve
+// Since WoF is individual scoring, only the solver gets the points
 const activePlayer = getActivePlayer();
-if (activePlayer) {
+if (activePlayer && hubEnabled) {
   updatePlayerStats(activePlayer.id, {
     puzzleSolve: true,
     hubPoints: 15,
@@ -2770,19 +2773,16 @@ setBonusWinnerName(teams[active]?.name || null);
 }
 try { sfx.play("solve"); } catch (e) {}
 setBonusResult("win");
-// Hub scoring: +20 for bonus round win
+// Hub scoring: +20 for bonus round win (individual scoring - only winner gets points)
 if (hubEnabled) {
-  const hubTeam = winnerIndex !== -1 ? hubTeamMap[winnerIndex] : hubTeamMap[active];
-  if (hubTeam) {
-    addHubTeamScore(hubTeam, 20, 'Wheel of Fortune', 'Bonus round won (+20)');
-
-    // Award individual bonus round solve (+20) to all players on the winning team
-    players.filter(p => p.team === hubTeam).forEach(p => {
-      updatePlayerStats(p.id, {
-        bonusSolve: true,
-        hubPoints: 20,
-        description: 'Bonus round solved (+20)'
-      });
+  // In individual mode, find the bonus round player
+  const bonusPlayerIndex = winnerIndex !== -1 ? winnerIndex : active;
+  const bonusPlayer = players[bonusPlayerIndex];
+  if (bonusPlayer) {
+    updatePlayerStats(bonusPlayer.id, {
+      bonusSolve: true,
+      hubPoints: 20,
+      description: 'Bonus round solved (+20)'
     });
   }
 }
