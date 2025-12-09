@@ -635,15 +635,7 @@ if (shouldHideHeader) return null;
 return (
 <div className="fixed top-2 left-2 right-2 z-[100] flex items-center justify-between gap-2 pointer-events-auto">
 <div className="flex items-center gap-2">
-{phase !== "setup" && (
-<button
-onClick={backToSetup}
-className="px-3 py-2 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10 text-sm font-semibold shadow-sm hover:scale-[1.02] hover:bg-white/20 transition transform custom-hover"
-aria-label="Back to setup"
->
-← Setup
-</button>
-)}
+{/* Back to setup button removed - game auto-starts now */}
 </div>
 <div className="flex items-center gap-2 justify-end">
 <button
@@ -4036,7 +4028,6 @@ prize === "KEYCHAIN" ? "bg-orange-600" : "bg-green-600"
 {/* bottom actions remain visible below the scrolling list */}
 <div className="mt-2 flex gap-2 justify-center flex-wrap">
 <button onClick={restartAll} className="px-4 py-2 rounded-xl bg-white text-black font-semibold hover:opacity-90">Play Again <br/>(with same settings)</button>
-<button onClick={backToSetup} className="px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 font-semibold">Back to Setup</button>
 <button onClick={() => setShowStats(true)} className="px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 font-semibold">Statistics</button>
 </div>
 </div>
