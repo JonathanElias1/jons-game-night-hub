@@ -159,16 +159,18 @@ const finalJONpardyData = {
     aliases: ["yaer", "yaire"]
 };
 
-// Buzzer keys - multiple options for arcade buttons
-// Team 1: Q, Z, 1, Left Arrow
-// Team 2: P, M, 2, Right Arrow
-// Team 3: Z (if not team 1), 3
-// Team 4: M (if not team 2), 4
+// Buzzer keys - supports up to 8 individual players
+// Player 1: Q, 1  |  Player 2: P, 2  |  Player 3: Z, 3  |  Player 4: M, 4
+// Player 5: A, 5  |  Player 6: L, 6  |  Player 7: X, 7  |  Player 8: ., 8
 const BUZZER_KEYS = {
-  'q': 0, '1': 0, 'z': 0, 'arrowleft': 0,
-  'p': 1, '2': 1, 'm': 1, 'arrowright': 1,
-  '3': 2,
-  '4': 3
+  'q': 0, '1': 0,
+  'p': 1, '2': 1,
+  'z': 2, '3': 2,
+  'm': 3, '4': 3,
+  'a': 4, '5': 4,
+  'l': 5, '6': 5,
+  'x': 6, '7': 6,
+  '.': 7, '8': 7,
 };
 
 // Gamepad button mapping for arcade USB encoders
@@ -426,27 +428,27 @@ useEffect(() => {
         audioContext.current.resume();
     }
 
-    // Check for hub data and set up team mapping
+    // Check for hub data - each player becomes their own "team" in JONpardy
     const hubData = getHubData();
-    if (hubData && hubData.players && hubData.players.length >= 2) {
-      const teamNames = hubData.teamNames || { A: 'Team A', B: 'Team B' };
-      // For 2 teams: Team 0 = Hub Team A, Team 1 = Hub Team B
-      const initialTeams = [
-        { name: teamNames.A, score: 0 },
-        { name: teamNames.B, score: 0 }
-      ];
+    if (hubData && hubData.players && hubData.players.length >= 1) {
+      // Each player is their own team for JONpardy (individual trivia game)
+      const initialTeams = hubData.players.map((p, index) => ({
+        name: p.name || `Player ${index + 1}`,
+        score: 0,
+        odersId: p.id, // Store player ID for hub scoring
+        hubTeam: p.team, // Store original hub team ('A' or 'B')
+        avatar: p.avatar || '🎮'
+      }));
       setTeams(initialTeams);
-      setHubTeamMap({ 0: 'A', 1: 'B' });
       setHubEnabled(true);
-      setNumTeams(2);
+      setNumTeams(initialTeams.length);
 
-      // Load players with individual tracking
+      // Also set up players array for compatibility
       const loadedPlayers = hubData.players.map((p, index) => ({
-        // Ensure player has a valid ID - use hub ID or generate fallback
         id: p.id || `player_${index}_${Date.now()}`,
         name: p.name || `Player ${index + 1}`,
-        team: p.team, // 'A' or 'B'
-        teamIndex: p.team === 'A' ? 0 : 1,
+        team: p.team, // 'A' or 'B' (original hub team)
+        teamIndex: index, // In JONpardy, each player is their own team
         avatar: p.avatar || '🎮',
         personalScore: 0,
         stats: {
@@ -456,8 +458,14 @@ useEffect(() => {
           gameWinBonus: 0
         }
       }));
-      console.log('JONpardy: Loaded players', loadedPlayers.map(p => ({ id: p.id, name: p.name, team: p.team })));
+      console.log('JONpardy: Each player is their own team', loadedPlayers.map(p => ({ id: p.id, name: p.name })));
       setPlayers(loadedPlayers);
+      // Hub team map: each team index maps to original hub team
+      const teamMap = {};
+      hubData.players.forEach((p, index) => {
+        teamMap[index] = p.team; // 'A' or 'B'
+      });
+      setHubTeamMap(teamMap);
     } else {
       const initialTeams = Array.from({ length: numTeams }, (_, i) => ({ name: `Team ${i + 1}`, score: 0 }));
       setTeams(initialTeams);
@@ -881,8 +889,8 @@ const handleBuzzIn = useCallback((event) => {
   
   if (gameState === 'setup') {
     const hubData = getHubData();
-    const hasHubData = hubData && hubData.players && hubData.players.length >= 2;
-    const hubTeamNames = hubData?.teamNames || { A: 'Team A', B: 'Team B' };
+    const hasHubData = hubData && hubData.players && hubData.players.length >= 1;
+    const playerNames = hubData?.players?.map(p => p.name) || [];
 
     return (
       <div className="min-h-screen w-screen bg-gray-900 text-white font-sans flex flex-col items-center justify-center p-4">
@@ -893,10 +901,12 @@ const handleBuzzIn = useCallback((event) => {
               <>
                 <div className="bg-green-600/30 border border-green-500 rounded-lg p-4 mb-6">
                   <p className="text-green-400 font-bold mb-2">✓ Game Night Hub Connected!</p>
-                  <p className="text-sm text-gray-300">Teams: {hubTeamNames.A} vs {hubTeamNames.B}</p>
-                  <p className="text-xs text-gray-400 mt-1">Points will auto-sync to the hub</p>
+                  <p className="text-sm text-gray-300 mb-2">Players: {playerNames.join(', ')}</p>
+                  <p className="text-xs text-gray-400">Each player competes individually!</p>
                 </div>
-                <p className="text-gray-400 mb-6">Buzzer keys: {hubTeamNames.A} (Q), {hubTeamNames.B} (P)</p>
+                <p className="text-gray-400 mb-6 text-sm">
+                  Buzzer keys: 1st (Q/1), 2nd (P/2), 3rd (Z/3), 4th (M/4)
+                </p>
               </>
             ) : (
               <>
