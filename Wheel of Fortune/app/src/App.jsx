@@ -987,6 +987,7 @@ const [selectedPuzzles, setSelectedPuzzles] = useState(FALLBACK);
 const [tempTeamCount, setTempTeamCount] = useState(String(teamCount));
 const [tempRoundsCount, setTempRoundsCount] = useState(String(roundsCount));
 const chargeLoopTimeoutRef = useRef(null);
+const gamepadPrevButtonsRef = useRef({}); // Track previous gamepad button states for edge detection
 // keep temps synced when phase/teamCount/roundsCount change (so returning to setup shows real current values)
 useEffect(() => {
 if (phase === "setup") {
@@ -1154,6 +1155,8 @@ setGameStats(initializeGameStats());
 }, [phase, initializeGameStats]);
 const sfx = useSfx();
 const imagesLoaded = useImagePreloader(); // ADD THIS LINE
+const [autoStarted, setAutoStarted] = useState(false);
+
 const displayBonusPlayer = useMemo(() => {
 if (bonusWinnerSpinning) return selectedBonusWinner || "?";
 if (Array.isArray(winners) && winners.length) return winners[0];
@@ -1178,6 +1181,105 @@ const count = Math.max(1, Math.min(n, pool.length));
 const shuffled = shuffle(pool);
 return shuffled.slice(0, count);
 };
+
+// Unlock audio on first user interaction (needed for auto-start mode)
+useEffect(() => {
+  const unlockAudio = () => {
+    sfx.unlock();
+    document.removeEventListener('click', unlockAudio);
+    document.removeEventListener('touchstart', unlockAudio);
+    document.removeEventListener('keydown', unlockAudio);
+  };
+  document.addEventListener('click', unlockAudio, { once: true });
+  document.addEventListener('touchstart', unlockAudio, { once: true });
+  document.addEventListener('keydown', unlockAudio, { once: true });
+  return () => {
+    document.removeEventListener('click', unlockAudio);
+    document.removeEventListener('touchstart', unlockAudio);
+    document.removeEventListener('keydown', unlockAudio);
+  };
+}, [sfx]);
+
+// Auto-start game when loaded (no setup screen)
+useEffect(() => {
+  if (autoStarted || phase !== "setup" || !sfx.loaded || !imagesLoaded) return;
+
+  // Check for hub data
+  const hubData = loadHubData();
+  let useHubTeams = false;
+  let hubNames = [];
+  let loadedPlayers = [];
+
+  if (hubData && hubData.players && hubData.players.length >= 2) {
+    const hubTeamNames = hubData.teamNames || { A: 'Team A', B: 'Team B' };
+    hubNames = [hubTeamNames.A, hubTeamNames.B];
+    useHubTeams = true;
+    loadedPlayers = hubData.players.map(p => ({
+      id: p.id,
+      name: p.name,
+      team: p.team,
+      teamIndex: p.team === 'A' ? 0 : 1,
+      avatar: p.avatar || '🎮',
+      personalScore: 0,
+      stats: { correctConsonants: 0, correctVowels: 0, puzzleSolves: 0, bonusSolves: 0, gameWinBonus: 0 }
+    }));
+    console.log('Wheel of Fortune: Hub scoring enabled with teams', hubTeamNames.A, 'and', hubTeamNames.B);
+  }
+
+  setAutoStarted(true);
+
+  // Set final values
+  const finalTeamCount = useHubTeams ? 2 : 2;
+  const names = useHubTeams ? hubNames : ['Team 1', 'Team 2'];
+  const maxRounds = Math.max(1, (puzzles && puzzles.length) || FALLBACK.length);
+  const finalRounds = Math.min(5, maxRounds);
+
+  // Configure game
+  setTeamCount(finalTeamCount);
+  setTempTeamCount(String(finalTeamCount));
+  setRoundsCount(finalRounds);
+  setTempRoundsCount(String(finalRounds));
+
+  if (useHubTeams) {
+    setHubEnabled(true);
+    setHubTeamMap({ 0: 'A', 1: 'B' });
+    setPlayers(loadedPlayers);
+    setActivePlayerIndex({ 0: 0, 1: 0 });
+  } else {
+    setHubEnabled(false);
+    setHubTeamMap({});
+    setPlayers([]);
+    setActivePlayerIndex({});
+  }
+  setGameWinBonusAwarded(false);
+
+  // Initialize teams
+  setTeams(names.map((name) => ({ name, total: 0, round: 0, prizes: [], holding: [] })));
+  setTeamNames(names);
+  setActive(0);
+  setAngle(0);
+  setHasSpun(false);
+  setZoomed(false);
+  setMysteryPrize(null);
+  setWonSpecialWedges([]);
+  setCurrentWedges([...WEDGES]);
+
+  const count = Math.max(1, Math.min(finalRounds, (puzzles && puzzles.length) || FALLBACK.length));
+  const chosen = selectRandomPuzzles(puzzles && puzzles.length ? puzzles : FALLBACK, count);
+  setBonusResult(null);
+  setBonusWinnerName(null);
+  winnersRef.current = [];
+  setWinners([]);
+  setSelectedPuzzles(chosen);
+  setIdx(0);
+  const first = chosen[0] || FALLBACK[0];
+  setBoard(normalizeAnswer(first.answer));
+  setCategory(first.category || "PHRASE");
+  setPhase("play");
+
+  console.log('Wheel of Fortune: Auto-started with', finalTeamCount, 'teams,', finalRounds, 'rounds');
+}, [autoStarted, phase, sfx.loaded, imagesLoaded, puzzles]);
+
 const isSolved = () => board.every((b) => b.shown);
 const allVowelsGuessed = Array.from(VOWELS).every((vowel) => letters.has(vowel));
 const canSpin = !spinning && !awaitingConsonant && !isSolved() && !bonusRound && !isRevealingLetters;
@@ -1810,6 +1912,41 @@ button.removeEventListener('touchcancel', handleTouchEnd);
 });
 };
 }, [canSpin, startCharge, endCharge]);
+
+// Gamepad polling for arcade buttons - hold to charge, release to spin
+useEffect(() => {
+let animationId;
+const pollGamepads = () => {
+  const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+  for (const gamepad of gamepads) {
+    if (!gamepad) continue;
+    const gpId = gamepad.index;
+    if (!gamepadPrevButtonsRef.current[gpId]) {
+      gamepadPrevButtonsRef.current[gpId] = {};
+    }
+    // Check any button (0-3 typically) for spin
+    for (let btnIndex = 0; btnIndex < Math.min(gamepad.buttons.length, 4); btnIndex++) {
+      const wasPressed = gamepadPrevButtonsRef.current[gpId][btnIndex];
+      const isPressed = gamepad.buttons[btnIndex].pressed;
+      // Button just pressed - start charging
+      if (isPressed && !wasPressed && canSpin) {
+        startCharge();
+      }
+      // Button just released - end charge (triggers spin)
+      if (!isPressed && wasPressed) {
+        endCharge();
+      }
+      gamepadPrevButtonsRef.current[gpId][btnIndex] = isPressed;
+    }
+  }
+  animationId = requestAnimationFrame(pollGamepads);
+};
+animationId = requestAnimationFrame(pollGamepads);
+return () => {
+  if (animationId) cancelAnimationFrame(animationId);
+};
+}, [canSpin, startCharge, endCharge]);
+
 useEffect(() => {
 const overlay = blockingOverlayRef.current;
 if (!overlay) return;

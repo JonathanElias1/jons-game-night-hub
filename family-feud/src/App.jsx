@@ -100,12 +100,15 @@ export default function FamilyFeudApp() {
   const { ding, buzz, blip, buzzA, buzzB, volume, setVolume, duplicateBuzz } = useAudio();
   const theme = useThemeMusic();
 
-  // Auto-start from hub data if available
+  // Auto-start from hub data if available, otherwise use defaults (no setup screen)
   useEffect(() => {
     if (autoStarted || gameSettings || !loaded) return;
 
     const hubData = loadHubData();
+    const totalRounds = data.rounds.length;
+
     if (hubData && hubData.players && hubData.players.length >= 2) {
+      // Hub data exists - use it
       const teamNames = hubData.teamNames || { A: 'Team A', B: 'Team B' };
 
       // Split players by team and assign random avatars
@@ -134,8 +137,6 @@ export default function FamilyFeudApp() {
         }));
 
       if (playersA.length > 0 && playersB.length > 0) {
-        // Use all available rounds from the JSON
-        const totalRounds = data.rounds.length;
         setAutoStarted(true);
         setPlayers([...playersA, ...playersB]);
         setTeamAName(teamNames.A);
@@ -143,8 +144,24 @@ export default function FamilyFeudApp() {
         setHubEnabled(true);
         setGameSettings({ numRounds: totalRounds, players: [...playersA, ...playersB], teamAName: teamNames.A, teamBName: teamNames.B });
         console.log('Family Feud: Hub scoring enabled with teams', teamNames.A, 'and', teamNames.B, '- Playing', totalRounds, 'rounds');
+        return;
       }
     }
+
+    // No valid hub data - auto-start with default teams (no setup screen)
+    const defaultPlayersA = [
+      { id: 'A0', name: 'Team A Player 1', avatar: '🔵', team: 'A', teamName: 'Team A', personalScore: 0, stats: { answersRevealed: 0, topAnswers: 0, faceoffWins: 0, stealsWon: 0, fastMoneyPoints: 0 } }
+    ];
+    const defaultPlayersB = [
+      { id: 'B0', name: 'Team B Player 1', avatar: '🔴', team: 'B', teamName: 'Team B', personalScore: 0, stats: { answersRevealed: 0, topAnswers: 0, faceoffWins: 0, stealsWon: 0, fastMoneyPoints: 0 } }
+    ];
+    setAutoStarted(true);
+    setPlayers([...defaultPlayersA, ...defaultPlayersB]);
+    setTeamAName('Team A');
+    setTeamBName('Team B');
+    setHubEnabled(false);
+    setGameSettings({ numRounds: totalRounds, players: [...defaultPlayersA, ...defaultPlayersB], teamAName: 'Team A', teamBName: 'Team B' });
+    console.log('Family Feud: Auto-started with default teams - Playing', totalRounds, 'rounds');
   }, [autoStarted, gameSettings, loaded, data.rounds.length]);
 
   // Sync actual team game scores to hub whenever they change
